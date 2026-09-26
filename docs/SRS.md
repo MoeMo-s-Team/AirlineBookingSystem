@@ -1099,6 +1099,824 @@ Các endpoint quản trị yêu cầu role `ADMIN`:
 - Booking management.
 - Booking status management.
 
+## 9.9. API Contract Specification
+
+### Authentication
+
+> **Lưu ý:** Auth endpoints không qua backend — Supabase Auth xử lý trực tiếp từ frontend.
+
+**Frontend Supabase Client:**
+```javascript
+import { createClient } from '@supabase/supabase-js'
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+```
+
+**Sign Up:**
+```javascript
+const { data, error } = await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'password123',
+  options: { data: { full_name: 'Nguyen Van A' } }
+})
+```
+
+**Sign In:**
+```javascript
+const { data, error } = await supabase.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password123'
+})
+// Response: { session: { access_token, refresh_token }, user }
+```
+
+**Sign Out:**
+```javascript
+await supabase.auth.signOut()
+```
+
+**Get Current User:**
+```javascript
+const { data: { user } } = await supabase.auth.getUser()
+// Requires: Authorization header with Bearer token
+```
+
+---
+
+### Common Types
+
+```typescript
+// API Response Wrapper
+interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  errors?: ValidationError[];
+}
+
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+// Standard Error Response
+interface ErrorResponse {
+  success: false;
+  message: string;
+  errors?: ValidationError[];
+}
+```
+
+---
+
+### Profile API
+
+#### GET /api/profile/me
+
+**Mô tả:** Lấy thông tin profile của user hiện tại.
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "fullName": "Nguyen Van A",
+    "role": "CUSTOMER"
+  }
+}
+```
+
+**Response 401:**
+```json
+{
+  "success": false,
+  "message": "Unauthorized"
+}
+```
+
+---
+
+### Flight API
+
+#### GET /api/flights
+
+**Mô tả:** Tìm kiếm chuyến bay.
+
+**Query Parameters:**
+| Param | Type | Required | Mô tả |
+|-------|------|----------|--------|
+| origin | String | Yes | Mã sân bay đi (VD: HAN) |
+| destination | String | Yes | Mã sân bay đến (VD: SGN) |
+| date | Date | Yes | Ngày bay (YYYY-MM-DD) |
+
+**Example:**
+```
+GET /api/flights?origin=HAN&destination=SGN&date=2026-12-25
+```
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "flightNumber": "VN1234",
+      "origin": "HAN",
+      "destination": "SGN",
+      "departureTime": "2026-12-25T06:00:00",
+      "arrivalTime": "2026-12-25T08:30:00",
+      "availableSeats": 45,
+      "prices": {
+        "economy": 1200000,
+        "premium": 1800000,
+        "business": 3000000
+      }
+    }
+  ]
+}
+```
+
+---
+
+#### GET /api/flights/{id}
+
+**Mô tả:** Lấy chi tiết chuyến bay.
+
+**Path Parameters:**
+| Param | Type | Mô tả |
+|-------|------|--------|
+| id | Long | Flight ID |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "flightNumber": "VN1234",
+    "origin": "HAN",
+    "destination": "SGN",
+    "departureTime": "2026-12-25T06:00:00",
+    "arrivalTime": "2026-12-25T08:30:00",
+    "availableSeats": 45,
+    "prices": {
+      "economy": 1200000,
+      "premium": 1800000,
+      "business": 3000000
+    }
+  }
+}
+```
+
+**Response 404:**
+```json
+{
+  "success": false,
+  "message": "Flight not found"
+}
+```
+
+---
+
+#### POST /api/flights (Admin)
+
+**Mô tả:** Tạo chuyến bay mới.
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Role: ADMIN
+```
+
+**Request Body:**
+```json
+{
+  "flightNumber": "VN5678",
+  "origin": "SGN",
+  "destination": "DAD",
+  "departureTime": "2026-12-26T10:00:00",
+  "arrivalTime": "2026-12-26T12:30:00",
+  "basePrice": 1200000,
+  "availableSeats": 100
+}
+```
+
+**Validation:**
+- `flightNumber`: Required, unique, max 20 chars
+- `origin`: Required, 3 chars
+- `destination`: Required, 3 chars
+- `departureTime`: Required, must be future
+- `arrivalTime`: Required, must be after departureTime
+- `basePrice`: Required, positive number
+- `availableSeats`: Required, positive integer
+
+**Response 201:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "flightNumber": "VN5678",
+    "origin": "SGN",
+    "destination": "DAD",
+    "departureTime": "2026-12-26T10:00:00",
+    "arrivalTime": "2026-12-26T12:30:00",
+    "availableSeats": 100
+  }
+}
+```
+
+**Response 400:**
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    { "field": "flightNumber", "message": "Flight number already exists" }
+  ]
+}
+```
+
+---
+
+#### PUT /api/flights/{id} (Admin)
+
+**Mô tả:** Cập nhật chuyến bay.
+
+**Path Parameters:**
+| Param | Type | Mô tả |
+|-------|------|--------|
+| id | Long | Flight ID |
+
+**Request Body:**
+```json
+{
+  "departureTime": "2026-12-26T11:00:00",
+  "arrivalTime": "2026-12-26T13:30:00",
+  "availableSeats": 80
+}
+```
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+---
+
+#### DELETE /api/flights/{id} (Admin)
+
+**Mô tả:** Xóa chuyến bay.
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "message": "Flight deleted successfully"
+}
+```
+
+---
+
+### Fare API
+
+#### GET /api/fares
+
+**Mô tả:** Lấy danh sách fare classes.
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "code": "ECONOMY",
+      "name": "Economy",
+      "priceMultiplier": 1.0,
+      "active": true
+    },
+    {
+      "id": 2,
+      "code": "PREMIUM",
+      "name": "Premium Economy",
+      "priceMultiplier": 1.5,
+      "active": true
+    },
+    {
+      "id": 3,
+      "code": "BUSINESS",
+      "name": "Business",
+      "priceMultiplier": 2.5,
+      "active": true
+    }
+  ]
+}
+```
+
+---
+
+#### POST /api/fares (Admin)
+
+**Request Body:**
+```json
+{
+  "code": "FIRST",
+  "name": "First Class",
+  "priceMultiplier": 4.0,
+  "active": true
+}
+```
+
+**Response 201:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "code": "FIRST",
+    "name": "First Class",
+    "priceMultiplier": 4.0,
+    "active": true
+  }
+}
+```
+
+---
+
+### Service API
+
+#### GET /api/services
+
+**Mô tả:** Lấy danh sách additional services.
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Extra Baggage 20kg",
+      "type": "BAGGAGE",
+      "price": 500000,
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "Special Meal",
+      "type": "MEAL",
+      "price": 200000,
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "Seat Selection",
+      "type": "SEAT",
+      "price": 150000,
+      "active": true
+    },
+    {
+      "id": 4,
+      "name": "Priority Boarding",
+      "type": "PRIORITY_BOARDING",
+      "price": 300000,
+      "active": true
+    }
+  ]
+}
+```
+
+---
+
+### Booking API
+
+#### POST /api/bookings
+
+**Mô tả:** Tạo booking mới.
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Request Body:**
+```json
+{
+  "flightId": 1,
+  "fareClassId": 3,
+  "passengers": [
+    {
+      "fullName": "Nguyen Van A",
+      "dateOfBirth": "1990-05-15",
+      "passportNo": "B1234567",
+      "phone": "0912345678"
+    },
+    {
+      "fullName": "Tran Thi B",
+      "dateOfBirth": "1992-08-20",
+      "passportNo": "B7654321",
+      "phone": "0987654321"
+    }
+  ],
+  "services": [
+    { "serviceId": 1, "quantity": 2 },
+    { "serviceId": 3, "quantity": 2 }
+  ]
+}
+```
+
+**Validation:**
+- `flightId`: Required, must exist
+- `fareClassId`: Required, must exist
+- `passengers`: Required, min 1 item
+  - `fullName`: Required, max 255 chars
+  - `dateOfBirth`: Required, valid date, must be in past
+  - `passportNo`: Required, unique within booking
+  - `phone`: Required, valid phone format
+- `services`: Optional array
+  - `serviceId`: Required, must exist
+  - `quantity`: Required, min 1
+
+**Response 201:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "bookingCode": "BK-ABC123",
+    "status": "PENDING",
+    "flight": {
+      "id": 1,
+      "flightNumber": "VN1234",
+      "origin": "HAN",
+      "destination": "SGN",
+      "departureTime": "2026-12-25T06:00:00"
+    },
+    "fareClass": {
+      "id": 3,
+      "code": "BUSINESS",
+      "name": "Business"
+    },
+    "passengers": [
+      {
+        "id": 1,
+        "fullName": "Nguyen Van A",
+        "dateOfBirth": "1990-05-15",
+        "passportNo": "B1234567"
+      }
+    ],
+    "services": [
+      {
+        "id": 1,
+        "name": "Extra Baggage 20kg",
+        "quantity": 2,
+        "unitPrice": 500000
+      }
+    ],
+    "priceBreakdown": {
+      "baseFare": 6000000,
+      "servicesTotal": 1300000,
+      "total": 7300000
+    },
+    "totalPrice": 7300000,
+    "createdAt": "2026-09-26T10:00:00"
+  }
+}
+```
+
+**Response 400:**
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    { "field": "passengers[0].passportNo", "message": "Passport number is required" }
+  ]
+}
+```
+
+**Response 401:**
+```json
+{
+  "success": false,
+  "message": "Unauthorized"
+}
+```
+
+---
+
+#### GET /api/bookings/me
+
+**Mô tả:** Lấy danh sách booking của user hiện tại.
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+| Param | Type | Required | Mô tả |
+|-------|------|----------|--------|
+| status | String | No | Filter by status |
+
+**Example:**
+```
+GET /api/bookings/me?status=PENDING
+```
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "bookingCode": "BK-ABC123",
+      "status": "PENDING",
+      "flight": { ... },
+      "fareClass": { ... },
+      "totalPrice": 7300000,
+      "createdAt": "2026-09-26T10:00:00"
+    }
+  ]
+}
+```
+
+---
+
+#### GET /api/bookings/{id}
+
+**Mô tả:** Lấy chi tiết booking.
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "bookingCode": "BK-ABC123",
+    "status": "CONFIRMED",
+    "flight": { ... },
+    "fareClass": { ... },
+    "passengers": [ ... ],
+    "services": [ ... ],
+    "priceBreakdown": { ... },
+    "totalPrice": 7300000,
+    "payment": {
+      "id": 1,
+      "amount": 7300000,
+      "status": "SUCCESS",
+      "paidAt": "2026-09-26T10:05:00"
+    },
+    "createdAt": "2026-09-26T10:00:00",
+    "updatedAt": "2026-09-26T10:05:00"
+  }
+}
+```
+
+---
+
+#### PATCH /api/bookings/{id}/cancel
+
+**Mô tả:** Hủy booking.
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Validation:**
+- Chỉ booking ở trạng thái PENDING mới được hủy
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "bookingCode": "BK-ABC123",
+    "status": "CANCELLED"
+  }
+}
+```
+
+**Response 400:**
+```json
+{
+  "success": false,
+  "message": "Cannot cancel booking with status CONFIRMED"
+}
+```
+
+---
+
+### Payment API
+
+#### POST /api/payments
+
+**Mô tả:** Thực hiện thanh toán (mock).
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Request Body:**
+```json
+{
+  "bookingId": 1,
+  "paymentMethod": "CREDIT_CARD"
+}
+```
+
+**Payment Methods:**
+- `CREDIT_CARD`
+- `BANK_TRANSFER`
+- `MOCK`
+
+**Response 200 (Success):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "bookingId": 1,
+    "amount": 7300000,
+    "paymentMethod": "CREDIT_CARD",
+    "status": "SUCCESS",
+    "transactionRef": "TXN-ABC123",
+    "paidAt": "2026-09-26T10:05:00"
+  }
+}
+```
+
+**Response 200 (Failed):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "bookingId": 1,
+    "amount": 7300000,
+    "paymentMethod": "CREDIT_CARD",
+    "status": "FAILED",
+    "transactionRef": null
+  }
+}
+```
+
+---
+
+### Notification API
+
+#### GET /api/notifications
+
+**Mô tả:** Lấy danh sách thông báo của user.
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+| Param | Type | Required | Mô tả |
+|-------|------|----------|--------|
+| isRead | Boolean | No | Filter by read status |
+| limit | Integer | No | Default: 20 |
+| offset | Integer | No | Default: 0 |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "type": "BOOKING_CONFIRMED",
+      "message": "Your booking BK-ABC123 has been confirmed.",
+      "isRead": false,
+      "bookingId": 1,
+      "createdAt": "2026-09-26T10:05:00"
+    }
+  ],
+  "pagination": {
+    "total": 5,
+    "limit": 20,
+    "offset": 0
+  }
+}
+```
+
+---
+
+#### PATCH /api/notifications/{id}/read
+
+**Mô tả:** Đánh dấu thông báo đã đọc.
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "isRead": true
+  }
+}
+```
+
+---
+
+### Admin APIs
+
+#### GET /api/bookings (Admin)
+
+**Mô tả:** Lấy tất cả bookings (admin).
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Role: ADMIN
+```
+
+**Query Parameters:**
+| Param | Type | Required | Mô tả |
+|-------|------|----------|--------|
+| status | String | No | Filter by status |
+| userId | UUID | No | Filter by user |
+| page | Integer | No | Default: 0 |
+| size | Integer | No | Default: 20 |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [ ... ],
+  "pagination": {
+    "total": 100,
+    "page": 0,
+    "size": 20,
+    "totalPages": 5
+  }
+}
+```
+
+---
+
+#### PATCH /api/bookings/{id}/status (Admin)
+
+**Mô tả:** Cập nhật trạng thái booking (admin).
+
+**Request Body:**
+```json
+{
+  "status": "CONFIRMED"
+}
+```
+
+**Allowed Transitions:**
+- `PENDING` → `CONFIRMED`, `CANCELLED`, `PAYMENT_FAILED`
+- `CONFIRMED` → không thể chuyển về `PENDING`
+- `CANCELLED` → terminal state
+- `PAYMENT_FAILED` → có thể retry payment
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "bookingCode": "BK-ABC123",
+    "status": "CONFIRMED"
+  }
+}
+```
+
+---
+
+### HTTP Status Codes
+
+| Code | Mô tả |
+|------|--------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad Request (validation error) |
+| 401 | Unauthorized |
+| 403 | Forbidden (không đủ quyền) |
+| 404 | Not Found |
+| 409 | Conflict (VD: duplicate) |
+| 500 | Internal Server Error |
+
 ---
 
 # 10. Kiến trúc hệ thống
