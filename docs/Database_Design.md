@@ -2,7 +2,7 @@
 
 **Phiên bản:** 1.0
 **Database Engine:** PostgreSQL
-**Tài liệu tham chiếu:** [SSR.md](file:///media/thanhhien/DATA/AirlineBookingSystem_DesignPattern/docs/SSR.md)
+**Tài liệu tham chiếu:** [SRS.md](./SRS.md)
 
 ---
 

@@ -187,7 +187,7 @@ backend/
 │       │   ├── BookingSubject.java
 │       │   ├── EmailNotificationObserver.java
 │       │   ├── SmsNotificationObserver.java
-│       │   └── AdminNotificationObserver.java
+│       │   └── PushNotificationObserver.java
 │       │
 │       └── factory/               # FACTORY PATTERN
 │           ├── TicketFactory.java
@@ -614,10 +614,10 @@ public class BookingStateContext {
         │                   │                   │
         ▼                   ▼                   ▼
 ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│    Email      │  │     SMS       │  │    Admin      │
+│    Email      │  │     SMS       │  │    Push       │
 │ Notification  │  │ Notification  │  │ Notification  │
 ├───────────────┤  ├───────────────┤  ├───────────────┤
-│ - emailService│  │ - smsService  │  │ - adminEmail  │
+│ - emailService│  │ - smsService  │  │ - pushService  │
 ├───────────────┤  ├───────────────┤  ├───────────────┤
 │ + onBooking   │  │ + onBooking   │  │ + onBooking   │
 │   StateChange │  │   StateChange │  │   StateChange │
@@ -749,7 +749,7 @@ public class TicketFactory {
 |---------|---------|---------|----------|
 | **Strategy** | Dynamic pricing calculation | `PricingStrategy`, `EconomyPricingStrategy`, `PremiumPricingStrategy`, `BusinessPricingStrategy` | Price calculation by fare class |
 | **State** | Booking lifecycle management | `BookingState`, `PendingState`, `ConfirmedState`, `CancelledState`, `PaymentFailedState` | State transitions |
-| **Observer** | Event notifications | `BookingSubject`, `BookingObserver`, `EmailNotificationObserver`, `SmsNotificationObserver` | Booking status updates |
+| **Observer** | Event notifications | `BookingSubject`, `BookingObserver`, `EmailNotificationObserver`, `SmsNotificationObserver`, `PushNotificationObserver` | Booking status updates |
 | **Factory** | Object creation | `TicketFactory`, `ETicketFactory`, `BoardingPassFactory` | Ticket generation |
 
 ---

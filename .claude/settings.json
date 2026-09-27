@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk git *)",
+      "Bash(rtk git commit -m 'docs: remove Decorator/Facade patterns, update Observer to multi-channel *)"
+    ]
+  }
+}
