@@ -10,25 +10,29 @@
 
 ```mermaid
 erDiagram
-    auth_users["auth.users (Supabase)"] ||--|| profiles : "synced"
-    roles ||--o{ profiles : "has"
-    profiles ||--o{ bookings : "creates"
-    profiles ||--o{ notifications : "receives"
-    flights ||--o{ bookings : "has"
-    fare_classes ||--o{ bookings : "applies"
-    bookings ||--o{ passengers : "contains"
-    bookings ||--o{ booking_services : "includes"
-    bookings ||--o{ payments : "has"
-    bookings ||--o{ notifications : "triggers"
-    additional_services ||--o{ booking_services : "linked"
+    AUTH_USERS ||--|| PROFILES : synced
+    ROLES ||--o{ PROFILES : has
+    PROFILES ||--o{ BOOKINGS : creates
+    PROFILES ||--o{ NOTIFICATIONS : receives
+    FLIGHTS ||--o{ BOOKINGS : has
+    FARE_CLASSES ||--o{ BOOKINGS : applies
+    BOOKINGS ||--o{ PASSENGERS : contains
+    BOOKINGS ||--o{ BOOKING_SERVICES : includes
+    BOOKINGS ||--o{ PAYMENTS : has
+    BOOKINGS ||--o{ NOTIFICATIONS : triggers
+    ADDITIONAL_SERVICES ||--o{ BOOKING_SERVICES : linked
 
-    roles {
+    AUTH_USERS {
+        uuid id PK
+    }
+
+    ROLES {
         bigint id PK
         varchar name UK
     }
 
-    profiles {
-        uuid id PK "= auth.users.id"
+    PROFILES {
+        uuid id PK
         varchar email UK
         varchar full_name
         bigint role_id FK
@@ -36,7 +40,7 @@ erDiagram
         timestamp updated_at
     }
 
-    flights {
+    FLIGHTS {
         bigint id PK
         varchar flight_number UK
         varchar origin
@@ -49,7 +53,7 @@ erDiagram
         timestamp updated_at
     }
 
-    fare_classes {
+    FARE_CLASSES {
         bigint id PK
         varchar code UK
         varchar name
@@ -57,7 +61,7 @@ erDiagram
         boolean active
     }
 
-    bookings {
+    BOOKINGS {
         bigint id PK
         varchar booking_code UK
         uuid user_id FK
@@ -69,7 +73,7 @@ erDiagram
         timestamp updated_at
     }
 
-    passengers {
+    PASSENGERS {
         bigint id PK
         bigint booking_id FK
         varchar full_name
@@ -78,7 +82,7 @@ erDiagram
         varchar phone
     }
 
-    additional_services {
+    ADDITIONAL_SERVICES {
         bigint id PK
         varchar name
         varchar type
@@ -86,7 +90,7 @@ erDiagram
         boolean active
     }
 
-    booking_services {
+    BOOKING_SERVICES {
         bigint id PK
         bigint booking_id FK
         bigint service_id FK
@@ -94,7 +98,7 @@ erDiagram
         decimal unit_price
     }
 
-    payments {
+    PAYMENTS {
         bigint id PK
         bigint booking_id FK
         decimal amount
@@ -105,7 +109,7 @@ erDiagram
         timestamp created_at
     }
 
-    notifications {
+    NOTIFICATIONS {
         bigint id PK
         uuid user_id FK
         bigint booking_id FK
