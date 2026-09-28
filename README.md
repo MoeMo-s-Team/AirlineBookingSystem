@@ -7,7 +7,7 @@
 | 2312617 | Trần Xuân Hiếu         | 2312617@dlu.edu.vn | [@ThanhXuanHieu](https://github.com/ThanhXuanHieu)   |
 | 2312693 | Nguyễn Thị Trà My      | 2312693@dlu.edu.vn | [@My6325](https://github.com/My6325)                 |
 | 2312609 | Nguyễn Ngọc Thanh Hiền | 2312609@dlu.edu.vn | [@hiendotforwork](https://github.com/hiendotforwork) |
-
+| 2115182 | Đặng Ân Thùy Anh | | [@hiendotforwork](https://github.com/hiendotforwork)
 ## 1. Giới thiệu
 
 **Airline Booking System** là hệ thống website **cổng đặt vé máy bay đa hạng vé và xử lý các dịch vụ đi kèm**, được xây dựng bằng **Java Spring Boot** và áp dụng các **Design Patterns** trong quá trình thiết kế và phát triển.
@@ -35,8 +35,8 @@ Hệ thống cho phép khách hàng tìm kiếm chuyến bay, lựa chọn hạn
 | **Spring Web**                  | Xây dựng RESTful API                |
 | **Spring Data JPA**             | ORM và truy cập cơ sở dữ liệu       |
 | **Hibernate**                   | Persistence Framework               |
-| **Spring Security**              | API Security + Authorization       |
-| **Supabase JWT Verification**   | Authentication (external)          |
+| **Spring Security**             | API Security + Authorization        |
+| **Supabase JWT Verification**   | Authentication (external)           |
 | **Spring Validation**           | Kiểm tra dữ liệu đầu vào            |
 | **SpringDoc OpenAPI / Swagger** | Tài liệu và kiểm thử API            |
 | **Maven**                       | Quản lý dependency và build project |
@@ -69,12 +69,12 @@ Hệ thống cho phép khách hàng tìm kiếm chuyến bay, lựa chọn hạn
 
 Hệ thống tập trung áp dụng các Design Patterns vào nghiệp vụ:
 
-| Pattern      | Áp dụng                                              |
-| ------------ | ---------------------------------------------------- |
-| **Strategy** | Tính giá theo hạng vé                              |
-| **Factory**  | Khởi tạo các loại vé / đối tượng nghiệp vụ         |
-| **State**    | Quản lý trạng thái Booking                           |
-| **Observer**  | Xử lý thông báo khi Booking thay đổi                 |
+| Pattern      | Áp dụng                                    |
+| ------------ | ------------------------------------------ |
+| **Strategy** | Tính giá theo hạng vé                      |
+| **Factory**  | Khởi tạo các loại vé / đối tượng nghiệp vụ |
+| **State**    | Quản lý trạng thái Booking                 |
+| **Observer** | Xử lý thông báo khi Booking thay đổi       |
 
 ---
 
@@ -180,6 +180,7 @@ Dự án được phát triển trong **3 tuần**, tập trung vào:
 Các chức năng như thanh toán ngân hàng thật, tích hợp API hãng hàng không thực tế, hệ thống vé điện tử chuẩn hàng không và các dịch vụ phức tạp nằm ngoài phạm vi phiên bản này.
 
 ---
+
 ## 8. Cấu trúc dự án
 
 ```text
