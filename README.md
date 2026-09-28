@@ -69,14 +69,12 @@ Hệ thống cho phép khách hàng tìm kiếm chuyến bay, lựa chọn hạn
 
 Hệ thống tập trung áp dụng các Design Patterns vào nghiệp vụ:
 
-| Pattern       | Áp dụng                                              |
-| ------------- | ---------------------------------------------------- |
-| **Strategy**  | Tính giá theo hạng vé và phương thức thanh toán      |
-| **Decorator** | Kết hợp các dịch vụ đi kèm như hành lý, suất ăn, ghế |
-| **Factory**   | Khởi tạo các loại vé / đối tượng nghiệp vụ           |
-| **State**     | Quản lý trạng thái Booking                           |
+| Pattern      | Áp dụng                                              |
+| ------------ | ---------------------------------------------------- |
+| **Strategy** | Tính giá theo hạng vé                              |
+| **Factory**  | Khởi tạo các loại vé / đối tượng nghiệp vụ         |
+| **State**    | Quản lý trạng thái Booking                           |
 | **Observer**  | Xử lý thông báo khi Booking thay đổi                 |
-| **Facade**    | Đơn giản hóa quy trình đặt vé                        |
 
 ---
 
@@ -195,7 +193,7 @@ AirlineBookingSystem_DesignPattern/
 │   │   ├── infrastructure/          # Security, external services
 │   │   ├── pattern/                 # Triển khai Design Patterns
 │   │   └── AirlineApplication.java  # Main application class
-│   ├── src/main/resources/          # Cấu hình application.yml & Flyway migrations
+│   ├── src/main/resources/          # Cấu hình application.yml
 │   ├── pom.xml                      # Maven dependencies
 │   └── Dockerfile
 ├── frontend/                         # React SPA
