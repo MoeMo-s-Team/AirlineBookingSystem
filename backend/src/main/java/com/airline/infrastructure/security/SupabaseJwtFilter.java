@@ -50,6 +50,9 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
 
             String userId = claims.getSubject();
             String role = claims.get("role", String.class);
+            if (role == null || role.isBlank()) {
+                role = "CUSTOMER";
+            }
 
             List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
