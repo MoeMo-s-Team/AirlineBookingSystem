@@ -8,12 +8,12 @@
 
 ## TEAM ASSIGNMENTS
 
-| Member | Modules | Backend | Frontend |
-|--------|---------|---------|----------|
-| **Hieu** | Auth + Flight | JWT, Flight CRUD | Flight pages |
-| **My** | Fare + Service | Fare/Service CRUD | Service selector |
-| **Hien** | Booking + Payment + State | Booking flow, Payment, State Pattern | Booking/Payment pages |
-| **Thuy Anh** | Frontend All + Observer | Notification infrastructure | All UI components |
+| Member       | Modules                   | Backend                              | Frontend              |
+| ------------ | ------------------------- | ------------------------------------ | --------------------- |
+| **Hieu**     | Auth + Flight             | JWT, Flight CRUD                     | Flight pages          |
+| **My**       | Fare + Service            | Fare/Service CRUD                    | Service selector      |
+| **Hien**     | Booking + Payment + State | Booking flow, Payment, State Pattern | Booking/Payment pages |
+| **Thuy Anh** | Frontend All + Observer   | Notification infrastructure          | All UI components     |
 
 ---
 
@@ -24,24 +24,28 @@
 #### Backend
 
 **Repository (new):**
+
 ```
 backend/src/main/java/com/airline/domain/repository/
 ├── FlightRepository.java      # Flight search queries
 ```
 
 **Service (new):**
+
 ```
 backend/src/main/java/com/airline/application/service/
 ├── FlightService.java         # Flight business logic
 ```
 
 **Controller (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/controller/
 ├── FlightController.java     # Flight endpoints
 ```
 
 **DTOs (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/dto/request/
 ├── FlightRequest.java
@@ -87,6 +91,7 @@ frontend/src/api/
 #### Backend
 
 **Repository (new):**
+
 ```
 backend/src/main/java/com/airline/domain/repository/
 ├── FareClassRepository.java
@@ -94,6 +99,7 @@ backend/src/main/java/com/airline/domain/repository/
 ```
 
 **Service (new):**
+
 ```
 backend/src/main/java/com/airline/application/service/
 ├── FareService.java
@@ -101,6 +107,7 @@ backend/src/main/java/com/airline/application/service/
 ```
 
 **Controller (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/controller/
 ├── FareController.java
@@ -108,6 +115,7 @@ backend/src/main/java/com/airline/presentation/controller/
 ```
 
 **DTOs (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/dto/request/
 ├── FareClassRequest.java
@@ -148,6 +156,7 @@ frontend/src/api/
 #### Backend
 
 **Repository (new):**
+
 ```
 backend/src/main/java/com/airline/domain/repository/
 ├── BookingRepository.java
@@ -156,6 +165,7 @@ backend/src/main/java/com/airline/domain/repository/
 ```
 
 **Service (new):**
+
 ```
 backend/src/main/java/com/airline/application/service/
 ├── BookingService.java
@@ -163,6 +173,7 @@ backend/src/main/java/com/airline/application/service/
 ```
 
 **Controller (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/controller/
 ├── BookingController.java
@@ -170,6 +181,7 @@ backend/src/main/java/com/airline/presentation/controller/
 ```
 
 **Pattern (new):**
+
 ```
 backend/src/main/java/com/airline/pattern/state/
 ├── BookingState.java
@@ -184,6 +196,7 @@ backend/src/main/java/com/airline/infrastructure/external/
 ```
 
 **DTOs (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/dto/request/
 ├── BookingRequest.java
@@ -239,11 +252,12 @@ frontend/src/api/
 
 ---
 
-### MEMBER 4: New Member - Frontend All + Observer
+### MEMBER 4: Thuy Anh - Frontend All + Observer
 
 #### Backend
 
 **Repository (new):**
+
 ```
 backend/src/main/java/com/airline/domain/repository/
 ├── NotificationRepository.java
@@ -251,6 +265,7 @@ backend/src/main/java/com/airline/domain/repository/
 ```
 
 **Pattern (new):**
+
 ```
 backend/src/main/java/com/airline/pattern/observer/
 ├── BookingObserver.java
@@ -259,12 +274,14 @@ backend/src/main/java/com/airline/pattern/observer/
 ```
 
 **Service (new):**
+
 ```
 backend/src/main/java/com/airline/application/service/
 ├── NotificationService.java
 ```
 
 **Controller (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/controller/
 ├── NotificationController.java
@@ -272,6 +289,7 @@ backend/src/main/java/com/airline/presentation/controller/
 ```
 
 **DTOs (new):**
+
 ```
 backend/src/main/java/com/airline/presentation/dto/response/
 ├── NotificationResponse.java
@@ -349,6 +367,7 @@ frontend/src/hooks/
 ## FILES ALREADY EXIST (DON'T RECREATE)
 
 ### Backend
+
 ```
 ✅ AirlineApplication.java
 ✅ SecurityConfig.java
@@ -363,6 +382,7 @@ frontend/src/hooks/
 ```
 
 ### Frontend
+
 ```
 ✅ supabase.ts
 ✅ apiClient.ts
@@ -394,7 +414,7 @@ Hien (Booking, Payment)
     └── Booking ──► Member 4 (Notification khi state change)
     └── Booking ──► Hieu (Bookings thuộc flights)
 
-Member 4 (Frontend, Observer)
+Thuy Anh (Frontend, Observer)
     │
     └── Notification ──► Hien (Observer gọi khi booking thay đổi)
     └── Frontend ──► All (API calls)
@@ -441,57 +461,15 @@ main
  ├── feature/my/fare-service-frontend
  ├── feature/hien/booking-backend
  ├── feature/hien/booking-frontend
- ├── feature/member4/frontend-auth
- ├── feature/member4/notification-backend
- └── feature/member4/frontend-ui
+ ├── feature/thuyanh/frontend-auth
+ ├── feature/thuyanh/notification-backend
+ └── feature/thuyanh/frontend-ui
 ```
 
 **Merging order:**
+
 1. Feature branches → `develop` (hoặc merge trực tiếp vào main nếu đơn giản)
 2. Resolve conflicts at boundaries (Booking → Flight/Fare)
-
----
-
-## QUICK START INSTRUCTIONS
-
-### Mỗi member cần làm:
-
-1. **Pull latest main**
-   ```bash
-   git checkout main
-   git pull
-   ```
-
-2. **Tạo feature branch**
-   ```bash
-   git checkout -b feature/yourname/module
-   ```
-
-3. **Setup local .env** (copy từ .env.example)
-   ```bash
-   cp .env.example .env
-   # Fill in Supabase credentials
-   ```
-
-4. **Run backend**
-   ```bash
-   cd backend
-   # Add @Env var file hoặc export trong IDE
-   mvn spring-boot:run
-   ```
-
-5. **Run frontend**
-   ```bash
-   cd frontend
-   pnpm install
-   pnpm dev
-   ```
-
-6. **Verify compiles**
-   ```bash
-   cd backend && mvn compile
-   cd frontend && pnpm build
-   ```
 
 ---
 
@@ -505,23 +483,23 @@ main
 
 ## EMERGENCY CONTACTS
 
-| Issue | Contact |
-|-------|---------|
-| JWT/Auth problems | Hieu |
-| Database schema | Hieu hoặc Hien |
-| API contract questions | Hien |
-| Frontend integration | Member 4 |
-| Supabase setup | Hien |
+| Issue                  | Contact        |
+| ---------------------- | -------------- |
+| JWT/Auth problems      | Hieu           |
+| Database schema        | Hieu hoặc Hien |
+| API contract questions | Hien           |
+| Frontend integration   | Member 4       |
+| Supabase setup         | Hien           |
 
 ---
 
 ## CHECKPOINTS
 
-| Date | Milestone | Owner |
-|------|-----------|-------|
-| Week 1 Day 3 | Flight CRUD working + UI | Hieu |
-| Week 1 Day 3 | Fare/Service CRUD + UI | My |
-| Week 1 Day 5 | Booking skeleton + State Pattern | Hien |
-| Week 1 Day 5 | Auth pages + Observer | Member 4 |
-| Week 2 | Full integration | All |
-| Week 3 | Polish + Tests | All |
+| Date         | Milestone                        | Owner    |
+| ------------ | -------------------------------- | -------- |
+| Week 1 Day 3 | Flight CRUD working + UI         | Hieu     |
+| Week 1 Day 3 | Fare/Service CRUD + UI           | My       |
+| Week 1 Day 5 | Booking skeleton + State Pattern | Hien     |
+| Week 1 Day 5 | Auth pages + Observer            | Thuy Anh |
+| Week 2       | Full integration                 | All      |
+| Week 3       | Polish + Tests                   | All      |
