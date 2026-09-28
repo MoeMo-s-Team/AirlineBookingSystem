@@ -7,7 +7,7 @@
 | 2312617 | Trần Xuân Hiếu         | 2312617@dlu.edu.vn | [@ThanhXuanHieu](https://github.com/ThanhXuanHieu)   |
 | 2312693 | Nguyễn Thị Trà My      | 2312693@dlu.edu.vn | [@My6325](https://github.com/My6325)                 |
 | 2312609 | Nguyễn Ngọc Thanh Hiền | 2312609@dlu.edu.vn | [@hiendotforwork](https://github.com/hiendotforwork) |
-| 2115182 | Đặng Ân Thùy Anh | | [@hiendotforwork](https://github.com/hiendotforwork)
+| 2115182 | Đặng Ân Thùy Anh | | [@danganthuyanh03](https://github.com/danganthuyanh03)
 ## 1. Giới thiệu
 
 **Airline Booking System** là hệ thống website **cổng đặt vé máy bay đa hạng vé và xử lý các dịch vụ đi kèm**, được xây dựng bằng **Java Spring Boot** và áp dụng các **Design Patterns** trong quá trình thiết kế và phát triển.
