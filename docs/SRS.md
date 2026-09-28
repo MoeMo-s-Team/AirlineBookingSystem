@@ -61,11 +61,9 @@ Dịch vụ Đi kèm dựa trên Design Patterns bằng Java\
   - [10.2. Các tầng hệ thống](#102-các-tầng-hệ-thống)
 - [11. Design Patterns](#11-design-patterns)
   - [11.1. Strategy Pattern](#111-strategy-pattern)
-  - [11.2. Decorator Pattern](#112-decorator-pattern)
-  - [11.3. Factory Pattern](#113-factory-pattern)
-  - [11.4. State Pattern](#114-state-pattern)
-  - [11.5. Observer Pattern](#115-observer-pattern)
-  - [11.6. Facade Pattern](#116-facade-pattern)
+  - [11.2. Factory Pattern](#112-factory-pattern)
+  - [11.3. State Pattern](#113-state-pattern)
+  - [11.4. Observer Pattern](#114-observer-pattern)
 - [12. Thiết kế Class](#12-thiết-kế-class)
 - [13. Ma trận truy vết yêu cầu](#13-ma-trận-truy-vết-yêu-cầu)
 - [14. Phạm vi triển khai và kiểm
@@ -1967,7 +1965,6 @@ Các service:
 - FlightService.
 - FareService.
 - AdditionalService.
-- BookingFacade.
 - PaymentService.
 - PricingService.
 
@@ -2025,27 +2022,7 @@ nối với Mock Payment Gateway.
 
 ---
 
-## 11.2. Decorator Pattern
-
-### Mục đích
-
-Cho phép kết hợp nhiều Additional Services vào Booking/giá vé.
-
-```text
-BookingPrice
-      │
-      ├── BaggageDecorator
-      ├── MealDecorator
-      ├── SeatDecorator
-      └── PriorityBoardingDecorator
-```
-
-Decorator giúp kết hợp nhiều dịch vụ mà không phải tạo class cho từng tổ
-hợp dịch vụ.
-
----
-
-## 11.3. Factory Pattern
+## 11.2. Factory Pattern
 
 ### Mục đích
 
@@ -2062,7 +2039,7 @@ Factory giúp tập trung logic khởi tạo object.
 
 ---
 
-## 11.4. State Pattern
+## 11.3. State Pattern
 
 ### Mục đích
 
@@ -2081,47 +2058,22 @@ Booking sử dụng state hiện tại để quyết định các transition h�
 
 ---
 
-## 11.5. Observer Pattern
+## 11.4. Observer Pattern
 
 ### Mục đích
 
-Tạo notification khi Booking có thay đổi.
+Tạo notification khi Booking có thay đổi. Hỗ trợ multi-channel notifications.
 
 ```text
 BookingSubject
       │
-      ▼
-BookingObserver
-      │
-      ▼
-NotificationService
-      │
-      ▼
-InAppNotification
+      ├── EmailNotificationObserver
+      ├── SmsNotificationObserver
+      └── PushNotificationObserver
 ```
 
-Observer giúp tách logic notification khỏi logic chính của Booking.
-
----
-
-## 11.6. Facade Pattern
-
-### Mục đích
-
-Đơn giản hóa toàn bộ quy trình tạo Booking.
-
-```text
-BookingFacade
-      │
-      ├── Flight availability
-      ├── Fare validation
-      ├── Passenger validation
-      ├── Service selection
-      ├── Pricing
-      └── Booking persistence
-```
-
-Customer-facing booking flow được điều phối thông qua `BookingFacade`.
+Observer giúp tách logic notification khỏi logic chính của Booking và dễ dàng
+thêm kênh notification mới.
 
 ---
 
@@ -2146,7 +2098,6 @@ AuthService
 FlightService
 FareService
 AdditionalService
-BookingFacade
 PaymentService
 PricingService
 ```
@@ -2174,16 +2125,6 @@ PricingStrategy
  └── BusinessPricingStrategy
 ```
 
-### Decorator
-
-```text
-BookingPrice
- ├── BaggageDecorator
- ├── MealDecorator
- ├── SeatDecorator
- └── PriorityBoardingDecorator
-```
-
 ### Factory
 
 ```text
@@ -2204,15 +2145,9 @@ BookingState
 
 ```text
 BookingSubject
-BookingObserver
-NotificationService
-InAppNotification
-```
-
-### Facade
-
-```text
-BookingFacade
+ ├── EmailNotificationObserver
+ ├── SmsNotificationObserver
+ └── PushNotificationObserver
 ```
 
 ---
@@ -2244,13 +2179,12 @@ Manage Fare FareClass Fare CRUD FareService Factory
 
 Passenger Passenger `/bookings` Passenger handling \-
 
-Additional AdditionalService, `/services` Service handling Decorator
-Service BookingService
+Additional AdditionalService, `/services` BookingService \-
 
-Calculate Pricing \- PricingService Strategy +
-Price Decorator
+Calculate Pricing \- PricingService Strategy
 
-Create Booking Booking POST `/bookings` BookingFacade Facade
+Create Booking Booking POST `/bookings` BookingService \-
+Pricing
 
 View Booking Booking GET BookingService \-
 `/bookings/{id}`

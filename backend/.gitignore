@@ -1,0 +1,20 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/MavenWrapperDownloader.java
+*.class
+package-lock.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Env
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
