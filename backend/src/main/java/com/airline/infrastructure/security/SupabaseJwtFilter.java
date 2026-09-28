@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SupabaseJwtFilter extends OncePerRequestFilter {
@@ -40,7 +42,7 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            SecretKey key = Keys.hmacShaKeyFor(supabaseProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8));
+            SecretKey key = Keys.hmacShaKeyFor(supabaseProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
 
             Claims claims = Jwts.parser()
                 .verifyWith(key)
@@ -62,6 +64,7 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
+            log.debug("JWT validation failed: {}", e.getMessage());
             SecurityContextHolder.clearContext();
         }
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "supabase")
 public class SupabaseProperties {
     private String url;
-    private String jwtSecret;
-    private String anonKey;
+    private String publishableKey;
+    private String secretKey;
+    private String jwksUrl;
 }
