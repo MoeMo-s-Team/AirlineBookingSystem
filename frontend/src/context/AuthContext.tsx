@@ -1,51 +1,110 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { User, Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { mockUsers, type MockUser } from '@/mocks/users';
 
-interface AuthContextType {
-  user: User | null
-  session: Session | null
-  loading: boolean
-  signOut: () => Promise<void>
+export interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export interface AuthContextType {
+  user: MockUser | null;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+  signOut: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const STORAGE_KEY = 'skywing_auth_user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<MockUser | null>(null);
 
+  // Load user from localStorage on mount
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }, []);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-    })
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    // Simulate brief API delay
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
-    return () => subscription.unsubscribe()
-  }, [])
+    const foundUser = mockUsers.find(
+      (u) => u.email === email && u.password === password
+    );
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-  }
+    if (foundUser) {
+      setUser(foundUser);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(foundUser));
+      return { success: true };
+    }
+
+    return { success: false, error: 'Invalid email or password' };
+  };
+
+  const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
+    // Simulate brief API delay
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Check if email already exists
+    const exists = mockUsers.some((u) => u.email === data.email);
+    if (exists) {
+      return { success: false, error: 'Email already registered' };
+    }
+
+    // Create new user
+    const newUser: MockUser = {
+      id: `user-${Date.now()}`,
+      email: data.email,
+      password: data.password,
+      name: data.name,
+      phone: data.phone,
+      role: 'customer',
+    };
+
+    setUser(newUser);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
+    return { success: true };
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+        login,
+        register,
+        logout,
+        signOut: logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
+  return context;
 }
