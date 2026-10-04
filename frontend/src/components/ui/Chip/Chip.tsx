@@ -1,4 +1,4 @@
-import type { ReactNode, KeyboardEvent } from 'react';
+import type { ReactNode } from 'react';
 import { Icon, type IconName } from '../Icon/Icon';
 
 export interface ChipProps {
