@@ -29,8 +29,8 @@
   .btn-primary {
     @apply inline-flex items-center justify-center px-6 py-3 rounded font-label-lg;
     @apply bg-secondary text-on-secondary;
-    @apply hover:bg-[#1976D2] active:bg-[#0D47A1];
-    @apply focus:outline-none focus:ring-2 focus:ring-[#90CAF9] focus:ring-offset-2;
+    @apply hover:bg-secondary-container active:bg-primary-container;
+    @apply focus:outline-none focus:ring-2 focus:ring-secondary-fixed focus:ring-offset-2;
     @apply transition-colors duration-150;
   }
   
@@ -69,7 +69,7 @@
     @apply w-full px-4 py-3 rounded-lg font-body-md;
     @apply bg-surface-container-low border border-outline-variant;
     @apply text-on-surface placeholder:text-on-surface-variant;
-    @apply focus:border-secondary focus:ring-2 focus:ring-[#90CAF9] focus:ring-offset-0;
+    @apply focus:border-secondary focus:ring-2 focus:ring-secondary-fixed focus:ring-offset-0;
     @apply transition-colors duration-150;
   }
   
