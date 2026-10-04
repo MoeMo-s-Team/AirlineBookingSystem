@@ -1,4 +1,5 @@
-docs/superpowers
+//docs/superpowers
 .env
 *.env.local
 node_modules/*
+.vscode/
