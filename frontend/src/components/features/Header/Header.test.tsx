@@ -14,7 +14,7 @@ const renderHeader = (props = {}) => {
 describe('Header', () => {
   it('renders logo', () => {
     renderHeader();
-    expect(screen.getByText('SkyWing')).toBeInTheDocument();
+    expect(screen.getByAltText('SkyWing Airlines Logo')).toBeInTheDocument();
   });
 
   it('renders navigation links', () => {
