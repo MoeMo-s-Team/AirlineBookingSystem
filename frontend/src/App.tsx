@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
 
 // Layouts
-import { AuthLayout } from './layouts/AuthLayout';
 import { MainLayout } from './layouts/MainLayout';
 
 // Auth Pages
@@ -79,33 +78,29 @@ export function App() {
         <BrowserRouter>
           <Routes>
             {/* Auth Routes */}
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-            </Route>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
             {/* Public User Routes */}
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/check-in" element={<CheckInPage />} />
-              <Route path="/status" element={<FlightStatusPage />} />
-              <Route
-                path="/bookings"
-                element={
-                  <ProtectedRoute>
-                    <MyBookingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/bookings/:id"
-                element={
-                  <ProtectedRoute>
-                    <BookingDetailsPage />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/check-in" element={<CheckInPage />} />
+            <Route path="/status" element={<FlightStatusPage />} />
+            <Route
+              path="/bookings"
+              element={
+                <ProtectedRoute>
+                  <MyBookingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bookings/:id"
+              element={
+                <ProtectedRoute>
+                  <BookingDetailsPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Booking Flow Routes */}
             <Route

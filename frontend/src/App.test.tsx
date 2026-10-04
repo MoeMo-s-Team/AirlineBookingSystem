@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
-import { ProtectedRoute, AdminRoute, NotFoundPage } from './App';
+import { App, ProtectedRoute, AdminRoute, NotFoundPage } from './App';
 import { DashboardPage } from './pages/booking/DashboardPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
@@ -132,5 +132,12 @@ describe('App Routing Integration', () => {
     renderAppRoute('/this-route-does-not-exist');
     expect(screen.getByRole('heading', { name: '404' })).toBeInTheDocument();
     expect(screen.getByText('Page not found')).toBeInTheDocument();
+  });
+
+  it('renders exactly one footer when App is mounted at /', () => {
+    window.history.pushState({}, '', '/');
+    render(<App />);
+    const footers = screen.getAllByRole('contentinfo');
+    expect(footers).toHaveLength(1);
   });
 });
