@@ -40,16 +40,13 @@ test.describe('SearchConsole Component', () => {
   test('validation shows errors on empty submit', async () => {
     await app.page.getByRole('button', { name: /Search Flights/i }).click();
 
-    // Should show validation errors
-    await expect(app.page.getByText(/Please select/i)).toBeVisible();
+    // Should show validation errors (multiple)
+    await expect(app.page.getByText(/Please select/i).first()).toBeVisible();
   });
 
   test('direct flights checkbox toggles', async () => {
     const checkbox = app.page.getByLabel('Direct flights only');
     await expect(checkbox).toBeVisible();
-
-    // Click to toggle
     await checkbox.click();
-    // Checkbox should be checked (checked state varies by implementation)
   });
 });

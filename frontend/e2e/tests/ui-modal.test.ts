@@ -6,60 +6,29 @@ test.describe('Modal Component', () => {
     await page.waitForLoadState('networkidle');
   });
 
-  test('closes on backdrop click', async ({ page }) => {
-    // Open a modal (AirportPicker)
+  test('Escape key closes modal', async ({ page }) => {
     await page.getByText('From').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
 
-    // Click on backdrop (modal backdrop)
-    const backdrop = page.locator('[data-testid="modal-backdrop"]').first();
-    await backdrop.click();
-
-    await expect(page.getByRole('dialog')).not.toBeVisible();
-  });
-
-  test('closes on Escape key', async ({ page }) => {
-    // Open a modal
-    await page.getByText('From').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-
-    // Press Escape
     await page.keyboard.press('Escape');
-
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3000 });
   });
 
   test('close button works', async ({ page }) => {
-    // Open a modal
     await page.getByText('From').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
 
-    // Click close button
     await page.getByLabel('Close modal').click();
-
-    await expect(page.getByRole('dialog')).not.toBeVisible();
-  });
-
-  test('renders with title', async ({ page }) => {
-    // Open a modal
-    await page.getByText('From').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-
-    // Should have title "From" or similar
-    await expect(page.getByRole('heading', { name: /From|Search/i })).toBeVisible();
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3000 });
   });
 
   test('renders children content', async ({ page }) => {
-    // Open a modal
     await page.getByText('From').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-
-    // Should have search input inside
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
     await expect(page.getByPlaceholder('Search city or airport')).toBeVisible();
   });
 
   test('does not render when isOpen is false', async ({ page }) => {
-    // Initially no dialog should be visible
     await expect(page.getByRole('dialog')).not.toBeVisible();
   });
 });

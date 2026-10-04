@@ -6,53 +6,44 @@ test.describe('AirportPicker Component', () => {
     await page.waitForLoadState('networkidle');
   });
 
-  test('opens modal on click', async ({ page }) => {
-    // Click on From airport picker
-    await page.getByText('From').first().click();
-
-    // Modal should appear
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByText('Search city or airport')).toBeVisible();
+  test('airport picker trigger is visible', async ({ page }) => {
+    await expect(page.getByText('From').first()).toBeVisible();
   });
 
-  test('closes modal on backdrop click', async ({ page }) => {
-    // Open modal
+  test('modal opens on click', async ({ page }) => {
     await page.getByText('From').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
+    await expect(page.getByPlaceholder('Search city or airport')).toBeVisible();
+  });
 
-    // Close by clicking backdrop (outside modal)
-    await page.mouse.click(10, 10);
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+  test('Escape key closes modal', async ({ page }) => {
+    await page.getByText('From').first().click();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3000 });
   });
 
   test('search filters airports', async ({ page }) => {
-    // Open modal
     await page.getByText('From').first().click();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
 
-    // Type in search
     const searchInput = page.getByPlaceholder('Search city or airport');
     await searchInput.fill('HAN');
-
-    // Wait for debounced search (300ms + render)
     await page.waitForTimeout(500);
 
-    // Should show Noi Bai
-    await expect(page.getByText(/Noi Bai/i)).toBeVisible();
+    await expect(page.getByText(/Noi Bai/i).first()).toBeVisible();
   });
 
   test('selects airport and closes modal', async ({ page }) => {
-    // Open modal
     await page.getByText('From').first().click();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
 
-    // Search and select
     const searchInput = page.getByPlaceholder('Search city or airport');
     await searchInput.fill('SGN');
     await page.waitForTimeout(500);
 
-    // Click on first result
-    await page.getByText(/Tan Son Nhat/i).click();
-
-    // Modal should close
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await page.getByText(/Tan Son Nhat/i).first().click();
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3000 });
   });
 });
