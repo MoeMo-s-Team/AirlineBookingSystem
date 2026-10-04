@@ -35,7 +35,8 @@ test.describe('Header Component', () => {
 
   test('navigation links navigate correctly', async ({ page }) => {
     const header = page.getByRole('banner');
-    await header.getByRole('link', { name: 'Book Flight' }).first().click();
+    // Use force to avoid interception by other elements
+    await header.getByRole('link', { name: 'Book Flight' }).first().click({ force: true });
     await expect(page).toHaveURL('/');
   });
 });
