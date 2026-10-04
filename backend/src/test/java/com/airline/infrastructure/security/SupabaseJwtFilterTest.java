@@ -29,7 +29,7 @@ class SupabaseJwtFilterTest {
     @BeforeEach
     void setUp() {
         supabaseProperties = new SupabaseProperties();
-        supabaseProperties.setJwtSecret(SECRET);
+        supabaseProperties.setSecretKey(SECRET);
         filter = new SupabaseJwtFilter(supabaseProperties);
         SecurityContextHolder.clearContext();
     }
