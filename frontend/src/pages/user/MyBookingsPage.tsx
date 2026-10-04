@@ -33,7 +33,7 @@ export function MyBookingsPage() {
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto px-6 lg:px-12 py-12">
-        <h1 className="font-headline-lg text-headline-lg text-primary mb-8">
+        <h1 className="text-headline-lg text-primary mb-8">
           My Bookings
         </h1>
 

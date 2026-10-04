@@ -62,7 +62,7 @@ export function AdminFaresPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="font-headline-lg text-headline-lg text-primary">Fare Classes</h1>
+          <h1 className="text-headline-lg text-primary">Fare Classes</h1>
           <Button variant="primary" leftIcon="add" onClick={handleOpenCreate}>
             Add Fare
           </Button>

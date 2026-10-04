@@ -45,7 +45,7 @@ export function FlightResultsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="font-headline-lg text-headline-lg text-primary">
+          <h1 className="text-headline-lg text-primary">
             Select Your Flight
           </h1>
           <p className="font-body-md text-on-surface-variant mt-1">

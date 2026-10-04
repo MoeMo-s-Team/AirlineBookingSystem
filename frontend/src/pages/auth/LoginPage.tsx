@@ -35,7 +35,7 @@ export function LoginPage() {
   return (
     <AuthLayout>
       <Card variant="elevated" padding="lg">
-        <h1 className="font-headline-lg text-headline-lg text-primary text-center mb-2">
+        <h1 className="text-headline-lg text-primary text-center mb-2">
           Welcome Back
         </h1>
         <p className="font-body-md text-on-surface-variant text-center mb-6">

@@ -43,7 +43,7 @@ export function AdminDashboardPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <h1 className="font-headline-lg text-headline-lg text-primary">
+        <h1 className="text-headline-lg text-primary">
           Dashboard
         </h1>
 

@@ -11,7 +11,7 @@ export function AdminFlightsPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="font-headline-lg text-headline-lg text-primary">Flights</h1>
+          <h1 className="text-headline-lg text-primary">Flights</h1>
           <Badge variant="neutral">{flightsList.length} flights</Badge>
         </div>
 
