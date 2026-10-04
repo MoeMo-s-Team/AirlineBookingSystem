@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal/Modal';
 import { Input } from '@/components/ui/Input/Input';
 import type { Airport, AirportPickerProps } from './types';
 
-export type { AirportPickerProps };
+export type { Airport, AirportPickerProps } from './types';
 
 export function AirportPicker({
   value,
@@ -22,14 +22,15 @@ export function AirportPicker({
   const iconName = type === 'origin' ? 'flight_takeoff' : 'flight_land';
 
   const filteredAirports = useMemo(() => {
-    if (!debouncedSearch) return [];
+    if (!debouncedSearch) return airports.slice(0, 8);
     const query = debouncedSearch.toLowerCase();
     return airports
       .filter(
         (airport) =>
           airport.code.toLowerCase().includes(query) ||
           airport.name.toLowerCase().includes(query) ||
-          airport.city.toLowerCase().includes(query)
+          airport.city.toLowerCase().includes(query) ||
+          airport.country.toLowerCase().includes(query)
       )
       .slice(0, 10);
   }, [debouncedSearch, airports]);
@@ -101,11 +102,24 @@ export function AirportPicker({
 
           {/* Results */}
           <div className="max-h-80 overflow-y-auto space-y-1">
+            {debouncedSearch ? (
+              <p className="font-label-sm text-outline uppercase tracking-wider px-1">
+                Search Results
+              </p>
+            ) : (
+              filteredAirports.length > 0 && (
+                <p className="font-label-sm text-outline uppercase tracking-wider px-1">
+                  Popular Airports
+                </p>
+              )
+            )}
+
             {filteredAirports.length === 0 && debouncedSearch && (
               <p className="text-center py-8 text-on-surface-variant">
                 No airports found
               </p>
             )}
+
             {filteredAirports.map((airport) => (
               <button
                 key={airport.code}

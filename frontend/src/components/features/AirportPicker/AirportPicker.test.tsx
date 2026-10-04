@@ -7,6 +7,8 @@ const mockAirports: Airport[] = [
   { code: 'HAN', name: 'Noi Bai International Airport', city: 'Hanoi', country: 'Vietnam', countryCode: 'VN' },
   { code: 'SGN', name: 'Tan Son Nhat International Airport', city: 'Ho Chi Minh City', country: 'Vietnam', countryCode: 'VN' },
   { code: 'DAD', name: 'Da Nang International Airport', city: 'Da Nang', country: 'Vietnam', countryCode: 'VN' },
+  { code: 'BKK', name: 'Suvarnabhumi Airport', city: 'Bangkok', country: 'Thailand', countryCode: 'TH' },
+  { code: 'SIN', name: 'Singapore Changi Airport', city: 'Singapore', country: 'Singapore', countryCode: 'SG' },
 ];
 
 describe('AirportPicker', () => {
@@ -50,7 +52,7 @@ describe('AirportPicker', () => {
     expect(screen.getByText('Noi Bai International Airport')).toBeInTheDocument();
   });
 
-  it('opens modal on click', () => {
+  it('opens modal on click and displays popular airports without search input', () => {
     render(
       <AirportPicker
         airports={mockAirports}
@@ -59,6 +61,30 @@ describe('AirportPicker', () => {
     );
     fireEvent.click(screen.getByRole('button'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Popular Airports')).toBeInTheDocument();
+    expect(screen.getByText('Noi Bai International Airport')).toBeInTheDocument();
+    expect(screen.getByText('Suvarnabhumi Airport')).toBeInTheDocument();
+  });
+
+  it('caps initial popular airports to 8 items', () => {
+    const tenAirports: Airport[] = Array.from({ length: 10 }, (_, i) => ({
+      code: `A0${i}`,
+      name: `Airport ${i}`,
+      city: `City ${i}`,
+      country: 'Country',
+      countryCode: 'CT',
+    }));
+
+    render(
+      <AirportPicker
+        airports={tenAirports}
+        onChange={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button'));
+    expect(screen.getByText('Airport 0')).toBeInTheDocument();
+    expect(screen.getByText('Airport 7')).toBeInTheDocument();
+    expect(screen.queryByText('Airport 8')).not.toBeInTheDocument();
   });
 
   it('closes modal on close button click', () => {
@@ -75,7 +101,7 @@ describe('AirportPicker', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('filters airports based on search query', async () => {
+  it('filters airports based on search query and shows Search Results header', async () => {
     render(
       <AirportPicker
         airports={mockAirports}
@@ -87,9 +113,11 @@ describe('AirportPicker', () => {
     fireEvent.change(input, { target: { value: 'HAN' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Noi Bai International Airport')).toBeInTheDocument();
+      expect(screen.getByText('Search Results')).toBeInTheDocument();
+      expect(screen.queryByText('Tan Son Nhat International Airport')).not.toBeInTheDocument();
     });
-    expect(screen.queryByText('Tan Son Nhat International Airport')).not.toBeInTheDocument();
+    expect(screen.getByText('Noi Bai International Airport')).toBeInTheDocument();
+    expect(screen.queryByText('Popular Airports')).not.toBeInTheDocument();
   });
 
   it('filters airports by city name', async () => {
@@ -101,11 +129,31 @@ describe('AirportPicker', () => {
     );
     fireEvent.click(screen.getByRole('button'));
     const input = screen.getByPlaceholderText('Search city or airport');
-    fireEvent.change(input, { target: { value: 'Ho Chi Minh' } });
+    fireEvent.change(input, { target: { value: 'Bangkok' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Tan Son Nhat International Airport')).toBeInTheDocument();
+      expect(screen.getByText('Search Results')).toBeInTheDocument();
+      expect(screen.queryByText('Noi Bai International Airport')).not.toBeInTheDocument();
     });
+    expect(screen.getByText('Suvarnabhumi Airport')).toBeInTheDocument();
+  });
+
+  it('filters airports by country name', async () => {
+    render(
+      <AirportPicker
+        airports={mockAirports}
+        onChange={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button'));
+    const input = screen.getByPlaceholderText('Search city or airport');
+    fireEvent.change(input, { target: { value: 'Thailand' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Search Results')).toBeInTheDocument();
+      expect(screen.queryByText('Singapore Changi Airport')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Suvarnabhumi Airport')).toBeInTheDocument();
   });
 
   it('displays "No airports found" when no match is found', async () => {
@@ -133,12 +181,7 @@ describe('AirportPicker', () => {
       />
     );
     fireEvent.click(screen.getByRole('button'));
-    const input = screen.getByPlaceholderText('Search city or airport');
-    fireEvent.change(input, { target: { value: 'DAD' } });
-
-    await waitFor(() => {
-      expect(screen.getByText('Da Nang International Airport')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Popular Airports')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Da Nang International Airport'));
     expect(handleChange).toHaveBeenCalledWith(mockAirports[2]);
