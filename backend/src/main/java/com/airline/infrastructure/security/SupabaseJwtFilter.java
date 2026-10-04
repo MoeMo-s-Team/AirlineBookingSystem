@@ -52,11 +52,28 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
 
             String userId = claims.getSubject();
             String role = claims.get("role", String.class);
-            if (role == null || role.isBlank()) {
+
+            // Supabase Auth mặc định để role="authenticated", kiểm tra thêm trong app_metadata hoặc user_metadata
+            if (role == null || role.isBlank() || "authenticated".equalsIgnoreCase(role)) {
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> appMetadata = claims.get("app_metadata", java.util.Map.class);
+                if (appMetadata != null && appMetadata.containsKey("role")) {
+                    role = String.valueOf(appMetadata.get("role"));
+                }
+            }
+            if (role == null || role.isBlank() || "authenticated".equalsIgnoreCase(role)) {
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> userMetadata = claims.get("user_metadata", java.util.Map.class);
+                if (userMetadata != null && userMetadata.containsKey("role")) {
+                    role = String.valueOf(userMetadata.get("role"));
+                }
+            }
+
+            if (role == null || role.isBlank() || "authenticated".equalsIgnoreCase(role)) {
                 role = "CUSTOMER";
             }
 
-            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
 
             UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userId, null, authorities);
