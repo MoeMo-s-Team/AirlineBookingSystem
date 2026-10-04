@@ -19,9 +19,10 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         const isFirst = index === 0;
+        const key = item.href || item.label;
 
         return (
-          <Fragment key={index}>
+          <Fragment key={key}>
             {index > 0 && (
               <span className="text-outline-variant">/</span>
             )}

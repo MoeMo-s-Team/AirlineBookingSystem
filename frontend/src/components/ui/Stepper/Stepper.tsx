@@ -55,7 +55,7 @@ export function Stepper({ steps, className = '' }: StepperProps) {
                 font-label-sm uppercase tracking-wider
                 ${isActive ? 'text-on-secondary-container font-semibold' : 'text-on-surface-variant'}
               `}>
-                {isActive ? 'Active' : `Step ${index + 1}`}
+                {isActive ? 'Active' : step.label}
               </p>
               <p className={`
                 font-label-md truncate

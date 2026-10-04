@@ -56,6 +56,7 @@ export function Modal({
     >
       {/* Backdrop */}
       <div
+        data-testid="modal-backdrop"
         className="absolute inset-0 bg-inverse-surface/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"

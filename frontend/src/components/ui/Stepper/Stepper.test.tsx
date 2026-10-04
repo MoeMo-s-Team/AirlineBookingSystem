@@ -12,10 +12,12 @@ const mockSteps = [
 describe('Stepper', () => {
   it('renders all steps', () => {
     render(<Stepper steps={mockSteps} />);
-    expect(screen.getByText('Select Flight')).toBeInTheDocument();
-    expect(screen.getByText('Passenger Info')).toBeInTheDocument();
-    expect(screen.getByText('Add-ons')).toBeInTheDocument();
-    expect(screen.getByText('Payment')).toBeInTheDocument();
+    // Each step label appears (sublabel + main label), count varies by status
+    // Active step shows "Active" in sublabel, not the label
+    expect(screen.getAllByText('Select Flight').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Passenger Info').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Add-ons').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Payment').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows check icon for completed steps', () => {

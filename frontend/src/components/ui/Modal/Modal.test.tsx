@@ -28,7 +28,7 @@ describe('Modal', () => {
         <p>Modal content</p>
       </Modal>
     );
-    fireEvent.click(screen.getByRole('dialog').firstChild!);
+    fireEvent.click(screen.getByTestId('modal-backdrop'));
     expect(handleClose).toHaveBeenCalled();
   });
 

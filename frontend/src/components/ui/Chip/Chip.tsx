@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, KeyboardEvent } from 'react';
 import { Icon, type IconName } from '../Icon/Icon';
 
 export interface ChipProps {
@@ -18,11 +18,19 @@ export function Chip({
   children,
   className = '',
 }: ChipProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === ' ') && onClick && !disabled) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
+      onKeyDown={onClick ? handleKeyDown : undefined}
       className={`
         inline-flex items-center gap-1 px-3 py-1.5 rounded-full font-label-md
         transition-colors duration-150

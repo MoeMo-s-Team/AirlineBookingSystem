@@ -52,6 +52,10 @@ export function Slider({
           value={value}
           onChange={handleChange}
           disabled={disabled}
+          aria-label={label}
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={value}
           className="
             w-full h-1.5 appearance-none bg-surface-container-high rounded-full
             cursor-pointer
