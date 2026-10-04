@@ -32,6 +32,7 @@ export type IconName =
   | 'notifications'
   | 'person'
   | 'phone'
+  | 'print'
   | 'receipt'
   | 'restaurant'
   | 'schedule'
