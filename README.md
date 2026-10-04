@@ -69,12 +69,14 @@ Hệ thống cho phép khách hàng tìm kiếm chuyến bay, lựa chọn hạn
 
 Hệ thống tập trung áp dụng các Design Patterns vào nghiệp vụ:
 
-| Pattern      | Áp dụng                                    |
-| ------------ | ------------------------------------------ |
-| **Strategy** | Tính giá theo hạng vé                      |
-| **Factory**  | Khởi tạo các loại vé / đối tượng nghiệp vụ |
-| **State**    | Quản lý trạng thái Booking                 |
-| **Observer** | Xử lý thông báo khi Booking thay đổi       |
+| Pattern       | Áp dụng                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| **Strategy**  | Tính giá vé linh hoạt theo từng hạng vé (Economy, Premium Economy, Business)               |
+| **State**     | Quản lý vòng đời và chuyển đổi trạng thái Booking (Pending, Confirmed, Cancelled, Failed)  |
+| **Observer**  | Xử lý gửi thông báo đa kênh (Email, SMS, Admin) khi trạng thái Booking thay đổi            |
+| **Factory**   | Khởi tạo các loại vé và tài liệu chuyến bay (E-Ticket, Boarding Pass)                     |
+| **Decorator** | Tính toán và cộng dồn linh hoạt chi phí các dịch vụ bổ trợ đi kèm                          |
+| **Facade**    | Cung cấp interface đơn giản hóa toàn bộ quy trình đặt vé cho client                        |
 
 ---
 
