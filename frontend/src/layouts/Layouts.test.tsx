@@ -19,7 +19,7 @@ describe('Layouts', () => {
     );
 
     expect(screen.getByTestId('auth-content')).toBeInTheDocument();
-    expect(screen.getByText('SkyWing')).toBeInTheDocument();
+    expect(screen.getByAltText('SkyWing Airlines Logo')).toBeInTheDocument();
     expect(screen.getByText('Back to Home')).toBeInTheDocument();
   });
 
