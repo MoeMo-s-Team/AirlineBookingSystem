@@ -59,6 +59,7 @@ export function Select({
           onChange={handleChange}
           disabled={disabled}
           required={required}
+          aria-invalid={hasError ? 'true' : undefined}
           className={`
             w-full pl-11 pr-10 py-3 rounded-lg font-body-md appearance-none
             bg-surface-container-low border

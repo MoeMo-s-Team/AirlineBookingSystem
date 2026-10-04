@@ -32,4 +32,14 @@ describe('Select', () => {
     render(<Select options={mockOptions} error="Country is required" />);
     expect(screen.getByText(/country is required/i)).toBeInTheDocument();
   });
+
+  it('sets aria-invalid attribute when error is present', () => {
+    const { rerender } = render(<Select options={mockOptions} error="Invalid" />);
+    const select = screen.getByRole('combobox');
+    expect(select).toHaveAttribute('aria-invalid', 'true');
+
+    rerender(<Select options={mockOptions} />);
+    expect(select).not.toHaveAttribute('aria-invalid');
+  });
 });
+

@@ -35,4 +35,14 @@ describe('Input', () => {
     fireEvent.change(input, { target: { value: 'test' } });
     expect(handleChange).toHaveBeenCalled();
   });
+
+  it('sets aria-invalid attribute when error is present', () => {
+    const { rerender } = render(<Input error="Invalid input" />);
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+
+    rerender(<Input />);
+    expect(input).not.toHaveAttribute('aria-invalid');
+  });
 });
+

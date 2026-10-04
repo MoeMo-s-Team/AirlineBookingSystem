@@ -77,6 +77,7 @@ export function Input({
           required={required}
           value={value}
           onChange={onChange}
+          aria-invalid={hasError ? 'true' : undefined}
           className={`
             w-full rounded-lg font-body-md
             bg-surface-container-low border 

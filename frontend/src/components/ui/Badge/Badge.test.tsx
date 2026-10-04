@@ -16,4 +16,13 @@ describe('Badge', () => {
     expect(badge).toHaveClass('bg-primary-fixed');
     expect(badge).toHaveClass('px-3');
   });
+
+  it('renders success and warning variants with semantic token classes', () => {
+    const { rerender } = render(<Badge variant="success">Confirmed</Badge>);
+    expect(screen.getByText('Confirmed')).toHaveClass('bg-success-container text-on-success-container');
+
+    rerender(<Badge variant="warning">Delayed</Badge>);
+    expect(screen.getByText('Delayed')).toHaveClass('bg-warning-container text-on-warning-container');
+  });
 });
+

@@ -65,6 +65,19 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
   
+  /* Success */
+  --color-success: #1b873a;
+  --color-on-success: #ffffff;
+  --color-success-container: #dcfce7;
+  --color-on-success-container: #14532d;
+
+  /* Warning */
+  --color-warning: #b45309;
+  --color-on-warning: #ffffff;
+  --color-warning-container: #fef3c7;
+  --color-on-warning-container: #78350f;
+
+  
   /* ========== TYPOGRAPHY ========== */
   --font-family-base: 'Roboto Flex', system-ui, sans-serif;
   --font-size-display-hero: 48px;

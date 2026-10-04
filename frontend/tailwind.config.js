@@ -69,7 +69,20 @@ export default {
         'on-error': 'var(--color-on-error)',
         'error-container': 'var(--color-error-container)',
         'on-error-container': 'var(--color-on-error-container)',
+
+        // Success
+        success: 'var(--color-success)',
+        'on-success': 'var(--color-on-success)',
+        'success-container': 'var(--color-success-container)',
+        'on-success-container': 'var(--color-on-success-container)',
+
+        // Warning
+        warning: 'var(--color-warning)',
+        'on-warning': 'var(--color-on-warning)',
+        'warning-container': 'var(--color-warning-container)',
+        'on-warning-container': 'var(--color-on-warning-container)',
       },
+
       spacing: {
         'space-xs': 'var(--spacing-space-xs)',
         'space-sm': 'var(--spacing-space-sm)',
