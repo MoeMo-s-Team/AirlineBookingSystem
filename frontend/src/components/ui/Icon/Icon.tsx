@@ -12,6 +12,7 @@ export type IconName =
   | 'error'
   | 'expand_more'
   | 'filter_list'
+  | 'flight'
   | 'flight_land'
   | 'flight_takeoff'
   | 'home'
