@@ -1,4 +1,15 @@
-docs/superpowers
+//docs/superpowers
 .env
 *.env.local
 node_modules/*
+.vscode/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Stitch UI designs
+stitch_skywing_flight_booking_interface/

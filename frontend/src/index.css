@@ -1,7 +1,2 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-body {
-  @apply bg-gray-50;
-}
+/* Re-export styles from styles folder */
+@import './styles/index.css';
