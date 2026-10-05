@@ -1,5 +1,6 @@
 import React from 'react';
 import { FareClass } from '../../types';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FareTierCardProps {
   readonly fareClass: FareClass;
@@ -38,7 +39,7 @@ export const FareTierCard: React.FC<FareTierCardProps> = ({
           </div>
           <div className="text-right">
             <span className="text-headline-sm font-bold text-primary">
-              ${fareClass.price}
+              {formatCurrency(fareClass.price)}
             </span>
             <span className="text-[11px] text-on-surface-variant block">/ passenger</span>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Flight, FareClass } from '../../types';
 import { FareTierCard } from './FareTierCard';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FlightCardProps {
   readonly flight: Flight;
@@ -101,7 +102,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                 Starting from
               </span>
               <span className="text-headline-lg font-bold text-primary leading-none">
-                ${flight.basePrice}
+                {formatCurrency(flight.basePrice)}
               </span>
               <span className="text-[10px] text-on-surface-variant block mt-0.5">
                 includes taxes & fees

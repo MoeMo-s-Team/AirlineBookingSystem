@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { FlightCard } from '../components/flight/FlightCard';
@@ -7,6 +7,8 @@ import { FlightDetailsModal } from '../components/flight/FlightDetailsModal';
 import { useFlights } from '../hooks/useFlights';
 import { useBookingFlow } from '../hooks/useBookingFlow';
 import { Flight, FareClass } from '../types';
+import { AIRPORTS } from '../data/mockData';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export interface FlightResultsPageProps {
   readonly initialOrigin?: string;
@@ -15,11 +17,38 @@ export interface FlightResultsPageProps {
 
 export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
   const navigate = useNavigate();
-  const { filteredFlights, filters, updateFilter } = useFlights();
-  const { selectedFlight, setSelectedFlight, selectedFareClass, setSelectedFareClass } = useBookingFlow();
+  const [urlSearchParams] = useSearchParams();
+  const { searchParams: defaultSearchParams } = useBookingFlow();
+  const activeSearchParams = useMemo(() => ({
+    ...defaultSearchParams,
+    origin: urlSearchParams.get('origin') ?? defaultSearchParams.origin,
+    destination: urlSearchParams.get('destination') ?? defaultSearchParams.destination,
+    departureDate: urlSearchParams.get('date') ?? defaultSearchParams.departureDate,
+    passengers: Number(urlSearchParams.get('passengers')) || defaultSearchParams.passengers,
+    cabinClass: (urlSearchParams.get('cabinClass') as typeof defaultSearchParams.cabinClass | null)
+      ?? defaultSearchParams.cabinClass
+  }), [defaultSearchParams, urlSearchParams]);
+  const {
+    filteredFlights,
+    filters,
+    updateFilter,
+    maxAvailablePrice,
+    isLoading,
+    error
+  } = useFlights(activeSearchParams);
+  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const [selectedFareClass, setSelectedFareClass] = useState<FareClass | null>(null);
 
   const [modalFlight, setModalFlight] = useState<Flight | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const originAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.origin);
+  const destinationAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.destination);
+  const departureDateLabel = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(new Date(`${activeSearchParams.departureDate}T00:00:00`));
 
   const handleSelectFare = (flight: Flight, fareClass: FareClass) => {
     setSelectedFlight(flight);
@@ -47,13 +76,14 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-headline-md font-bold text-primary">
-                    Ho Chi Minh City (SGN) → Hanoi (HAN)
+                    {originAirport?.city ?? activeSearchParams.origin} ({activeSearchParams.origin}) →{' '}
+                    {destinationAirport?.city ?? activeSearchParams.destination} ({activeSearchParams.destination})
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-label-sm text-on-surface-variant mt-0.5">
-                  <span>Thu, Oct 15, 2026</span>
+                  <span>{departureDateLabel}</span>
                   <span>•</span>
-                  <span>1 Passenger</span>
+                  <span>{activeSearchParams.passengers} Passenger{activeSearchParams.passengers > 1 ? 's' : ''}</span>
                   <span>•</span>
                   <span>Economy / Premium / Business</span>
                 </div>
@@ -81,7 +111,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    updateFilter('maxPrice', 500);
+                    updateFilter('maxPrice', Number.MAX_SAFE_INTEGER);
                     updateFilter('stops', 'all');
                     updateFilter('sortBy', 'recommended');
                   }}
@@ -98,21 +128,23 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                     Max Price
                   </label>
                   <span className="text-label-md font-bold text-primary">
-                    ${filters.maxPrice}
+                    {filters.maxPrice === Number.MAX_SAFE_INTEGER
+                      ? formatCurrency(maxAvailablePrice)
+                      : formatCurrency(filters.maxPrice)}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="90"
-                  max="500"
-                  step="10"
-                  value={filters.maxPrice}
+                  min="0"
+                  max={maxAvailablePrice}
+                  step={Math.max(50_000, Math.ceil(maxAvailablePrice / 20 / 50_000) * 50_000)}
+                  value={Math.min(filters.maxPrice, maxAvailablePrice)}
                   onChange={e => updateFilter('maxPrice', Number(e.target.value))}
                   className="w-full accent-primary cursor-pointer"
                 />
                 <div className="flex justify-between text-[11px] text-on-surface-variant mt-1">
-                  <span>$90</span>
-                  <span>$500</span>
+                  <span>{formatCurrency(0)}</span>
+                  <span>{formatCurrency(maxAvailablePrice)}</span>
                 </div>
               </div>
 
@@ -168,7 +200,9 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
               {/* Sort Bar */}
               <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <span className="text-label-md font-semibold text-on-surface-variant pl-2">
-                  Found <strong className="text-primary">{filteredFlights.length} flights</strong> matching criteria
+                  {isLoading ? 'Loading available flights…' : (
+                    <>Found <strong className="text-primary">{filteredFlights.length} flights</strong> matching criteria</>
+                  )}
                 </span>
 
                 <div className="flex items-center gap-1">
@@ -192,6 +226,19 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
 
               {/* Flights Cards */}
               <div className="space-y-4">
+                {error && (
+                  <div className="rounded-xl border border-error/30 bg-error-container/30 p-6 text-on-error-container">
+                    <p className="font-semibold">Unable to load flights</p>
+                    <p className="mt-1 text-body-sm">{error}</p>
+                  </div>
+                )}
+                {!isLoading && !error && filteredFlights.length === 0 && (
+                  <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-8 text-center">
+                    <span className="material-symbols-outlined text-[36px] text-secondary">travel_explore</span>
+                    <p className="mt-2 font-semibold text-primary">No flights found for this route and date.</p>
+                    <p className="mt-1 text-body-sm text-on-surface-variant">Try another departure date or route.</p>
+                  </div>
+                )}
                 {filteredFlights.map(flight => (
                   <FlightCard
                     key={flight.id}
@@ -222,7 +269,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                     Flight Selected: {selectedFlight.flightNumber} ({selectedFlight.departureCode} → {selectedFlight.arrivalCode})
                   </span>
                   <div className="text-headline-sm font-bold text-primary">
-                    {selectedFareClass.name} • ${selectedFareClass.price} <span className="text-body-sm font-normal text-on-surface-variant">total per person</span>
+                    {selectedFareClass.name} • {formatCurrency(selectedFareClass.price)} <span className="text-body-sm font-normal text-on-surface-variant">total per person</span>
                   </div>
                 </div>
               </div>
