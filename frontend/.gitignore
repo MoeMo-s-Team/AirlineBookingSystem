@@ -18,7 +18,6 @@ dist-ssr/
 .vscode/
 .idea/
 
-# Test outputs
-test-results/
-playwright-report/
-
+# OS
+.DS_Store
+Thumbs.db
