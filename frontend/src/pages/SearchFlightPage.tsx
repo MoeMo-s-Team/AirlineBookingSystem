@@ -14,7 +14,14 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
   const { searchParams, setSearchParams } = useBookingFlow();
 
   const handleSearch = () => {
-    navigate('/flights');
+    const query = new URLSearchParams({
+      origin: searchParams.origin,
+      destination: searchParams.destination,
+      date: searchParams.departureDate,
+      passengers: String(searchParams.passengers),
+      cabinClass: searchParams.cabinClass
+    });
+    navigate(`/flights?${query.toString()}`);
   };
 
   const featuredDestinations = [
@@ -124,7 +131,14 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
                     origin: 'SGN', // Reset to departure city
                     destination: dest.code
                   });
-                  navigate('/flights');
+                  const query = new URLSearchParams({
+                    origin: 'SGN',
+                    destination: dest.code,
+                    date: searchParams.departureDate,
+                    passengers: String(searchParams.passengers),
+                    cabinClass: searchParams.cabinClass
+                  });
+                  navigate(`/flights?${query.toString()}`);
                 }}
                 className="group cursor-pointer bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
               >

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FareClass } from '../../types';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FareTierCardProps {
   readonly fareClass: FareClass;
@@ -12,61 +13,57 @@ export const FareTierCard: React.FC<FareTierCardProps> = ({
   isSelected = false,
   onSelect
 }) => {
+  const benefits = [
+    { icon: 'luggage', label: fareClass.baggage },
+    { icon: 'airline_seat_recline_normal', label: fareClass.seatPitch },
+    { icon: 'restaurant', label: fareClass.meal },
+    { icon: 'sync', label: fareClass.changes },
+    { icon: 'stars', label: `${fareClass.milesMultiplier}x SkyWing Miles Accumulation` }
+  ];
+
   return (
     <div
-      className={`relative flex flex-col justify-between p-5 rounded-xl border transition-all ${
+      className={`flex min-w-0 flex-col justify-between rounded-xl border p-5 transition-[background-color,border-color,box-shadow] duration-200 ${
         isSelected
           ? 'bg-surface-container-low border-primary ring-2 ring-primary/20 shadow-md'
           : 'bg-surface-container-lowest border-outline-variant hover:border-secondary hover:shadow-sm'
       }`}
     >
-      {fareClass.popular && (
-        <span className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-secondary text-on-secondary text-[11px] font-bold uppercase tracking-wider shadow-sm">
-          Best Value
-        </span>
-      )}
-
       <div>
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <span className="text-[11px] font-bold text-secondary uppercase tracking-wider">
               {fareClass.tier}
             </span>
-            <h4 className="text-headline-sm font-bold text-primary mt-0.5">
+            <h4 className="mt-0.5 text-headline-sm font-bold text-primary">
               {fareClass.name}
             </h4>
           </div>
-          <div className="text-right">
-            <span className="text-headline-sm font-bold text-primary">
-              ${fareClass.price}
+          {fareClass.popular && (
+            <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-on-secondary shadow-sm">
+              Best Value
             </span>
-            <span className="text-[11px] text-on-surface-variant block">/ passenger</span>
-          </div>
+          )}
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-1 tabular-nums">
+          <span className="text-headline-lg font-bold leading-none text-primary">
+            {formatCurrency(fareClass.price)}
+          </span>
+          <span className="whitespace-nowrap text-[11px] text-on-surface-variant">/ passenger</span>
         </div>
 
         {/* Feature List */}
-        <div className="mt-4 space-y-2.5 border-t border-outline-variant/60 pt-4 text-body-sm text-on-surface">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-secondary">luggage</span>
-            <span>{fareClass.baggage}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-secondary">airline_seat_recline_normal</span>
-            <span>{fareClass.seatPitch}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-secondary">restaurant</span>
-            <span>{fareClass.meal}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-secondary">sync</span>
-            <span>{fareClass.changes}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-secondary">stars</span>
-            <span>{fareClass.milesMultiplier}x SkyWing Miles Accumulation</span>
-          </div>
-        </div>
+        <ul className="mt-5 space-y-3 border-t border-outline-variant/60 pt-4 text-body-sm leading-5 text-on-surface">
+          {benefits.map(benefit => (
+            <li key={benefit.icon} className="grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-3">
+              <span className="material-symbols-outlined mt-0.5 text-[16px] leading-none text-secondary">
+                {benefit.icon}
+              </span>
+              <span>{benefit.label}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* Select CTA */}
@@ -74,7 +71,8 @@ export const FareTierCard: React.FC<FareTierCardProps> = ({
         <button
           type="button"
           onClick={() => onSelect(fareClass)}
-          className={`w-full py-2.5 rounded-lg text-label-md font-bold transition-all flex items-center justify-center gap-2 ${
+          aria-pressed={isSelected}
+          className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-label-md font-bold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px ${
             isSelected
               ? 'bg-primary text-on-primary shadow-sm'
               : 'border border-primary text-primary hover:bg-surface-container'

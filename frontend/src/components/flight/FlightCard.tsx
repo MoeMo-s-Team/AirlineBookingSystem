@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Flight, FareClass } from '../../types';
 import { FareTierCard } from './FareTierCard';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FlightCardProps {
   readonly flight: Flight;
@@ -101,7 +102,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                 Starting from
               </span>
               <span className="text-headline-lg font-bold text-primary leading-none">
-                ${flight.basePrice}
+                {formatCurrency(flight.basePrice)}
               </span>
               <span className="text-[10px] text-on-surface-variant block mt-0.5">
                 includes taxes & fees
@@ -134,7 +135,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       {/* Expanded Fares Selection Drawer */}
       {expanded && (
         <div className="bg-surface-container-low/60 border-t border-outline-variant p-6">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-5 flex flex-col gap-1 border-b border-outline-variant/60 pb-4 sm:flex-row sm:items-end sm:justify-between">
             <h3 className="text-label-lg font-bold text-primary uppercase tracking-wider">
               Select Fare Tier for Flight {flight.flightNumber}
             </h3>
@@ -143,7 +144,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(17rem,1fr))] gap-5">
             {flight.fareClasses.map(fc => (
               <FareTierCard
                 key={fc.id}
