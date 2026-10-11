@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { useBookingFlow } from '../hooks/useBookingFlow';
-import { MOCK_BOOKINGS } from '../data/mockData';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export interface BookingConfirmationPageProps {
   readonly onPrint?: () => void;
@@ -11,8 +11,10 @@ export interface BookingConfirmationPageProps {
 
 export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = () => {
   const { confirmedBooking } = useBookingFlow();
-  // Fallback to mock booking if arrived directly
-  const booking = confirmedBooking || MOCK_BOOKINGS[0];
+  if (!confirmedBooking) {
+    return <div className="min-h-screen bg-background flex flex-col"><TopNavBar /><main className="flex-1 pt-16 p-8 text-center"><h1 className="text-headline-lg font-bold text-primary">Không tìm thấy booking vừa xác nhận</h1><p className="mt-2 text-on-surface-variant">Hãy mở My Bookings để xem dữ liệu đã lưu.</p><Link className="inline-block mt-5 text-primary underline" to="/my-bookings">My Bookings</Link></main><Footer /></div>;
+  }
+  const booking = confirmedBooking;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -26,10 +28,10 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
               <span className="material-symbols-outlined text-[36px]">check_circle</span>
             </div>
             <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-              Booking Confirmed & Ticket Issued
+              Booking Confirmed
             </h1>
             <p className="text-body-lg text-on-surface-variant mt-2 max-w-lg mx-auto">
-              Your flight reservation is locked. An official e-ticket and invoice have been dispatched to your email address.
+              Your booking and mock payment were successfully recorded.
             </p>
           </div>
 
@@ -78,7 +80,7 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                 <div>
                   <span className="text-2xl font-bold tracking-tight block">SkyWing Airlines</span>
                   <span className="text-[12px] opacity-80 uppercase tracking-widest font-semibold">
-                    Electronic Boarding Card • {booking.fareClass.tier}
+                    Booking Details • {booking.fareClass.name}
                   </span>
                 </div>
               </div>
@@ -118,50 +120,22 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                 </div>
               </div>
 
-              {/* Gate, Seat, Terminal Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-b border-outline-variant">
+              <div className="grid grid-cols-2 gap-4 py-6 border-b border-outline-variant">
                 <div>
                   <span className="text-[11px] text-outline uppercase font-semibold block">Passenger</span>
                   <span className="text-label-md font-bold text-primary">
-                    {booking.passengers[0]?.lastName} {booking.passengers[0]?.firstName}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-outline uppercase font-semibold block">Terminal / Gate</span>
-                  <span className="text-label-md font-bold text-primary">
-                    {booking.flight.departureTerminal} / {booking.gate || 'Gate 14'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-outline uppercase font-semibold block">Seat Number</span>
-                  <span className="text-label-md font-bold text-secondary">
-                    {booking.seatAssignment || '03A (Lie-Flat Suite)'}
+                    {booking.passengers.map(passenger => `${passenger.firstName} ${passenger.lastName}`).join(', ')}
                   </span>
                 </div>
                 <div>
                   <span className="text-[11px] text-outline uppercase font-semibold block">Total Paid</span>
                   <span className="text-label-md font-bold text-primary">
-                    ${booking.grandTotal} ({booking.paymentStatus})
+                    {formatCurrency(booking.grandTotal)} ({booking.paymentStatus})
                   </span>
                 </div>
               </div>
 
-              {/* Barcode Strip */}
-              <div className="pt-6 flex flex-col items-center">
-                <div className="h-16 w-full max-w-md flex items-center justify-between px-3 bg-surface-container-low rounded-xl border border-outline-variant">
-                  {Array.from({ length: 48 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-12 bg-on-surface ${
-                        i % 4 === 0 ? 'w-1.5' : i % 2 === 0 ? 'w-1' : 'w-0.5'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-[11px] font-mono text-outline tracking-widest mt-2 uppercase font-semibold">
-                  E-TICKET: {booking.pnr} - {booking.flight.flightNumber} - SKYAIR-SYSTEM
-                </span>
-              </div>
+              <p className="pt-5 text-center text-body-sm text-on-surface-variant">Seat assignment and boarding pass are not available yet.</p>
             </div>
           </div>
 

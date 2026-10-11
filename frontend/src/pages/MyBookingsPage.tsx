@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { BookingCard } from '../components/booking/BookingCard';
 import { BookingDossierModal } from '../components/booking/BookingDossierModal';
 import { useAuth } from '../context/AuthContext';
-import { MOCK_BOOKINGS } from '../data/mockData';
+import { cancelBooking, getBooking, getMyBookings } from '../api/bookingApi';
+import { toBookingView } from '../api/bookingView';
 import { Booking } from '../types';
 
 export interface MyBookingsPageProps {
@@ -14,25 +15,46 @@ export interface MyBookingsPageProps {
 
 export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
   const { user, isAuthenticated } = useAuth();
-  const [bookings, setBookings] = useState<Booking[]>([...MOCK_BOOKINGS]);
-  const [activeTab, setActiveTab] = useState<'UPCOMING' | 'COMPLETED' | 'CANCELLED'>('UPCOMING');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'UPCOMING' | 'CANCELLED' | 'PAYMENT_FAILED'>('UPCOMING');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
 
-  const handleCancelBooking = (pnr: string) => {
-    if (window.confirm(`Are you sure you want to cancel booking ${pnr}? A refund will be initiated.`)) {
-      setBookings(prev =>
-        prev.map(b => (b.pnr === pnr ? { ...b, status: 'CANCELLED', paymentStatus: 'REFUNDED' } : b))
-      );
+  const loadBookings = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const summaries = await getMyBookings();
+      const details = await Promise.all(summaries.map(item => getBooking(item.id)));
+      setBookings(details.map(toBookingView));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không tải được danh sách booking.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void loadBookings(); }, [loadBookings]);
+
+  const handleCancelBooking = async (pnr: string) => {
+    const booking = bookings.find(item => item.pnr === pnr);
+    if (!booking?.id || !window.confirm(`Hủy booking ${pnr}?`)) return;
+    try {
+      await cancelBooking(booking.id);
+      await loadBookings();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể hủy booking.');
     }
   };
 
   const filteredBookings = bookings.filter(b => {
     // Tab filter
-    if (activeTab === 'UPCOMING' && (b.status === 'CANCELLED' || b.status === 'COMPLETED')) return false;
-    if (activeTab === 'COMPLETED' && b.status !== 'COMPLETED') return false;
+    if (activeTab === 'UPCOMING' && (b.status === 'CANCELLED' || b.status === 'PAYMENT_FAILED')) return false;
     if (activeTab === 'CANCELLED' && b.status !== 'CANCELLED') return false;
+    if (activeTab === 'PAYMENT_FAILED' && b.status !== 'PAYMENT_FAILED') return false;
 
     // Search query filter
     if (searchQuery.trim()) {
@@ -112,7 +134,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             {/* Tabs */}
             <div className="inline-flex p-1 rounded-xl bg-surface-container-low border border-outline-variant">
-              {(['UPCOMING', 'COMPLETED', 'CANCELLED'] as const).map(tab => (
+              {(['UPCOMING', 'CANCELLED', 'PAYMENT_FAILED'] as const).map(tab => (
                 <button
                   key={tab}
                   type="button"
@@ -123,7 +145,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
                       : 'text-on-surface-variant hover:text-primary'
                   }`}
                 >
-                  {tab.charAt(0) + tab.slice(1).toLowerCase()}
+                  {tab === 'PAYMENT_FAILED' ? 'Payment Failed' : tab.charAt(0) + tab.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
@@ -144,7 +166,10 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
           </div>
 
           {/* Bookings List */}
-          {filteredBookings.length > 0 ? (
+          {error && <div role="alert" className="mb-4 rounded-xl bg-error-container p-4 text-error">{error}</div>}
+          {isLoading ? (
+            <p className="py-12 text-center text-on-surface-variant">Loading your bookings…</p>
+          ) : filteredBookings.length > 0 ? (
             <div className="space-y-4">
               {filteredBookings.map(booking => (
                 <BookingCard

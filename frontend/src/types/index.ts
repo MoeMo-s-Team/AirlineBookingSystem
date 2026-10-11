@@ -71,6 +71,7 @@ export interface AncillaryService {
 }
 
 export interface Booking {
+  readonly id?: number;
   readonly pnr: string;
   readonly flight: Flight;
   readonly fareClass: FareClass;
@@ -85,7 +86,7 @@ export interface Booking {
   readonly servicesTotal: number;
   readonly discount: number;
   readonly grandTotal: number;
-  readonly status: 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'COMPLETED';
+  readonly status: 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'PAYMENT_FAILED' | 'COMPLETED';
   readonly bookingDate: string;
   readonly paymentMethod: string;
   readonly paymentStatus: 'PAID' | 'PENDING' | 'REFUNDED';

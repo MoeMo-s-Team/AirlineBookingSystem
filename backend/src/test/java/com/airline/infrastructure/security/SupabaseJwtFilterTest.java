@@ -1,38 +1,24 @@
 package com.airline.infrastructure.security;
 
-import com.airline.config.SupabaseProperties;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SupabaseJwtFilterTest {
-
-    private SupabaseProperties supabaseProperties;
-    private SupabaseJwtFilter filter;
-    private static final String SECRET = "0123456789012345678901234567890123456789";
-
-    @BeforeEach
-    void setUp() {
-        supabaseProperties = new SupabaseProperties();
-        supabaseProperties.setSecretKey(SECRET);
-        filter = new SupabaseJwtFilter(supabaseProperties);
-        SecurityContextHolder.clearContext();
-    }
 
     @AfterEach
     void tearDown() {
@@ -40,30 +26,48 @@ class SupabaseJwtFilterTest {
     }
 
     @Test
-    void testFilterHandlesTokenWithoutRoleClaim() throws ServletException, IOException {
-        SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
-        String token = Jwts.builder()
-            .subject("user-uuid-123")
-            .signWith(key)
-            .compact();
+    void usesDecodedSupabaseJwtAndDefaultsAuthenticatedRoleToCustomer() throws Exception {
+        JwtDecoder decoder = mock(JwtDecoder.class);
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "RS256")
+                .subject("72a8b0a7-d05d-4a29-82b5-bdc6ef826a1c")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(300))
+                .claim("role", "authenticated")
+                .build();
+        when(decoder.decode("token")).thenReturn(jwt);
 
+        SupabaseJwtFilter filter = new SupabaseJwtFilter(decoder);
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("Authorization", "Bearer " + token);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        FilterChain filterChain = mock(FilterChain.class);
+        request.addHeader("Authorization", "Bearer token");
+        filter.doFilter(request, new MockHttpServletResponse(), mock(FilterChain.class));
 
-        filter.doFilter(request, response, filterChain);
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication);
+        assertEquals(jwt.getSubject(), authentication.getName());
+        assertTrue(authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_CUSTOMER")));
+    }
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        assertNotNull(auth, "Authentication should not be null");
-        assertEquals("user-uuid-123", auth.getPrincipal());
-        assertFalse(
-            auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_null")),
-            "Authority should not be ROLE_null"
-        );
-        assertTrue(
-            auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER")),
-            "Authority should default to ROLE_CUSTOMER"
-        );
+    @Test
+    void readsAdminRoleFromAppMetadata() throws Exception {
+        JwtDecoder decoder = mock(JwtDecoder.class);
+        Jwt jwt = Jwt.withTokenValue("admin-token")
+                .header("alg", "RS256")
+                .subject("72a8b0a7-d05d-4a29-82b5-bdc6ef826a1c")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(300))
+                .claim("role", "authenticated")
+                .claim("app_metadata", Map.of("role", "ADMIN"))
+                .build();
+        when(decoder.decode("admin-token")).thenReturn(jwt);
+
+        SupabaseJwtFilter filter = new SupabaseJwtFilter(decoder);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer admin-token");
+        filter.doFilter(request, new MockHttpServletResponse(), mock(FilterChain.class));
+
+        assertTrue(SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")));
     }
 }

@@ -4,6 +4,8 @@ import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { PriceSummaryCard } from '../components/booking/PriceSummaryCard';
 import { useBookingFlow } from '../hooks/useBookingFlow';
+import { createBooking, getBooking } from '../api/bookingApi';
+import { processPayment } from '../api/paymentApi';
 
 export interface CheckoutPaymentPageProps {
   readonly onPaymentSuccess?: () => void;
@@ -18,22 +20,51 @@ export const CheckoutPaymentPage: React.FC<CheckoutPaymentPageProps> = () => {
     selectedServices,
     paymentMethod,
     setPaymentMethod,
-    confirmBooking
+    completeBooking
   } = useBookingFlow();
-
-  const [cardName, setCardName] = useState('NGUYEN VAN A');
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 9012');
-  const [cardExpiry, setCardExpiry] = useState('08/29');
-  const [cardCvv, setCardCvv] = useState('889');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingBookingId, setPendingBookingId] = useState<number | null>(null);
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    if (!selectedFlight || !selectedFareClass || passengers.length === 0) {
+      setError('Vui lòng chọn chuyến bay, hạng vé và nhập thông tin hành khách trước.');
+      return;
+    }
+    setError(null);
     setIsProcessing(true);
-    setTimeout(() => {
-      confirmBooking();
-      setIsProcessing(false);
+    try {
+      let bookingId = pendingBookingId;
+      if (bookingId === null) {
+        const booking = await createBooking({
+          flightId: Number(selectedFlight.id),
+          fareClassId: Number(selectedFareClass.id),
+          passengers: passengers.map(passenger => ({
+            fullName: `${passenger.firstName} ${passenger.lastName}`.trim(),
+            dateOfBirth: passenger.dateOfBirth,
+            passportNo: passenger.passportNumber,
+            phone: passenger.phone
+          })),
+          services: selectedServices.map(service => ({ serviceId: Number(service.id), quantity: 1 }))
+        });
+        bookingId = booking.id;
+        setPendingBookingId(bookingId);
+      }
+      const payment = await processPayment(bookingId, paymentMethod === 'card' ? 'CREDIT_CARD' : 'BANK_TRANSFER');
+      if (payment.status !== 'SUCCESS') {
+        setPendingBookingId(null);
+        setError('Thanh toán thất bại; booking được lưu với trạng thái PAYMENT_FAILED. Hãy tạo booking mới để thử lại.');
+        return;
+      }
+      const booking = await getBooking(bookingId);
+      completeBooking(booking, payment);
+      setPendingBookingId(null);
       navigate('/confirmation');
-    }, 800);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể hoàn tất booking hoặc thanh toán.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -87,21 +118,20 @@ export const CheckoutPaymentPage: React.FC<CheckoutPaymentPageProps> = () => {
                   Secure Checkout & Payment
                 </h1>
                 <p className="text-body-md text-on-surface-variant mt-1">
-                  Transactions are encrypted end-to-end with 256-bit bank-grade TLS security protocols.
+                  Demo checkout uses the backend mock gateway. No real payment is collected.
                 </p>
               </div>
 
               {/* Payment Methods Selector Tabs */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {[
                   { id: 'card', label: 'Credit / Debit Card', icon: 'credit_card' },
-                  { id: 'bank', label: 'VietQR / Bank Wire', icon: 'account_balance' },
-                  { id: 'wallet', label: 'Apple / Google Pay', icon: 'contactless' }
+                  { id: 'bank', label: 'VietQR / Bank Wire', icon: 'account_balance' }
                 ].map(tab => (
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() => setPaymentMethod(tab.id as any)}
+                    onClick={() => setPaymentMethod(tab.id as 'card' | 'bank')}
                     className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${
                       paymentMethod === tab.id
                         ? 'bg-surface-container-low border-primary ring-2 ring-primary/20 text-primary font-bold shadow-sm'
@@ -114,107 +144,22 @@ export const CheckoutPaymentPage: React.FC<CheckoutPaymentPageProps> = () => {
                 ))}
               </div>
 
-              {/* Card Form */}
               {paymentMethod === 'card' && (
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-4">
-                  <div>
-                    <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                      Name on Card *
-                    </label>
-                    <input
-                      type="text"
-                      value={cardName}
-                      onChange={e => setCardName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                      Card Number *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={cardNumber}
-                        onChange={e => setCardNumber(e.target.value)}
-                        className="w-full pl-3.5 pr-12 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
-                      />
-                      <span className="material-symbols-outlined absolute right-3 top-2.5 text-secondary text-[22px]">
-                        credit_card
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                        Expiry Date *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={cardExpiry}
-                        onChange={e => setCardExpiry(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-center font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                        Security Code (CVV) *
-                      </label>
-                      <input
-                        type="password"
-                        maxLength={4}
-                        placeholder="•••"
-                        value={cardCvv}
-                        onChange={e => setCardCvv(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-center font-mono"
-                      />
-                    </div>
-                  </div>
+                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm">
+                  <p className="font-semibold text-primary">Mock card payment</p>
+                  <p className="mt-1 text-body-sm text-on-surface-variant">Backend demo gateway will simulate a successful card payment. Do not enter real card details.</p>
                 </div>
               )}
 
               {/* VietQR Mock */}
               {paymentMethod === 'bank' && (
                 <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm text-center">
-                  <span className="text-label-md font-bold text-primary block mb-2">
-                    Scan VietQR Code with any Banking App in Vietnam
-                  </span>
-                  <div className="w-48 h-48 mx-auto bg-surface-container border border-outline-variant rounded-xl flex items-center justify-center p-4 my-4">
-                    <span className="material-symbols-outlined text-[80px] text-primary">qr_code_2</span>
-                  </div>
-                  <p className="text-body-sm text-on-surface-variant">
-                    Instant automated confirmation upon successful wire transfer
-                  </p>
+                  <p className="font-semibold text-primary">Mock bank transfer</p>
+                  <p className="mt-1 text-body-sm text-on-surface-variant">Backend demo gateway simulates a successful transfer. No real transfer or QR payment is performed.</p>
                 </div>
               )}
 
-              {/* Digital Wallets */}
-              {paymentMethod === 'wallet' && (
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm text-center">
-                  <span className="material-symbols-outlined text-[48px] text-primary mb-2">contactless</span>
-                  <h3 className="text-headline-sm font-bold text-primary mb-1">
-                    Express 1-Click Biometric Checkout
-                  </h3>
-                  <p className="text-body-sm text-on-surface-variant max-w-sm mx-auto">
-                    Authorize payment securely via Apple Touch ID / Face ID or Google Pay.
-                  </p>
-                </div>
-              )}
-
-              {/* Security Badges */}
-              <div className="flex items-center gap-6 text-on-surface-variant text-body-sm pt-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-secondary text-[20px]">lock</span>
-                  <span>256-Bit SSL Encryption</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-secondary text-[20px]">verified_user</span>
-                  <span>PCI-DSS Level 1 Certified</span>
-                </div>
-              </div>
+              {error && <p role="alert" className="rounded-xl bg-error-container p-4 text-error">{error}</p>}
             </div>
 
             {/* Summary Column */}
@@ -224,7 +169,7 @@ export const CheckoutPaymentPage: React.FC<CheckoutPaymentPageProps> = () => {
                 fareClass={selectedFareClass}
                 passengerCount={passengers.length}
                 selectedServices={selectedServices}
-                ctaLabel={isProcessing ? 'Authorizing Payment...' : 'Authorize & Issue E-Ticket'}
+                ctaLabel={isProcessing ? 'Processing Payment...' : 'Pay & Confirm Booking'}
                 onCtaClick={handlePay}
                 isCtaDisabled={isProcessing}
               />

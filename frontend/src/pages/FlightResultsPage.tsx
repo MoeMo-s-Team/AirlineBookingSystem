@@ -18,7 +18,7 @@ export interface FlightResultsPageProps {
 export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
   const navigate = useNavigate();
   const [urlSearchParams] = useSearchParams();
-  const { searchParams: defaultSearchParams } = useBookingFlow();
+  const { searchParams: defaultSearchParams, selectedFlight, selectedFareClass, setSelectedFlight, setSelectedFareClass, setPassengers } = useBookingFlow();
   const activeSearchParams = useMemo(() => ({
     ...defaultSearchParams,
     origin: urlSearchParams.get('origin') ?? defaultSearchParams.origin,
@@ -36,9 +36,6 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
     isLoading,
     error
   } = useFlights(activeSearchParams);
-  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
-  const [selectedFareClass, setSelectedFareClass] = useState<FareClass | null>(null);
-
   const [modalFlight, setModalFlight] = useState<Flight | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const originAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.origin);
@@ -53,6 +50,10 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
   const handleSelectFare = (flight: Flight, fareClass: FareClass) => {
     setSelectedFlight(flight);
     setSelectedFareClass(fareClass);
+    setPassengers(Array.from({ length: activeSearchParams.passengers }, (_, index) => ({
+      id: `passenger-${index + 1}`, title: 'Mr', firstName: '', lastName: '', dateOfBirth: '', nationality: '',
+      passportNumber: '', passportExpiry: '', email: '', phone: ''
+    })));
   };
 
   const handleProceed = () => {

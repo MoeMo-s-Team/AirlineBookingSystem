@@ -1,6 +1,7 @@
 import React from 'react';
 import { Booking } from '../../types';
 import { StatusBadge } from '../common/StatusBadge';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface BookingDossierModalProps {
   readonly booking: Booking | null;
@@ -29,7 +30,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-headline-sm font-bold text-primary">
-                  Booking Dossier & E-Ticket
+                  Booking Details
                 </h2>
                 <StatusBadge status={booking.status} />
               </div>
@@ -54,7 +55,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             <div className="flex justify-between items-start mb-6">
               <div>
                 <span className="text-[11px] uppercase tracking-widest opacity-80 font-bold block">
-                  SkyWing Electronic Boarding Pass
+                  Booking reference
                 </span>
                 <span className="text-headline-md font-bold block mt-0.5">
                   {booking.flight.airline} {booking.flight.flightNumber}
@@ -87,19 +88,19 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
               </div>
             </div>
 
-            {/* Gate, Seat, Boarding Time */}
+            {/* These details are not provided by the current booking API. */}
             <div className="bg-white/10 backdrop-blur rounded-xl p-3 grid grid-cols-3 gap-2 text-center border border-white/15">
               <div>
                 <span className="text-[10px] uppercase tracking-wider opacity-80 block">Gate</span>
-                <span className="text-headline-sm font-bold">{booking.gate || 'Gate 12'}</span>
+                <span className="text-headline-sm font-bold">Not assigned</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase tracking-wider opacity-80 block">Seat</span>
-                <span className="text-headline-sm font-bold">{booking.seatAssignment || '03A'}</span>
+                <span className="text-headline-sm font-bold">Not assigned</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase tracking-wider opacity-80 block">Boarding Time</span>
-                <span className="text-headline-sm font-bold">45m Prior</span>
+                <span className="text-[10px] uppercase tracking-wider opacity-80 block">Fare Class</span>
+                <span className="text-headline-sm font-bold">{booking.fareClass.name}</span>
               </div>
             </div>
           </div>
@@ -116,11 +117,10 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
                     {p.title}. {p.lastName} {p.firstName}
                   </span>
                   <span className="text-[12px] text-on-surface-variant block mt-0.5">
-                    Passport: {p.passportNumber} • Nationality: {p.nationality}
+                    Passport: {p.passportNumber}
                   </span>
                 </div>
                 <div className="text-left sm:text-right">
-                  <span className="text-[12px] text-on-surface-variant block">Contact: {p.email}</span>
                   <span className="text-[12px] text-secondary font-medium block">{p.phone}</span>
                 </div>
               </div>
@@ -139,7 +139,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
                     <span className="material-symbols-outlined text-[20px] text-secondary">{svc.icon}</span>
                     <div>
                       <span className="text-label-md font-semibold text-primary block">{svc.name}</span>
-                      <span className="text-[11px] text-on-surface-variant">${svc.price} Paid</span>
+                      <span className="text-[11px] text-on-surface-variant">{formatCurrency(svc.price)}</span>
                     </div>
                   </div>
                 ))}
@@ -147,30 +147,12 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             </div>
           )}
 
-          {/* Barcode Mock */}
-          <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant flex flex-col items-center text-center">
-            <span className="text-[10px] text-outline uppercase tracking-widest font-bold mb-2">
-              Automated Airport Gate Scanner Code
-            </span>
-            <div className="h-14 w-full max-w-sm flex items-center justify-between px-2 bg-white rounded border border-outline-variant">
-              {Array.from({ length: 42 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-10 bg-on-surface ${
-                    i % 3 === 0 ? 'w-1' : i % 5 === 0 ? 'w-1.5' : 'w-0.5'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-label-sm font-mono text-outline mt-2 tracking-widest">
-              {booking.pnr} - {booking.flight.flightNumber} - {booking.departureDate}
-            </span>
-          </div>
+            <p className="text-center text-body-sm text-on-surface-variant">A boarding pass, seat and gate are not available from the current backend.</p>
         </div>
 
         {/* Actions Footer */}
         <div className="p-6 border-t border-outline-variant bg-surface-container-low flex flex-col sm:flex-row justify-between gap-3">
-          {booking.status === 'CONFIRMED' && onCancelBooking && (
+          {booking.status === 'PENDING' && onCancelBooking && (
             <button
               type="button"
               onClick={() => {

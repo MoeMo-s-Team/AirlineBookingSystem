@@ -1,6 +1,7 @@
 import React from 'react';
 import { Booking } from '../../types';
 import { StatusBadge } from '../common/StatusBadge';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface BookingCardProps {
   readonly booking: Booking;
@@ -39,7 +40,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         <div className="flex items-center gap-3">
           <StatusBadge status={booking.status} />
           <span className="text-headline-sm font-bold text-primary">
-            ${booking.grandTotal}
+            {formatCurrency(booking.grandTotal)}
           </span>
         </div>
       </div>
@@ -112,7 +113,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {booking.status === 'CONFIRMED' && onCancel && (
+          {booking.status === 'PENDING' && onCancel && (
             <button
               type="button"
               onClick={() => onCancel(booking.pnr)}
@@ -128,7 +129,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary text-label-md font-semibold transition-all flex items-center gap-1.5 shadow-sm"
           >
             <span className="material-symbols-outlined text-[16px]">visibility</span>
-            <span>View Dossier & E-Ticket</span>
+            <span>View Booking Details</span>
           </button>
         </div>
       </div>

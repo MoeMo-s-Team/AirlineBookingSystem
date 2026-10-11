@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { MOCK_ACCOUNTS } from '../data/mockData';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 
 export interface AuthUser {
   readonly id: string;
@@ -15,91 +16,78 @@ export interface AuthContextType {
   readonly isAuthenticated: boolean;
   readonly isAdmin: boolean;
   readonly isLoading: boolean;
-  readonly signIn: (email: string, password: string) => Promise<boolean>;
-  readonly signUp: (name: string, email: string, password: string) => Promise<boolean>;
-  readonly signOut: () => void;
+  readonly signIn: (email: string, password: string) => Promise<AuthUser>;
+  readonly signUp: (name: string, email: string, password: string) => Promise<{ requiresEmailConfirmation: boolean }>;
+  readonly signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_STORAGE_KEY = 'skywing_auth_session';
+function toAuthUser(user: User): AuthUser {
+  return {
+    id: user.id,
+    name: String(user.user_metadata.full_name ?? user.email?.split('@')[0] ?? 'SkyWing Member'),
+    email: user.email ?? '',
+    role: String(user.app_metadata.role ?? '').toUpperCase() === 'ADMIN' ? 'admin' : 'customer'
+  };
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load initial session on mount (defaults to unauthenticated / null)
   useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        setUser(JSON.parse(stored));
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
+    let active = true;
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (active) setUser(session?.user ? toAuthUser(session.user) : null);
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? toAuthUser(session.user) : null);
       setIsLoading(false);
-    }
-  }, []);
-
-  const signIn = useCallback(async (email: string, _password: string): Promise<boolean> => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 350));
-
-    // Check if matching any predefined mock account
-    const matched = MOCK_ACCOUNTS.find(
-      acc => acc.email.toLowerCase() === email.trim().toLowerCase() ||
-             acc.frequentFlyerNumber.toLowerCase() === email.trim().toLowerCase()
-    );
-
-    const authenticatedUser: AuthUser = matched
-      ? {
-          id: matched.id,
-          name: matched.name,
-          email: matched.email,
-          role: matched.role,
-          frequentFlyerNumber: matched.frequentFlyerNumber,
-          tier: matched.tier
-        }
-      : {
-          id: 'usr-' + Date.now(),
-          name: email.split('@')[0],
-          email: email,
-          role: email.toLowerCase().includes('admin') ? 'admin' : 'customer',
-          frequentFlyerNumber: 'SW-CLUB-' + Math.floor(10000 + Math.random() * 90000),
-          tier: 'Classic'
-        };
-
-    setUser(authenticatedUser);
-    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authenticatedUser));
-    setIsLoading(false);
-    return true;
-  }, []);
-
-  const signUp = useCallback(async (name: string, email: string, _password: string): Promise<boolean> => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 400));
-
-    const newUser: AuthUser = {
-      id: 'usr-' + Date.now(),
-      name: name || 'New SkyWing Member',
-      email: email,
-      role: 'customer',
-      frequentFlyerNumber: 'SW-CLUB-' + Math.floor(10000 + Math.random() * 90000),
-      tier: 'Classic'
+    });
+    return () => {
+      active = false;
+      subscription.unsubscribe();
     };
-
-    setUser(newUser);
-    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
-    setIsLoading(false);
-    return true;
   }, []);
 
-  const signOut = useCallback(() => {
-    setUser(null);
-    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  const signIn = useCallback(async (email: string, password: string): Promise<AuthUser> => {
+    setIsLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      setIsLoading(false);
+      throw error ?? new Error('Không thể đăng nhập.');
+    }
+    return toAuthUser(data.user);
+  }, []);
+
+  const signUp = useCallback(async (name: string, email: string, password: string) => {
+    setIsLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: `${window.location.origin}/sign-in`
+      }
+    });
+    if (error) {
+      setIsLoading(false);
+      throw error;
+    }
+    return { requiresEmailConfirmation: !data.session };
+  }, []);
+
+  const signOut = useCallback(async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   }, []);
 
   const value = useMemo<AuthContextType>(() => ({
@@ -112,11 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut
   }), [user, isLoading, signIn, signUp, signOut]);
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export function useAuth(): AuthContextType {

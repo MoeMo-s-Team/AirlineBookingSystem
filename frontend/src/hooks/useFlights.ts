@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { searchFlights, FlightApiModel } from '../api/flightApi';
+import { getActiveFares, FareApiModel } from '../api/catalogApi';
 import { AIRPORTS, STANDARD_FARE_CLASSES } from '../data/mockData';
 import { Flight, FlightFilterOptions, FlightSearchParams } from '../types';
 
@@ -25,12 +26,12 @@ export function useFlights(searchParams: FlightSearchParams) {
     setIsLoading(true);
     setError(null);
 
-    searchFlights({
+    Promise.all([searchFlights({
       origin: searchParams.origin,
       destination: searchParams.destination,
       date: searchParams.departureDate
-    }, controller.signal)
-      .then(result => setFlights(result.map(toFlightViewModel)))
+    }, controller.signal), getActiveFares()])
+      .then(([result, fares]) => setFlights(result.map(flight => toFlightViewModel(flight, fares))))
       .catch(cause => {
         if (cause instanceof DOMException && cause.name === 'AbortError') return;
         setFlights([]);
@@ -103,7 +104,7 @@ export function useFlights(searchParams: FlightSearchParams) {
   };
 }
 
-function toFlightViewModel(flight: FlightApiModel): Flight {
+function toFlightViewModel(flight: FlightApiModel, fares: readonly FareApiModel[]): Flight {
   const departureAirport = AIRPORTS.find(airport => airport.code === flight.origin);
   const arrivalAirport = AIRPORTS.find(airport => airport.code === flight.destination);
   const departure = new Date(flight.departureTime);
@@ -128,24 +129,23 @@ function toFlightViewModel(flight: FlightApiModel): Flight {
     stops: 0,
     stopDetails: 'Direct Non-stop',
     aircraft: 'Aircraft not specified',
-    basePrice: flight.prices.economy ?? flight.basePrice,
+    basePrice: flight.basePrice,
     seatsAvailable: flight.availableSeats,
     onTimeRate: 'N/A',
     status: departure.getTime() > Date.now() ? 'SCHEDULED' : 'DEPARTED',
-    fareClasses: buildFareClasses(flight.prices)
+    fareClasses: buildFareClasses(flight, fares)
   };
 }
 
-function buildFareClasses(prices: Readonly<Record<string, number>>) {
-  const templatesByCode = {
-    economy: STANDARD_FARE_CLASSES[0],
-    premium: STANDARD_FARE_CLASSES[2],
-    business: STANDARD_FARE_CLASSES[3]
-  } as const;
-
-  return Object.entries(templatesByCode).flatMap(([code, template]) => {
-    const price = prices[code];
-    return price == null ? [] : [{ ...template, id: code, price }];
+function buildFareClasses(flight: FlightApiModel, fares: readonly FareApiModel[]) {
+  return fares.map(fare => {
+    const code = fare.code.toLowerCase().replace(/[^a-z]/g, '');
+    const name = fare.name.toLowerCase().replace(/[^a-z]/g, '');
+    const template = STANDARD_FARE_CLASSES.find(item => item.name.toLowerCase().replace(/[^a-z]/g, '') === name)
+      ?? [...STANDARD_FARE_CLASSES].sort((a, b) => b.tier.length - a.tier.length)
+      .find(item => code.includes(item.tier.toLowerCase().replace(/[^a-z]/g, '')))
+      ?? STANDARD_FARE_CLASSES[0];
+    return { ...template, id: String(fare.id), name: fare.name, tier: template.tier, price: flight.basePrice * fare.priceMultiplier };
   });
 }
 

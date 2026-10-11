@@ -1,5 +1,6 @@
 import React from 'react';
 import { AncillaryService } from '../../types';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface ServiceCardProps {
   readonly service: AncillaryService;
@@ -45,7 +46,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
             Service Rate
           </span>
           <span className="text-headline-sm font-bold text-primary">
-            +${service.price}
+            +{formatCurrency(service.price)}
           </span>
         </div>
 

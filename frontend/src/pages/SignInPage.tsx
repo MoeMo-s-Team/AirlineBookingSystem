@@ -27,8 +27,8 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
     setIsSubmitting(true);
     setErrorMessage('');
     try {
-      await signIn(email, password);
-      if (email.toLowerCase().includes('admin') || email === 'admin@skywing.vn') {
+      const signedInUser = await signIn(email, password);
+      if (signedInUser.role === 'admin') {
         navigate('/admin/flights', { replace: true });
       } else {
         navigate('/my-bookings', { replace: true });

@@ -18,6 +18,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +34,14 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
 
     setIsSubmitting(true);
     setErrorMessage('');
+    setConfirmationEmail(null);
     try {
-      await signUp(fullName, email, password);
-      navigate('/my-bookings');
+      const result = await signUp(fullName, email, password);
+      if (result.requiresEmailConfirmation) {
+        setConfirmationEmail(email.trim());
+      } else {
+        navigate('/my-bookings');
+      }
     } catch {
       setErrorMessage('Registration failed. Please try again.');
     } finally {
@@ -93,6 +99,34 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                 </button>
               </div>
             </div>
+          ) : confirmationEmail ? (
+            <div className="text-center space-y-6">
+              <div className="w-16 h-16 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-[34px]">mark_email_read</span>
+              </div>
+              <div>
+                <h2 className="text-headline-sm font-bold text-primary">Check your inbox</h2>
+                <p className="text-body-md text-on-surface-variant mt-2">
+                  We sent a confirmation link to <strong className="text-primary">{confirmationEmail}</strong>.
+                </p>
+                <p className="text-body-sm text-on-surface-variant mt-3">
+                  Open the email and confirm your account before signing in. Check spam or promotions if it does not arrive shortly.
+                </p>
+              </div>
+              <Link
+                to="/sign-in"
+                className="block w-full py-3 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md transition-all"
+              >
+                Go to Sign In
+              </Link>
+              <button
+                type="button"
+                onClick={() => setConfirmationEmail(null)}
+                className="text-label-md font-semibold text-primary hover:text-secondary"
+              >
+                Use a different email
+              </button>
+            </div>
           ) : (
             <>
               {errorMessage && (
@@ -101,7 +135,6 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                   <span>{errorMessage}</span>
                 </div>
               )}
-
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>

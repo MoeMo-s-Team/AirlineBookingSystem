@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { ServiceCard } from '../components/service/ServiceCard';
 import { PriceSummaryCard } from '../components/booking/PriceSummaryCard';
 import { useBookingFlow } from '../hooks/useBookingFlow';
-import { MOCK_SERVICES } from '../data/mockData';
+import { getActiveServices } from '../api/catalogApi';
+import { AncillaryService } from '../types';
 
 export interface AdditionalServicesPageProps {
   readonly onProceed?: () => void;
@@ -13,6 +14,16 @@ export interface AdditionalServicesPageProps {
 
 export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () => {
   const navigate = useNavigate();
+  const [services, setServices] = useState<AncillaryService[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    getActiveServices().then(items => setServices(items.map(item => ({
+      id: String(item.id), name: item.name,
+      category: item.type === 'PRIORITY_BOARDING' ? 'priority' : item.type.toLowerCase() as AncillaryService['category'],
+      description: item.type.replace(/_/g, ' ').toLowerCase(), price: item.price,
+      icon: item.type === 'BAGGAGE' ? 'luggage' : item.type === 'MEAL' ? 'restaurant' : item.type === 'SEAT' ? 'airline_seat_recline_normal' : 'bolt'
+    })))).catch(cause => setError(cause instanceof Error ? cause.message : 'Không tải được dịch vụ.'));
+  }, []);
   const {
     selectedFlight,
     selectedFareClass,
@@ -80,8 +91,9 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
                 </p>
               </div>
 
+              {error && <p role="alert" className="rounded-xl bg-error-container p-4 text-error">{error}</p>}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {MOCK_SERVICES.map(service => (
+                {services.map(service => (
                   <ServiceCard
                     key={service.id}
                     service={service}

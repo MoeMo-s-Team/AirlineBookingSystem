@@ -1,9 +1,5 @@
 package com.airline.infrastructure.security;
 
-import com.airline.config.SupabaseProperties;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,20 +9,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SupabaseJwtFilter extends OncePerRequestFilter {
 
-    private final SupabaseProperties supabaseProperties;
+    private final JwtDecoder supabaseJwtDecoder;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -42,28 +39,19 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            SecretKey key = Keys.hmacShaKeyFor(supabaseProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
-
-            Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
+            Jwt claims = supabaseJwtDecoder.decode(token);
             String userId = claims.getSubject();
-            String role = claims.get("role", String.class);
+            String role = claims.getClaimAsString("role");
 
             // Supabase Auth mặc định để role="authenticated", kiểm tra thêm trong app_metadata hoặc user_metadata
             if (role == null || role.isBlank() || "authenticated".equalsIgnoreCase(role)) {
-                @SuppressWarnings("unchecked")
-                java.util.Map<String, Object> appMetadata = claims.get("app_metadata", java.util.Map.class);
+                Map<String, Object> appMetadata = claims.getClaimAsMap("app_metadata");
                 if (appMetadata != null && appMetadata.containsKey("role")) {
                     role = String.valueOf(appMetadata.get("role"));
                 }
             }
             if (role == null || role.isBlank() || "authenticated".equalsIgnoreCase(role)) {
-                @SuppressWarnings("unchecked")
-                java.util.Map<String, Object> userMetadata = claims.get("user_metadata", java.util.Map.class);
+                Map<String, Object> userMetadata = claims.getClaimAsMap("user_metadata");
                 if (userMetadata != null && userMetadata.containsKey("role")) {
                     role = String.valueOf(userMetadata.get("role"));
                 }

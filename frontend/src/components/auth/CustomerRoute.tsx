@@ -15,7 +15,11 @@ export const CustomerRoute: React.FC<CustomerRouteProps> = ({ children }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return null;
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center text-on-surface-variant">
+        Loading account…
+      </main>
+    );
   }
 
   // If an Admin is logged in, isolate them to the Ops Console

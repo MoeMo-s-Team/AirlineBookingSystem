@@ -14,8 +14,10 @@ import { AdminFareClassesPage } from './pages/admin/AdminFareClassesPage';
 import { AdminServicesPage } from './pages/admin/AdminServicesPage';
 import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
 import { AdminRoute } from './components/auth/AdminRoute';
+import { AuthenticatedRoute } from './components/auth/AuthenticatedRoute';
 import { CustomerRoute } from './components/auth/CustomerRoute';
 import { AuthProvider } from './context/AuthContext';
+import { BookingFlowProvider } from './hooks/useBookingFlow';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -30,6 +32,7 @@ function ScrollToTop() {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
+      <BookingFlowProvider>
       <ScrollToTop />
       <Routes>
         {/* Passenger Experience Routes (Guarded: Admins are redirected to /admin/flights) */}
@@ -53,7 +56,7 @@ export const App: React.FC = () => {
           path="/passenger"
           element={
             <CustomerRoute>
-              <PassengerInfoPage />
+              <AuthenticatedRoute><PassengerInfoPage /></AuthenticatedRoute>
             </CustomerRoute>
           }
         />
@@ -61,7 +64,7 @@ export const App: React.FC = () => {
           path="/services"
           element={
             <CustomerRoute>
-              <AdditionalServicesPage />
+              <AuthenticatedRoute><AdditionalServicesPage /></AuthenticatedRoute>
             </CustomerRoute>
           }
         />
@@ -69,7 +72,7 @@ export const App: React.FC = () => {
           path="/checkout"
           element={
             <CustomerRoute>
-              <CheckoutPaymentPage />
+              <AuthenticatedRoute><CheckoutPaymentPage /></AuthenticatedRoute>
             </CustomerRoute>
           }
         />
@@ -77,7 +80,7 @@ export const App: React.FC = () => {
           path="/confirmation"
           element={
             <CustomerRoute>
-              <BookingConfirmationPage />
+              <AuthenticatedRoute><BookingConfirmationPage /></AuthenticatedRoute>
             </CustomerRoute>
           }
         />
@@ -85,7 +88,7 @@ export const App: React.FC = () => {
           path="/my-bookings"
           element={
             <CustomerRoute>
-              <MyBookingsPage />
+              <AuthenticatedRoute><MyBookingsPage /></AuthenticatedRoute>
             </CustomerRoute>
           }
         />
@@ -146,6 +149,7 @@ export const App: React.FC = () => {
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </BookingFlowProvider>
     </AuthProvider>
   );
 };
