@@ -17,4 +17,13 @@ class ApiResponseTest {
         assertFalse(response.isSuccess());
         assertEquals("Something went wrong", response.getMessage());
     }
+
+    @Test
+    void successWithPaginationIncludesPagination() {
+        ApiResponse<String> response = ApiResponse.successWithPagination("Hello",
+                ApiResponse.Pagination.builder().total(1).page(0).size(20).totalPages(1).build());
+
+        assertTrue(response.isSuccess());
+        assertEquals(1, response.getPagination().getTotal());
+    }
 }

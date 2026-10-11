@@ -18,6 +18,7 @@ public class ApiResponse<T> {
     private String message;
     private T data;
     private List<ValidationError> errors;
+    private Pagination pagination;
 
     @Data
     @Builder
@@ -43,10 +44,29 @@ public class ApiResponse<T> {
             .build();
     }
 
+    public static <T> ApiResponse<T> successWithPagination(T data, Pagination pagination) {
+        return ApiResponse.<T>builder()
+            .success(true)
+            .data(data)
+            .pagination(pagination)
+            .build();
+    }
+
     public static <T> ApiResponse<T> error(String message) {
         return ApiResponse.<T>builder()
             .success(false)
             .message(message)
             .build();
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Pagination {
+        private long total;
+        private int page;
+        private int size;
+        private int totalPages;
     }
 }
