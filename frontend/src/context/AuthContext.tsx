@@ -15,6 +15,8 @@ export interface AuthContextType {
   readonly isAuthenticated: boolean;
   readonly isAdmin: boolean;
   readonly isLoading: boolean;
+  /** Supabase Auth integration supplies this; the current mock session has no JWT. */
+  readonly getAccessToken?: () => Promise<string | null>;
   readonly signIn: (email: string, password: string) => Promise<boolean>;
   readonly signUp: (name: string, email: string, password: string) => Promise<boolean>;
   readonly signOut: () => void;

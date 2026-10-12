@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { NotificationBell } from '../notification/NotificationBell';
 
 export interface TopNavBarProps {
   readonly currentPath?: string;
@@ -68,14 +69,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
 
         {/* Right Action Icons & Auth Profile */}
         <div className="flex items-center gap-space-md">
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative p-space-sm text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-colors"
-          >
-            <span className="material-symbols-outlined text-[22px]">notifications</span>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary-container ring-2 ring-surface-container-lowest" />
-          </button>
+          <NotificationBell />
 
           {isAuth ? (
             <div className="relative">
