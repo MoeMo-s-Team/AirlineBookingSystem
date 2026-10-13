@@ -19,6 +19,8 @@ export interface AuthContextType {
   readonly isAdmin: boolean;
   readonly isLoading: boolean;
   readonly profileError: ApiError | null;
+  /** Supabase Auth token getter for API calls like notifications */
+  readonly getAccessToken?: () => Promise<string | null>;
   readonly signIn: (email: string, password: string) => Promise<void>;
   readonly signUp: (fullName: string, email: string, password: string) => Promise<{ confirmationRequired: boolean }>;
   readonly signOut: () => Promise<void>;
@@ -220,17 +222,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [session, fetchProfile]);
 
+  const getAccessToken = useCallback(async (): Promise<string | null> => {
+    if (sessionRef.current?.access_token) {
+      return sessionRef.current.access_token;
+    }
+    try {
+      const { data } = await supabase.auth.getSession();
+      return data.session?.access_token || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const value = useMemo<AuthContextType>(() => ({
     user,
     isAuthenticated: !!session,
     isAdmin: user?.role === 'ADMIN',
     isLoading,
     profileError,
+    getAccessToken,
     signIn,
     signUp,
     signOut,
     refreshProfile,
-  }), [session, user, isLoading, profileError, signIn, signUp, signOut, refreshProfile]);
+  }), [session, user, isLoading, profileError, getAccessToken, signIn, signUp, signOut, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>
