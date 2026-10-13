@@ -19,7 +19,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
 
   // Use props if explicitly passed, otherwise use live auth state
   const isAuth = propIsAuthenticated !== undefined ? propIsAuthenticated : authIsAuthenticated;
-  const displayName = userDisplayName || user?.name || 'Guest Traveler';
+  const displayName = userDisplayName || user?.fullName || user?.name || 'Guest Traveler';
 
   const navLinks = [
     { label: 'Book Flight', path: '/' },

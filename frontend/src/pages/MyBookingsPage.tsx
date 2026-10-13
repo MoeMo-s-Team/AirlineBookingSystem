@@ -61,7 +61,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
                 </span>
                 {isAuthenticated && user && (
                   <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container text-primary">
-                    Hội Viên {user.name}
+                    Hội Viên {user.fullName || user.name}
                   </span>
                 )}
               </div>

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class SupabaseProperties {
     private String url;
     private String publishableKey;
-    private String secretKey;
     private String jwksUrl;
+    private String issuerUri;
+    private String jwtAudience;
 }
