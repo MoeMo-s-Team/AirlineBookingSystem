@@ -1,12 +1,15 @@
 /**
  * Base API Client cho việc kết nối giữa Frontend React và Backend Spring Boot
- * Sử dụng native Fetch API, tự động gắn Base URL và JWT Token.
+ * Sử dụng native Fetch API, tự động gắn Base URL và JWT Token từ Supabase session.
  */
+
+import { supabase } from '../lib/supabase';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 export interface ApiResponse<T> {
   success: boolean;
+  code?: string;
   message?: string;
   data: T;
   timestamp?: string;
@@ -14,36 +17,21 @@ export interface ApiResponse<T> {
 
 export interface ApiError {
   status: number;
+  code?: string;
   message: string;
   timestamp?: string;
 }
 
 /**
- * Lấy Bearer Token từ storage (hỗ trợ cả Supabase Auth token và SkyWing token lưu trữ)
+ * Lấy Bearer Token từ Supabase session hiện tại
  */
-function getAuthToken(): string | null {
+async function getAuthToken(): Promise<string | null> {
   try {
-    // 1. Kiểm tra skywing token trực tiếp
-    const directToken = localStorage.getItem('skywing_token') || sessionStorage.getItem('skywing_token');
-    if (directToken) return directToken;
-
-    // 2. Kiểm tra token trong session của Supabase Auth
-    const sbKey = Object.keys(localStorage).find(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
-    if (sbKey) {
-      const parsed = JSON.parse(localStorage.getItem(sbKey) || '{}');
-      if (parsed.access_token) return parsed.access_token;
-    }
-
-    // 3. Fallback kiểm tra auth session thông thường
-    const sessionStr = sessionStorage.getItem('skywing_auth_session');
-    if (sessionStr) {
-      const parsed = JSON.parse(sessionStr);
-      if (parsed.token) return parsed.token;
-    }
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || null;
   } catch {
-    // Không ném lỗi nếu parse storage thất bại
+    return null;
   }
-  return null;
 }
 
 interface RequestOptions extends RequestInit {
@@ -70,7 +58,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   const headers = new Headers(options.headers || {});
   headers.set('Content-Type', 'application/json');
 
-  const token = getAuthToken();
+  const token = await getAuthToken();
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -87,6 +75,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     const errorMsg = data?.message || `Lỗi yêu cầu HTTP: ${response.status} ${response.statusText}`;
     const error: ApiError = {
       status: response.status,
+      code: data?.code,
       message: errorMsg,
       timestamp: data?.timestamp,
     };
