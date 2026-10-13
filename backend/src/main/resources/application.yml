@@ -23,7 +23,7 @@ supabase:
   publishable-key: ${SUPABASE_PUBLISHABLE_KEY:}
   jwks-url: ${SUPABASE_JWKS_URL:}
   issuer-uri: ${SUPABASE_ISSUER_URI:}
-  jwt-audience: ${SUPABASE_JWT_AUDIENCE:authenticated}
+  jwt-audience: ${SUPABASE_JWT_AUDIENCE}
 
 springdoc:
   api-docs:

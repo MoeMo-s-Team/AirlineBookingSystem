@@ -72,19 +72,12 @@ public class ProfileAuthorizationFilter extends OncePerRequestFilter {
             try {
                 ProfileIdentity identity = profileService.requireIdentity(userId);
 
-                ProfilePrincipal principal = ProfilePrincipal.builder()
-                        .id(identity.getId())
-                        .email(identity.getEmail())
-                        .fullName(identity.getFullName())
-                        .role(identity.getRole())
-                        .build();
-
                 List<SimpleGrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + identity.getRole())
                 );
 
                 UsernamePasswordAuthenticationToken authenticated =
-                        new UsernamePasswordAuthenticationToken(principal, jwtAuth.getToken(), authorities);
+                        new UsernamePasswordAuthenticationToken(identity, jwtAuth.getToken(), authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(authenticated);
 

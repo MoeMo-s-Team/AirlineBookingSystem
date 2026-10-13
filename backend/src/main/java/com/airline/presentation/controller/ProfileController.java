@@ -1,6 +1,6 @@
 package com.airline.presentation.controller;
 
-import com.airline.infrastructure.security.ProfilePrincipal;
+import com.airline.application.dto.ProfileIdentity;
 import com.airline.presentation.dto.response.ApiResponse;
 import com.airline.presentation.dto.response.ProfileMeResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +19,7 @@ public class ProfileController {
     @GetMapping("/me")
     @Operation(summary = "Lấy thông tin profile của người dùng hiện tại từ token")
     public ResponseEntity<ApiResponse<ProfileMeResponse>> getMyProfile(
-            @AuthenticationPrincipal ProfilePrincipal principal) {
+            @AuthenticationPrincipal ProfileIdentity principal) {
 
         ProfileMeResponse response = ProfileMeResponse.builder()
                 .id(principal.getId())

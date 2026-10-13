@@ -62,7 +62,7 @@ class ProfileAuthorizationFilterTest {
     }
 
     @Test
-    void doFilter_shouldInstallProfilePrincipal_whenProfileFound() throws Exception {
+    void doFilter_shouldInstallProfileIdentity_whenProfileFound() throws Exception {
         UUID userId = UUID.randomUUID();
         SecurityContextHolder.getContext().setAuthentication(createJwtToken(userId.toString()));
 
@@ -83,8 +83,8 @@ class ProfileAuthorizationFilterTest {
         verify(filterChain).doFilter(request, response);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(auth);
-        assertInstanceOf(ProfilePrincipal.class, auth.getPrincipal());
-        ProfilePrincipal principal = (ProfilePrincipal) auth.getPrincipal();
+        assertInstanceOf(ProfileIdentity.class, auth.getPrincipal());
+        ProfileIdentity principal = (ProfileIdentity) auth.getPrincipal();
         assertEquals(userId, principal.getId());
         assertEquals("CUSTOMER", principal.getRole());
         assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER")));

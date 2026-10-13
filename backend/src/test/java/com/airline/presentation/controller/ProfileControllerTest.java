@@ -1,6 +1,6 @@
 package com.airline.presentation.controller;
 
-import com.airline.infrastructure.security.ProfilePrincipal;
+import com.airline.application.dto.ProfileIdentity;
 import com.airline.presentation.dto.response.ApiResponse;
 import com.airline.presentation.dto.response.ProfileMeResponse;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ class ProfileControllerTest {
     void getMyProfile_shouldReturnProfile_fromAuthenticatedPrincipal() {
         ProfileController controller = new ProfileController();
         UUID userId = UUID.randomUUID();
-        ProfilePrincipal principal = ProfilePrincipal.builder()
+        ProfileIdentity principal = ProfileIdentity.builder()
                 .id(userId)
                 .email("test@airline.com")
                 .fullName("Test User")
