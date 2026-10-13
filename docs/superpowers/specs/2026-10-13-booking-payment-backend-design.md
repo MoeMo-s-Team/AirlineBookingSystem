@@ -70,7 +70,7 @@ After saving a newly created `PENDING` booking, call `BookingSubject.publishStat
 
 - Require existing flight and fare IDs; require at least one passenger; validate passenger fields and positive service quantities.
 - **Additional demo business rule (not an existing SRS Create Booking validation):** reject an inactive fare class or inactive additional service. Add this rule explicitly when synchronizing the SRS.
-- Reject requests that attempt to supply server-owned values.
+- Request DTOs do not expose server-owned fields (`userId`, `amount`, `status`). Unknown JSON fields may be ignored by the current Jackson configuration; returning `400` for them would require explicitly enabling unknown-property rejection and is not part of this design.
 - Use owner-scoped booking reads/mutations so another customer's booking is not disclosed.
 - Return `400` for request validation, `404` for missing or non-owned booking, `409` for invalid state/concurrent mutation, and preserve the existing `401`/`403` security behavior.
 - Payment methods remain the documented mock values (`CREDIT_CARD`, `BANK_TRANSFER`, `MOCK`). No card credentials are persisted.
@@ -81,7 +81,7 @@ After saving a newly created `PENDING` booking, call `BookingSubject.publishStat
 2. Implement booking create/read/history/admin list/cancel with server-side pricing and service price snapshots.
 3. Implement configured mock gateway and payment persistence/status transitions.
 4. Wire ownership/role checks, observer publication, and OpenAPI routes.
-5. Reconcile the SRS/demo API contract: remove the status-update route from both the API summary and detailed contract, remove the `PAYMENT_FAILED` retry line, document bearer/owner checks for booking detail, and mark the inactive fare/service validation as an added demo rule. Then run backend verification.
+5. Reconcile the SRS/demo API contract: remove the status-update route from both the API summary and detailed contract, remove the `PAYMENT_FAILED` retry line, document bearer/owner checks for booking detail, mark the inactive fare/service validation as an added demo rule, and change the invalid-state cancellation example from `400` to `409 Conflict`. Then run backend verification.
 
 Required tests:
 
