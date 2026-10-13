@@ -15,6 +15,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     private boolean success;
+    private String code;
     private String message;
     private T data;
     private List<ValidationError> errors;
@@ -46,6 +47,14 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> error(String message) {
         return ApiResponse.<T>builder()
             .success(false)
+            .message(message)
+            .build();
+    }
+
+    public static <T> ApiResponse<T> error(String code, String message) {
+        return ApiResponse.<T>builder()
+            .success(false)
+            .code(code)
             .message(message)
             .build();
     }
