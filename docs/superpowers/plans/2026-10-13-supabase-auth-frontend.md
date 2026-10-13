@@ -21,7 +21,8 @@
 - Support Supabase email confirmation both enabled and disabled.
 - Invalid/expired backend auth clears displayed identity; profile errors must not fall back to mock role data.
 - `onAuthStateChange` only updates the session. A session-driven effect loads `/api/profile/me` and ignores responses from older requests.
-- Route guards wait for auth bootstrap and initial profile resolution before redirecting.
+- `isLoading` covers only initial auth bootstrap and initial profile resolution. Token refresh and later profile loads run without toggling app-wide loading state.
+- Route guards wait for initial auth bootstrap before redirecting; afterward they handle profile 401, 403, and 5xx according to their distinct meanings.
 - Email confirmation returns through the app callback URL configured in Supabase's redirect allowlist.
 
 ## Review Focus
@@ -30,7 +31,8 @@
 - Clicking the confirmation link returns to `/auth/callback`; callback waits for bootstrap and profile loading before navigating, and reports callback/profile errors. Task 2 and Task 3 test this.
 - Signup with confirmation disabled returns a session and loads backend profile; Task 2 tests this.
 - A stale profile response after session change, token refresh, or signout must not overwrite the current profile. Task 2 tests these races.
-- A `/api/profile/me` backend failure is exposed as `profileError`, separately from no session, with `refreshProfile()` available to retry. Route guards wait while `isLoading` is true. Task 2 and Task 3 test this.
+- `/api/profile/me` 401 is an auth/session error and requires reauthentication; 403 means the backend profile/role is invalid and must not redirect as if signed out; 5xx retains the Supabase session and allows retry through `refreshProfile()`. Task 2 and Task 3 test these separately.
+- `isLoading` remains false during token refresh and later profile requests, including `refreshProfile()`, to avoid app-wide loading flicker. Task 2 tests this.
 - Supabase refresh changes the access token; the next API request must use the current token rather than a copied stale token. Task 2 tests this.
 - Non-email frequent flyer IDs and email strings containing `admin` must not authenticate or grant admin access; Task 3 tests email-only signin and server-sourced route role.
 
@@ -83,17 +85,17 @@
 - `AuthUser` is the backend profile shape: `{ id: string; email: string; fullName: string; role: 'CUSTOMER' | 'ADMIN' }`.
 - `AuthContextType.signIn(email: string, password: string): Promise<AuthUser>`.
 - `AuthContextType.signUp(fullName: string, email: string, password: string): Promise<{ confirmationRequired: boolean }>`.
-- `AuthContextType.profileError: ApiError | null` distinguishes profile/backend failure from no session; `refreshProfile(): Promise<void>` retries profile loading for the current session.
+- `AuthContextType.profileError: ApiError | null` exposes `/api/profile/me` errors; `refreshProfile(): Promise<void>` retries profile loading for the current session.
 - `AuthContextType.signOut(): Promise<void>`.
-- Context exposes `user`, `isAuthenticated`, `isAdmin`, and `isLoading`; `user` is populated only from `GET /api/profile/me`. `isLoading` remains true through initial session restoration and the first profile resolution.
+- Context exposes `user`, `isAuthenticated`, `isAdmin`, and `isLoading`; `user` is populated only from `GET /api/profile/me`. `isLoading` is true only until initial session restoration and the first profile resolution finish; subsequent refreshes do not toggle it.
 - API client obtains the token with `supabase.auth.getSession()` for each request and attaches `Authorization: Bearer <access_token>` when present. `ApiError` includes optional backend `code`.
 
 - [ ] **Step 1: Write failing API client tests** that assert the current session token is attached, no authorization header is added without a session, and a backend error preserves its `code`.
 - [ ] **Step 2: Run `cd frontend && pnpm test --run src/api/apiClient.test.ts`**; confirm the current storage-scanning client fails the expectations.
 - [ ] **Step 3: Implement session-based token lookup** in `apiClient.ts`; remove `skywing_token`, Supabase storage-key scanning, and fake session fallback.
-- [ ] **Step 4: Write failing AuthContext tests** for initial session restoration plus `/api/profile/me`, signin success/error, signup metadata with no role and configured `emailRedirectTo`, confirmation-required signup, signout, token refresh, 401/403 profile rejection, 5xx exposed through `profileError`, `refreshProfile()`, and stale requests resolving after a newer session or signout.
+- [ ] **Step 4: Write failing AuthContext tests** for initial session restoration plus `/api/profile/me`, signin success/error, signup metadata with no role and configured `emailRedirectTo`, confirmation-required signup, signout, token refresh without toggling `isLoading`, distinct 401 auth/session handling, 403 invalid-profile handling, 5xx retaining session with `profileError`, silent `refreshProfile()`, and stale requests resolving after a newer session or signout.
 - [ ] **Step 5: Run `cd frontend && pnpm test --run src/context/AuthContext.test.tsx`**; confirm mock-based auth cannot satisfy the cases.
-- [ ] **Step 6: Implement AuthContext with `getSession` and `onAuthStateChange`**, Supabase `signInWithPassword`, `signUp({ options: { data: { full_name }, emailRedirectTo } })`, and `signOut`. The auth listener only sets session state; a `useEffect` keyed to session loads identity from `/api/profile/me`. Use a request generation ID or `AbortController` so responses from an older session/request cannot update profile state after session change, token refresh, or signout. Clear profile/error when session becomes null. Expose profile failures through `profileError`, and let `refreshProfile()` retry for the current session. Never decode role from JWT or metadata. A failed profile lookup clears displayed identity but retains the Supabase session; do not convert backend failures into unauthenticated state or a fallback role.
+- [ ] **Step 6: Implement AuthContext with `getSession` and `onAuthStateChange`**, Supabase `signInWithPassword`, `signUp({ options: { data: { full_name }, emailRedirectTo } })`, and `signOut`. The auth listener only sets session state; a `useEffect` keyed to session loads identity from `/api/profile/me`. Use a request generation ID or `AbortController` so responses from an older session/request cannot update profile state after session change, token refresh, or signout. Set `isLoading` only during initial session restoration and its first profile resolution; token refresh and all later profile fetches, including `refreshProfile()`, run without toggling it. Clear profile/error when session becomes null. For `/api/profile/me` 401, clear displayed identity and treat it as an invalid/expired auth session so guards require signin. For 403, clear displayed identity and surface an invalid backend profile/role error without treating the user as signed out. For 5xx, clear displayed identity, retain the Supabase session, expose `profileError`, and allow retry. Never decode role from JWT or metadata or fall back to a role.
 - [ ] **Step 7: Run `cd frontend && pnpm test --run src/api/apiClient.test.ts src/context/AuthContext.test.tsx && pnpm build`**; session/token tests and production build pass.
 - [ ] **Step 8: Commit** with `feat: connect Supabase sessions to backend profile`.
 
@@ -122,7 +124,7 @@
 - [ ] **Step 2: Write failing signup, callback, and route guard tests** for confirmation-required message/no navigation, immediate-session navigation, Supabase error display, callback loading while `isLoading`, successful profile resolution followed by navigation, callback/profile error display, and protected routes remaining on a loading view (without redirect) until `isLoading` becomes false.
 - [ ] **Step 3: Run `cd frontend && pnpm test --run src/pages/SignInPage.test.tsx src/pages/SignUpPage.test.tsx src/pages/AuthCallbackPage.test.tsx src/components/auth/AuthRoutes.test.tsx`**; confirm current heuristic redirects, unconditional signup navigation, missing callback handling, and premature route redirects fail.
 - [ ] **Step 4: Update signin/signup pages and add the callback route/page** to use the Task 2 method contracts. Make signin email-only; navigate by the returned profile role; show confirmation instructions when `confirmationRequired` is true. Signup passes the configured callback URL. The callback relies on Supabase JS session restoration, waits while `isLoading`, then navigates after profile resolution or shows the available error; it does not parse or trust tokens manually from the URL.
-- [ ] **Step 5: Update route guards and shared UI** for uppercase `CUSTOMER`/`ADMIN`, `fullName`, and async signout. Guards render a loading state while `isLoading`; they must not redirect to signin during bootstrap. When profile resolution failed, show the profile error and retry action rather than treating it as a missing session. Remove email-based role selection and mock-only frequent-flyer/tier displays from auth surfaces; keep unrelated mock booking data untouched.
+- [ ] **Step 5: Update route guards and shared UI** for uppercase `CUSTOMER`/`ADMIN`, `fullName`, and async signout. Guards render a loading state only during initial bootstrap; afterward, 401 routes to signin, 403 shows the invalid-profile error, and 5xx shows the profile error with retry without signing out. Remove email-based role selection and mock-only frequent-flyer/tier displays from auth surfaces; keep unrelated mock booking data untouched.
 - [ ] **Step 6: Run `cd frontend && pnpm test --run src/pages/SignInPage.test.tsx src/pages/SignUpPage.test.tsx src/pages/AuthCallbackPage.test.tsx src/components/auth/AuthRoutes.test.tsx && pnpm build`**; auth, callback, route guard tests and production build pass.
 - [ ] **Step 7: Commit** with `feat: use Supabase identity in auth screens`.
 
