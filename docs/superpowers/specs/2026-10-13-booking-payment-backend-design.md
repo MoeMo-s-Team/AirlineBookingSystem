@@ -1,11 +1,11 @@
 # Booking and Payment Backend Design
 
 **Date:** 2026-10-13  
-**Status:** Conversational design approved; awaiting written spec review
+**Status:** Approved
 
 ## Goal
 
-Implement the backend business flow for booking creation, lookup, cancellation, and mock payment in the existing Spring Boot application. Keep the existing layer boundaries, Supabase JWT authentication, pricing strategy, and booking notification observer.
+Implement the backend business flow for booking creation, lookup, cancellation, and mock payment in the existing Spring Boot application. Keep the existing layer boundaries, Supabase JWT authentication, database-backed fare pricing used by `FlightService`, and booking notification observer.
 
 ## Scope
 
@@ -27,7 +27,7 @@ Out of scope: real payment processing, retries, refunds, webhooks, seat holds/in
 - Add a small State Pattern implementation under `pattern/state`; no booking state package exists in the current source tree.
 - Reuse `BookingSubject` and `InAppNotificationObserver`. Add a small `MockPaymentGateway` whose outcome comes from backend configuration and defaults to `SUCCESS`.
 
-The authenticated Supabase profile UUID is the source of customer ownership. Client requests never supply `userId`, amount, or booking/payment status. Admin listing requires the existing `ADMIN` role.
+The authenticated Supabase profile UUID is the source of customer ownership. Mutation request bodies never supply server-owned `userId`, amount, or booking/payment status; admin/list endpoints may accept `userId` and `status` as query filters. Admin listing requires the existing `ADMIN` role.
 
 ## API and data contract
 
@@ -46,7 +46,7 @@ Do not expose `PATCH /api/bookings/{id}/status` in this demo. Payment success/fa
 
 `GET /api/bookings/{id}` requires `Authorization: Bearer <access_token>`. The backend returns a booking only to its owner; another user's booking ID returns `404`.
 
-Booking create accepts flight/fare IDs, passenger details, and optional service IDs with quantities. The backend loads current flight, fare, and active service prices, calculates the total, and snapshots each selected service's unit price in `booking_services`. Payment create accepts only `bookingId` and `paymentMethod`; amount comes from `Booking.totalPrice`.
+Booking create accepts flight/fare IDs, passenger details, and optional service IDs with quantities. The backend loads the flight, active fare class, and active services from DB, calculates the total using the selected fare's database `priceMultiplier` (as `FlightService` does), and snapshots each selected service's unit price in `booking_services`. Payment create accepts only `bookingId` and `paymentMethod`; amount comes from `Booking.totalPrice`.
 
 Persist to the existing `bookings`, `passengers`, `booking_services`, and `payments` schema. The current entities and init schema cover the required fields, so no database migration is expected. Booking price is the sum of each passenger's flight base price multiplied by the selected fare multiplier, plus each service snapshot price multiplied by quantity.
 
