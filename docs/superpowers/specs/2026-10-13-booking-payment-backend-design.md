@@ -14,7 +14,7 @@ Implement the backend business flow for booking creation, lookup, cancellation, 
 - Customer pays for their own pending booking through a mock gateway.
 - The backend calculates and persists booking and payment amounts.
 - Booking status changes use the State Pattern and publish existing observer notifications.
-- Reconcile the SRS/API documentation with the agreed demo behavior: remove the admin status-update endpoint and remove the PAYMENT_FAILED retry rule.
+- Reconcile the SRS/API documentation with the agreed demo behavior: remove `PATCH /api/bookings/{id}/status` from both the endpoint summary and detailed contract, remove the `PAYMENT_FAILED` retry line from the detailed contract, and document bearer authentication plus owner-only access for booking detail.
 
 Out of scope: real payment processing, retries, refunds, webhooks, seat holds/inventory updates, frontend changes, email/SMS, and payment idempotency keys.
 
@@ -36,13 +36,15 @@ Keep these SRS routes in the demo:
 | Method | Route | Access |
 | --- | --- | --- |
 | POST | `/api/bookings` | Customer |
-| GET | `/api/bookings/{id}` | Owning customer |
+| GET | `/api/bookings/{id}` | Bearer token; owning customer only |
 | GET | `/api/bookings/me` | Customer; optional status filter |
 | PATCH | `/api/bookings/{id}/cancel` | Owning customer; only while `PENDING` |
 | GET | `/api/bookings` | Admin; status/user filters and pagination |
 | POST | `/api/payments` | Owning customer; booking must be `PENDING` |
 
 Do not expose `PATCH /api/bookings/{id}/status` in this demo. Payment success/failure and pending-only cancellation are the only status mutation paths.
+
+`GET /api/bookings/{id}` requires `Authorization: Bearer <access_token>`. The backend returns a booking only to its owner; another user's booking ID returns `404`.
 
 Booking create accepts flight/fare IDs, passenger details, and optional service IDs with quantities. The backend loads current flight, fare, and active service prices, calculates the total, and snapshots each selected service's unit price in `booking_services`. Payment create accepts only `bookingId` and `paymentMethod`; amount comes from `Booking.totalPrice`.
 
@@ -66,8 +68,9 @@ After saving a newly created `PENDING` booking, call `BookingSubject.publishStat
 
 ## Validation and errors
 
-- Require an existing flight and fare class; require at least one passenger; validate passenger fields and positive service quantities.
-- Reject inactive selected services and requests that attempt to supply server-owned values.
+- Require existing flight and fare IDs; require at least one passenger; validate passenger fields and positive service quantities.
+- **Additional demo business rule (not an existing SRS Create Booking validation):** reject an inactive fare class or inactive additional service. Add this rule explicitly when synchronizing the SRS.
+- Reject requests that attempt to supply server-owned values.
 - Use owner-scoped booking reads/mutations so another customer's booking is not disclosed.
 - Return `400` for request validation, `404` for missing or non-owned booking, `409` for invalid state/concurrent mutation, and preserve the existing `401`/`403` security behavior.
 - Payment methods remain the documented mock values (`CREDIT_CARD`, `BANK_TRANSFER`, `MOCK`). No card credentials are persisted.
@@ -78,11 +81,11 @@ After saving a newly created `PENDING` booking, call `BookingSubject.publishStat
 2. Implement booking create/read/history/admin list/cancel with server-side pricing and service price snapshots.
 3. Implement configured mock gateway and payment persistence/status transitions.
 4. Wire ownership/role checks, observer publication, and OpenAPI routes.
-5. Reconcile the SRS/demo API contract, then run backend verification.
+5. Reconcile the SRS/demo API contract: remove the status-update route from both the API summary and detailed contract, remove the `PAYMENT_FAILED` retry line, document bearer/owner checks for booking detail, and mark the inactive fare/service validation as an added demo rule. Then run backend verification.
 
 Required tests:
 
-- Booking creation rejects invalid references/passengers/quantities, calculates price from persisted prices, and snapshots service unit prices.
+- Booking creation rejects invalid references/passengers/quantities and inactive fare/services, calculates price from persisted prices, and snapshots service unit prices.
 - Customer cannot read, cancel, or pay for another user's booking; admin listing requires `ADMIN`.
 - Only `PENDING` can be cancelled or paid. Payment success confirms; failure persists `PAYMENT_FAILED`; subsequent payment attempts are rejected.
 - Pay and cancel submitted concurrently for one pending booking result in exactly one successful operation.
