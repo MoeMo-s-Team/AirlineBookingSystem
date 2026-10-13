@@ -62,9 +62,9 @@ PENDING → CANCELLED       customer cancellation (terminal)
 
 `PaymentService` accepts only a `PENDING` booking. A failed payment attempt is persisted with `PaymentStatus.FAILED`, and the booking becomes terminal `PAYMENT_FAILED`; no retry path exists. A successful attempt is persisted with `PaymentStatus.SUCCESS` and confirms the booking.
 
-Create booking, payment, and cancellation each run in a database transaction. Payment and cancellation lock the booking row before checking ownership/status. This makes concurrent pay/cancel serialize: whichever commits first succeeds; the other sees a non-pending booking and fails with conflict. A failed gateway result is a normal committed business outcome. Unexpected persistence/observer errors roll back the booking/payment/notification changes together.
+Create booking, payment, and cancellation each run in a database transaction. Payment and cancellation use one repository query that filters by both booking ID and owner UUID and applies `PESSIMISTIC_WRITE` (for example, `findByIdAndUserIdForUpdate`, implemented against `Booking.user.id`). This avoids locking a booking row for a non-owner request. Concurrent pay/cancel serialize on the owned row: whichever commits first succeeds; the other sees a non-pending booking and fails with conflict. A failed gateway result is a normal committed business outcome. Unexpected persistence/observer errors roll back the booking/payment/notification changes together.
 
-After saving a newly created `PENDING` booking, call `BookingSubject.publishStatusChanged(booking, null)` once. For cancellation/payment, publish only after a real status change is persisted. A no-op transition emits no event. A single actual transition produces one notification; duplicate notification persistence across independently repeated observer invocations is not an idempotency feature in this scope.
+After saving a newly created `PENDING` booking, call `BookingSubject.publishStatusChanged(booking, null)` once. For cancellation/payment, publish only after a real status change is persisted. A no-op transition emits no event, consistent with `docs/NOTIFICATION_INTEGRATION.md`. Each service operation that causes one real status transition publishes once and persists exactly one notification. This does not add observer idempotency across independently repeated invocations.
 
 ## Validation and errors
 
@@ -88,8 +88,8 @@ Required tests:
 - Booking creation rejects invalid references/passengers/quantities and inactive fare/services, calculates price from persisted prices, and snapshots service unit prices.
 - Customer cannot read, cancel, or pay for another user's booking; admin listing requires `ADMIN`.
 - Only `PENDING` can be cancelled or paid. Payment success confirms; failure persists `PAYMENT_FAILED`; subsequent payment attempts are rejected.
-- Pay and cancel submitted concurrently for one pending booking result in exactly one successful operation.
-- Booking creation publishes once with `oldStatus = null`; an unchanged status publishes no event; a single real transition creates one notification and no duplicate notification.
+- Pay and cancel submitted concurrently for one pending booking result in exactly one successful operation; the locked repository query filters by booking ID and owner UUID together.
+- Each service operation that causes one real status transition publishes/persists exactly one notification. Booking creation uses `oldStatus = null`; an unchanged status publishes nothing, matching `docs/NOTIFICATION_INTEGRATION.md`.
 - Mock result configuration defaults to `SUCCESS` and exercises both success/failure paths.
 
 The repository currently has no test database configuration. The concurrency test must run against PostgreSQL (preferably an isolated PostgreSQL Testcontainers fixture) so it verifies the row-lock behavior used by Supabase PostgreSQL.
