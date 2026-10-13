@@ -26,7 +26,7 @@ Thay đăng nhập/đăng ký mô phỏng bằng Supabase Auth thật, theo hai 
 
 Frontend giao tiếp trực tiếp với Supabase Auth cho thao tác có password. Backend không nhận, lưu hoặc chuyển tiếp password. Supabase phát hành access token; frontend gửi token đó trong header `Authorization: Bearer …` khi gọi endpoint được bảo vệ.
 
-Security flow theo thứ tự: (1) xác minh chữ ký JWT bằng Supabase JWKS và kiểm tra issuer, audience, thời hạn; (2) lấy UUID từ `sub`; (3) query `Profile` và quan hệ `Role` theo UUID; (4) tạo authority `ROLE_CUSTOMER` hoặc `ROLE_ADMIN` từ role trong database. Không query profile trước khi token được xác minh. Backend không lấy quyền từ `user_metadata`, `app_metadata` hoặc claim role của token.
+Security flow theo thứ tự trên các protected routes: (1) xác minh chữ ký JWT bằng Supabase JWKS và kiểm tra issuer, audience, thời hạn; (2) lấy UUID từ `sub`; (3) query `Profile` và quan hệ `Role` theo UUID; (4) tạo authority `ROLE_CUSTOMER` hoặc `ROLE_ADMIN` từ role trong database. `ProfileAuthorizationFilter` chỉ chạy trên protected routes; public GET và Swagger/API docs được bỏ qua, kể cả request public có bearer token hợp lệ. Không query profile trước khi token được xác minh. Backend không lấy quyền từ `user_metadata`, `app_metadata` hoặc claim role của token.
 
 Sử dụng Spring Security OAuth2 Resource Server/Nimbus để xác minh JWT và tải JWKS, thay cho việc tự viết tải khóa/cache JWKS. Cấu hình issuer/JWKS phải trỏ đúng project Supabase. `SUPABASE_JWT_AUDIENCE` là cấu hình bắt buộc theo môi trường, không hard-code audience trong code. Project cần phát hành user access token bằng signing key được công bố qua JWKS; không âm thầm fallback sang secret khi JWKS không xác minh được token.
 
@@ -41,8 +41,9 @@ Mỗi request được bảo vệ tra role của `sub` từ database để thay 
 - Trả `ApiResponse` hiện có với `id`, `email`, `fullName`, `role`.
 - Không chấp nhận user ID từ query, path hoặc body; người dùng chỉ đọc hồ sơ của chính mình.
 - JWT sai chữ ký, sai issuer/audience hoặc hết hạn trả `401 Unauthorized`.
+- JWT thiếu trên protected route cũng trả `401 Unauthorized`; mọi `401` dùng JSON `ApiResponse` có `success: false`, `code: "UNAUTHORIZED"` và thông điệp lỗi.
 - JWT hợp lệ nhưng không có profile trả `403 Forbidden` với mã lỗi `PROFILE_NOT_FOUND`; role thiếu/không hợp lệ trả `403 Forbidden` với mã `PROFILE_ROLE_INVALID`.
-- Lỗi database nội bộ trả lỗi server `5xx`, không giả thành profile thiếu.
+- Lỗi database trong security filter trả `5xx` với mã `PROFILE_LOOKUP_FAILED`; không biến thành `403`, không tạo authority và không fallback sang `CUSTOMER`.
 - Error response thêm trường `code` vào cấu trúc `ApiResponse` hiện tại; success responses giữ nguyên. Mã xác thực dùng các giá trị ổn định trên, không suy luận từ chuỗi `message`.
 
 ### Phân loại route
@@ -82,8 +83,9 @@ Phạm vi:
 Điều kiện hoàn tất giai đoạn:
 
 - JWT hợp lệ của user hiện có xác thực được; `/api/profile/me` trả đúng profile và role.
-- Token thiếu trên route cần auth, sai chữ ký, sai issuer/audience hoặc hết hạn bị từ chối với `401`; test audience đúng và sai.
+- Token thiếu trên route cần auth, sai chữ ký, sai issuer/audience hoặc hết hạn bị từ chối với JSON `401` theo `ApiResponse`; test audience đúng và sai.
 - JWT hợp lệ nhưng thiếu profile trả `403 PROFILE_NOT_FOUND`; role thiếu/không hợp lệ trả `403 PROFILE_ROLE_INVALID`; metadata/claim role không làm thay đổi quyền.
+- Lỗi database khi filter tra profile trả `5xx PROFILE_LOOKUP_FAILED`; public GET không gọi profile lookup.
 - Customer không gọi được endpoint admin; admin có role trong database gọi được.
 - Kiểm tra được độc lập bằng token Supabase thật qua Swagger/curl.
 
@@ -110,8 +112,9 @@ Phạm vi:
 
 ## Lỗi và ranh giới tin cậy
 
-- JWT thiếu trên route cần auth, sai chữ ký, sai issuer/audience hoặc hết hạn: trả `401`.
+- JWT thiếu trên protected route, sai chữ ký, sai issuer/audience hoặc hết hạn: trả JSON `401` theo `ApiResponse` với `code=UNAUTHORIZED`.
 - JWT hợp lệ nhưng profile không tồn tại: trả `403` với `PROFILE_NOT_FOUND`; role không hợp lệ: trả `403` với `PROFILE_ROLE_INVALID`; không cấp role fallback.
+- Lỗi database khi filter tra profile: trả `5xx` với `PROFILE_LOOKUP_FAILED`; không trả `403` hoặc gán `ROLE_CUSTOMER`.
 - Lỗi signup từ Supabase hoặc trigger profile được hiển thị qua UI; không giả định signup thành công khi Supabase trả lỗi.
 - Lỗi tải `/api/profile/me` không được thay bằng role suy đoán từ email hoặc metadata.
 - Frontend chỉ dùng publishable/anon key. Supabase service role key và signing key chỉ nằm phía server hoặc dashboard.

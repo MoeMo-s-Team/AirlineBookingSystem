@@ -23,10 +23,10 @@
 
 ## Review Focus
 
-- Invalid signature, issuer, audience, or expiration must return `401` before profile lookup; Task 2 tests each validator, including configured audience match and mismatch.
+- Invalid/missing/expired JWT on protected routes must return JSON `401` with `ApiResponse.code=UNAUTHORIZED` before profile lookup; Task 2 tests each validator, audience match/mismatch, and the response body.
 - A verified `sub` without a profile must return `403 PROFILE_NOT_FOUND`; Task 1 tests missing profile and Task 2 tests the HTTP error response.
 - A profile with missing or unknown role must return `403 PROFILE_ROLE_INVALID` without any authority; Task 1 and Task 2 test this.
-- A database outage during profile lookup must return `5xx`, never a synthetic customer profile; Task 2 tests this failure path.
+- A database outage during profile lookup must return `5xx PROFILE_LOOKUP_FAILED`, never `403` or a synthetic customer profile; Task 2 tests this failure path and asserts no authority is installed.
 - A role changed in the database must affect the next request even when the token has not changed; Task 3 sends the same JWT across two requests while the profile role changes and verifies customer/admin route authorization.
 
 ---
@@ -35,7 +35,7 @@
 
 - Modify `backend/pom.xml`: add Spring Security OAuth2 Resource Server; remove JJWT after deleting its two remaining production uses.
 - Modify `backend/src/main/resources/application.yml` and `backend/src/main/java/com/airline/config/SupabaseProperties.java`: require issuer URI, JWKS URL, and audience settings.
-- Modify `backend/src/main/java/com/airline/config/SecurityConfig.java`: configure JWT validation, profile filter order, and request authorization.
+- Modify `backend/src/main/java/com/airline/config/SecurityConfig.java`: configure JWT validation, a JSON `ApiResponse` authentication entry point, profile filter order, and request authorization.
 - Delete `backend/src/main/java/com/airline/infrastructure/security/SupabaseJwtFilter.java`; create `ProfileAuthorizationFilter.java` and `ProfilePrincipal.java` in the same package.
 - Create `backend/src/main/java/com/airline/domain/repository/ProfileRepository.java` and `backend/src/main/java/com/airline/application/service/ProfileService.java`; create `application/dto/ProfileIdentity.java` and `application/exception/ProfileAuthorizationException.java`.
 - Modify `backend/src/main/java/com/airline/presentation/dto/response/ApiResponse.java` to carry stable error codes; create `presentation/dto/response/ProfileMeResponse.java` and `presentation/controller/ProfileController.java`.
@@ -78,22 +78,26 @@
 - Delete: `backend/src/test/java/com/airline/infrastructure/security/SupabaseJwtFilterTest.java`
 - Create: `backend/src/test/java/com/airline/infrastructure/security/SupabaseJwtDecoderTest.java`
 - Create: `backend/src/test/java/com/airline/infrastructure/security/ProfileAuthorizationFilterTest.java`
+- Create: `backend/src/test/java/com/airline/infrastructure/security/SupabaseSecurityIntegrationTest.java`
 
 **Interfaces:**
 - Consumes `ProfileService.requireIdentity(UUID)` from Task 1.
 - Produces a `JwtDecoder` backed by configured JWKS and validators for configured issuer, configured audience, and default timestamp rules.
 - Produces `ProfilePrincipal(UUID id, String email, String fullName, String role)` and authentication authorities derived from its database role.
 - Produces `ApiResponse.error(String code, String message)` while keeping existing success response fields unchanged.
+- Protected routes use an `AuthenticationEntryPoint` that returns `401` JSON: `success=false`, `code="UNAUTHORIZED"`, and a stable message.
+- `ProfileAuthorizationFilter.shouldNotFilter` skips Swagger/API docs and public GET flights/fares/services routes, explicitly excluding admin `/all` routes; a valid bearer on a public GET must not trigger profile lookup.
 
 - [ ] **Step 1: Write failing decoder tests** for configured issuer/audience success, wrong issuer, audience mismatch, expired token, and a signature not matching the configured JWKS. Generate a temporary RSA signing key and serve its JWK Set from a local JDK HTTP server in the test.
 - [ ] **Step 2: Run `cd backend && mvn -Dtest=SupabaseJwtDecoderTest test`**; confirm these cases fail against the current HS256-only filter.
 - [ ] **Step 3: Configure Resource Server JWT verification** with required `SUPABASE_ISSUER_URI`, `SUPABASE_JWKS_URL`, and `SUPABASE_JWT_AUDIENCE`; audience comes only from configuration. Add the Resource Server starter and remove the obsolete JJWT dependencies after deleting their production call sites.
-- [ ] **Step 4: Write failing filter tests** for authenticated profile resolution, `403 PROFILE_NOT_FOUND`, `403 PROFILE_ROLE_INVALID`, and database failure returning `5xx`; assert profile lookup occurs only after a verified `JwtAuthenticationToken` reaches the filter.
-- [ ] **Step 5: Add a resource-server integration assertion** that invalid signature, issuer, audience, or expiration returns `401` and never calls `ProfileService`.
-- [ ] **Step 6: Implement `ProfileAuthorizationFilter` after `BearerTokenAuthenticationFilter`**. Parse the verified `sub`, resolve `ProfileIdentity`, install a `ProfilePrincipal` with exactly `ROLE_CUSTOMER` or `ROLE_ADMIN`, or write the specified error response and stop the chain.
-- [ ] **Step 7: Remove `/api/fares/dev-token` and its JJWT imports**; remove the obsolete `secret-key` property from backend auth configuration. Invalid bearer tokens remain `401` through Resource Server's authentication entry point.
-- [ ] **Step 8: Run `cd backend && mvn -Dtest=SupabaseJwtDecoderTest,ProfileAuthorizationFilterTest test`**; all signature, issuer, audience, expiration, profile, role, and database-failure cases pass.
-- [ ] **Step 9: Commit** with `feat: verify Supabase JWTs and load database roles`.
+- [ ] **Step 4: Write failing filter tests** for authenticated profile resolution, `403 PROFILE_NOT_FOUND`, `403 PROFILE_ROLE_INVALID`, and database failure returning `5xx PROFILE_LOOKUP_FAILED`; assert lookup occurs only after a verified `JwtAuthenticationToken` reaches a protected route, and database failure stops the chain without authority.
+- [ ] **Step 5: Add security integration tests**: missing, invalid signature, issuer, audience, and expiration on protected routes return JSON `401` with `code=UNAUTHORIZED` and never call `ProfileService`; a public GET with a valid bearer token succeeds without profile lookup.
+- [ ] **Step 6: Implement `ProfileAuthorizationFilter` after `BearerTokenAuthenticationFilter`**. Parse the verified `sub` only for protected routes, resolve `ProfileIdentity`, install a `ProfilePrincipal` with exactly `ROLE_CUSTOMER` or `ROLE_ADMIN`, or write the specified 403/5xx JSON response and stop the chain. Catch `ProfileAuthorizationException` separately from `DataAccessException`; database exceptions return `5xx PROFILE_LOOKUP_FAILED`, never 403 or a customer fallback.
+- [ ] **Step 7: Configure a JSON `AuthenticationEntryPoint`** in `SecurityConfig` for missing/invalid credentials on protected routes, returning `ApiResponse.error("UNAUTHORIZED", message)` with status 401. Keep public GET and docs routes out of profile resolution; ensure `/api/fares/all` and `/api/services/all` remain protected despite the public GET matchers.
+- [ ] **Step 8: Remove `/api/fares/dev-token` and its JJWT imports**; remove the obsolete `secret-key` property from backend auth configuration. Remove JJWT dependencies after confirming there are no remaining production or test references.
+- [ ] **Step 9: Run `cd backend && mvn -Dtest=SupabaseJwtDecoderTest,ProfileAuthorizationFilterTest,SupabaseSecurityIntegrationTest test`**; all JWT, filter ordering, public-route bypass, stable JSON error, profile, role, and database-failure cases pass.
+- [ ] **Step 10: Commit** with `feat: verify Supabase JWTs and load database roles`.
 
 ## Task 3: Expose current profile and enforce the route matrix
 
