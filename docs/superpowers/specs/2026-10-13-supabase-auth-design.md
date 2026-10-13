@@ -95,12 +95,17 @@ Phạm vi:
 
 - Cài `@supabase/supabase-js`; khởi tạo client từ `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY` (hoặc publishable key tương ứng).
 - Thay mock `AuthContext` bằng `supabase.auth.signUp`, `signInWithPassword`, `signOut`, `getSession` và listener thay đổi auth state.
+- Callback `onAuthStateChange` chỉ cập nhật session state, không `await` hoặc gọi API. Một `useEffect` theo session sẽ gọi `/api/profile/me`.
+- Bảo vệ profile state khỏi response cũ khi session/user đổi, access token refresh hoặc signout bằng request generation ID hoặc `AbortController`.
+- `AuthContext` cung cấp `profileError` và `refreshProfile()` để UI phân biệt chưa đăng nhập với backend không tải được profile.
 - Signup gửi `full_name` qua user metadata để trigger database tạo profile. Role không gửi từ client.
 - Sau khi có session, gọi `GET /api/profile/me`; role dùng cho route guard, menu admin và hiển thị user lấy từ response backend.
 - API client lấy `access_token` từ session Supabase hiện tại, chỉ gắn Bearer token khi có session; bỏ token giả và fallback storage tự quản lý.
 - Giữ hành vi đăng xuất đồng bộ với Supabase và cập nhật UI qua listener session.
 - Xóa tài khoản mock và mọi logic tự gán `admin` theo email hoặc nội dung người dùng.
 - Hỗ trợ cả hai cấu hình xác nhận email: khi signup không trả session, hiển thị hướng dẫn xác nhận email; khi có session, tải profile và tiếp tục.
+- Signup đặt `emailRedirectTo` trỏ về route callback trong app; callback chờ auth bootstrap, sau đó xử lý session/profile và chuyển tiếp hoặc hiển thị lỗi. URL callback phải nằm trong allowlist của Supabase.
+- Route guards phải chờ auth bootstrap và lần profile resolution ban đầu hoàn tất; không redirect khi `isLoading` còn true.
 
 Điều kiện hoàn tất giai đoạn:
 
