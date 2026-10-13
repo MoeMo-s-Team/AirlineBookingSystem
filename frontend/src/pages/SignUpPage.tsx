@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
@@ -10,7 +10,7 @@ export interface SignUpPageProps {
 
 export const SignUpPage: React.FC<SignUpPageProps> = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, signUp, signOut } = useAuth();
+  const { user, isAuthenticated, signUp, signOut, profileError, refreshProfile } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,6 +18,19 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+  const [awaitingProfile, setAwaitingProfile] = useState(false);
+
+  useEffect(() => {
+    if (awaitingProfile && user) navigate('/my-bookings', { replace: true });
+  }, [awaitingProfile, user, navigate]);
+
+  useEffect(() => {
+    if (profileError) {
+      setAwaitingProfile(false);
+      setErrorMessage(profileError.message);
+    }
+  }, [profileError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +46,16 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
 
     setIsSubmitting(true);
     setErrorMessage('');
+    setInfoMessage('');
     try {
-      await signUp(fullName, email, password);
-      navigate('/my-bookings');
-    } catch {
-      setErrorMessage('Registration failed. Please try again.');
+      const res = await signUp(fullName, email, password);
+      if (res.confirmationRequired) {
+        setInfoMessage('Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản của bạn trước khi đăng nhập.');
+      } else {
+        setAwaitingProfile(true);
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -66,14 +84,14 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
           {isAuthenticated && user ? (
             <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-primary text-on-primary font-bold text-lg flex items-center justify-center mx-auto">
-                {user.name.charAt(0)}
+                {(user.fullName || user.email).charAt(0).toUpperCase()}
               </div>
               <div>
                 <span className="text-label-md font-bold text-primary block">
-                  You are already enrolled as {user.name}
+                  You are already enrolled as {user.fullName}
                 </span>
                 <span className="text-[12px] text-on-surface-variant block">
-                  Member ID: {user.frequentFlyerNumber || 'SW-GOLD-88910'}
+                  {user.email}
                 </span>
               </div>
               <div className="flex items-center justify-center gap-3 pt-2">
@@ -99,16 +117,29 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                 <div className="mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-body-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">error</span>
                   <span>{errorMessage}</span>
+                  {profileError?.status && profileError.status >= 500 && (
+                    <button type="button" onClick={() => void refreshProfile()} className="ml-auto underline">
+                      Retry
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {infoMessage && (
+                <div className="mb-4 p-4 rounded-xl bg-secondary-container/30 border border-secondary/30 text-on-surface text-body-sm flex items-start gap-3">
+                  <span className="material-symbols-outlined text-[20px] text-secondary mt-0.5">mark_email_read</span>
+                  <span>{infoMessage}</span>
                 </div>
               )}
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
+                  <label htmlFor="fullName" className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
                     Full Name (As on Passport) *
                   </label>
                   <input
+                    id="fullName"
                     type="text"
                     placeholder="e.g. Tran Thi Mai"
                     value={fullName}
@@ -119,10 +150,11 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                 </div>
 
                 <div>
-                  <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
+                  <label htmlFor="email" className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
                     Email Address *
                   </label>
                   <input
+                    id="email"
                     type="email"
                     placeholder="traveler@email.com"
                     value={email}
@@ -133,10 +165,11 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                 </div>
 
                 <div>
-                  <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
+                  <label htmlFor="password" className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
                     Create Secure Password *
                   </label>
                   <input
+                    id="password"
                     type="password"
                     placeholder="At least 8 characters"
                     value={password}
@@ -147,10 +180,11 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                 </div>
 
                 <div>
-                  <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
+                  <label htmlFor="confirmPassword" className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
                     Confirm Password *
                   </label>
                   <input
+                    id="confirmPassword"
                     type="password"
                     placeholder="Re-enter your password"
                     value={confirmPassword}

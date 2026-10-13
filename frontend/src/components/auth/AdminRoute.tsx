@@ -7,7 +7,7 @@ export interface AdminRouteProps {
 }
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, profileError, refreshProfile } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -30,8 +30,38 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
+  if (profileError) {
+    return (
+      <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-surface-container-lowest border border-error/30 rounded-3xl p-8 text-center shadow-xl">
+          <h1 className="text-headline-md font-bold text-error tracking-tight">
+            {profileError.status === 403 ? 'Invalid account profile' : 'Could not load your profile'}
+          </h1>
+          <p className="text-body-sm text-on-surface-variant mt-2 mb-6">{profileError.message}</p>
+          {profileError.status >= 500 && (
+            <button
+              type="button"
+              onClick={() => void refreshProfile()}
+              className="w-full py-2.5 rounded-xl bg-primary text-on-primary text-label-md font-bold hover:bg-primary-container transition-colors"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-surface-container-low flex items-center justify-center">
+        <span className="text-label-md font-semibold text-primary">Loading profile...</span>
+      </div>
+    );
+  }
+
   // Logged in as customer -> Access Denied / Unauthorized for Admin Portal
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-surface-container-lowest border border-error/30 rounded-3xl p-8 text-center shadow-xl">

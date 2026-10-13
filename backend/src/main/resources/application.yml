@@ -20,9 +20,10 @@ server:
 
 supabase:
   url: ${SUPABASE_URL}
-  publishable-key: ${SUPABASE_PUBLISHABLE_KEY}
-  secret-key: ${SUPABASE_SECRET_KEY}
+  publishable-key: ${SUPABASE_PUBLISHABLE_KEY:}
   jwks-url: ${SUPABASE_JWKS_URL:}
+  issuer-uri: ${SUPABASE_ISSUER_URI:}
+  jwt-audience: ${SUPABASE_JWT_AUDIENCE}
 
 springdoc:
   api-docs:

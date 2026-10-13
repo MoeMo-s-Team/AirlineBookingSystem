@@ -74,7 +74,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = () => {
           </div>
           <div className="truncate">
             <span className="text-label-sm font-bold text-primary block leading-tight truncate">
-              {user?.name || 'Administrator'}
+              {user?.fullName || user?.name || 'Administrator'}
             </span>
             <span className="text-[10px] text-on-surface-variant font-mono">
               Role: System Dispatcher

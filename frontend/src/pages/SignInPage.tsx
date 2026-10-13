@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
@@ -10,12 +10,22 @@ export interface SignInPageProps {
 
 export const SignInPage: React.FC<SignInPageProps> = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, signIn, signOut } = useAuth();
+  const { user, isAuthenticated, signIn, signOut, profileError, refreshProfile } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [awaitingProfile, setAwaitingProfile] = useState(false);
+
+  useEffect(() => {
+    if (!awaitingProfile || !user) return;
+    navigate(user.role === 'ADMIN' ? '/admin/flights' : '/my-bookings', { replace: true });
+  }, [awaitingProfile, user, navigate]);
+
+  useEffect(() => {
+    if (profileError) setErrorMessage(profileError.message);
+  }, [profileError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,13 +38,9 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
     setErrorMessage('');
     try {
       await signIn(email, password);
-      if (email.toLowerCase().includes('admin') || email === 'admin@skywing.vn') {
-        navigate('/admin/flights', { replace: true });
-      } else {
-        navigate('/my-bookings', { replace: true });
-      }
-    } catch {
-      setErrorMessage('Authentication failed. Please verify your credentials.');
+      setAwaitingProfile(true);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Authentication failed. Please verify your credentials.');
     } finally {
       setIsSubmitting(false);
     }
@@ -65,18 +71,18 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
           {isAuthenticated && user ? (
             <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-primary text-on-primary font-bold text-lg flex items-center justify-center mx-auto">
-                {user.name.charAt(0)}
+                {(user.fullName || user.email).charAt(0).toUpperCase()}
               </div>
               <div>
                 <span className="text-label-md font-bold text-primary block">
-                  Signed in as {user.name}
+                  Signed in as {user.fullName}
                 </span>
                 <span className="text-[12px] text-on-surface-variant block">
                   {user.email}
                 </span>
               </div>
               <div className="flex items-center justify-center gap-3 pt-2">
-                {user.role === 'admin' ? (
+                {user.role === 'ADMIN' ? (
                   <button
                     type="button"
                     onClick={() => navigate('/admin/flights')}
@@ -109,18 +115,24 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
                 <div className="mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-body-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">error</span>
                   <span>{errorMessage}</span>
+                  {profileError?.status && profileError.status >= 500 && (
+                    <button type="button" onClick={() => void refreshProfile()} className="ml-auto underline">
+                      Retry
+                    </button>
+                  )}
                 </div>
               )}
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                    Email Address or Frequent Flyer ID *
+                  <label htmlFor="email" className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
+                    Email Address *
                   </label>
                   <input
-                    type="text"
-                    placeholder="e.g. name@email.com or SW-88910"
+                    id="email"
+                    type="email"
+                    placeholder="e.g. name@email.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
@@ -130,7 +142,7 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="text-label-sm font-semibold text-outline uppercase tracking-wider">
+                    <label htmlFor="password" className="text-label-sm font-semibold text-outline uppercase tracking-wider">
                       Password *
                     </label>
                     <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Password reset link simulated.'); }} className="text-label-sm text-secondary hover:underline">
@@ -138,6 +150,7 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
                     </a>
                   </div>
                   <input
+                    id="password"
                     type="password"
                     placeholder="Enter your password"
                     value={password}

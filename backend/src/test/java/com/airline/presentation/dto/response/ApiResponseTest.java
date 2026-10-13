@@ -16,5 +16,14 @@ class ApiResponseTest {
         ApiResponse<Void> response = ApiResponse.error("Something went wrong");
         assertFalse(response.isSuccess());
         assertEquals("Something went wrong", response.getMessage());
+        assertNull(response.getCode());
+    }
+
+    @Test
+    void testErrorResponseWithCode() {
+        ApiResponse<Void> response = ApiResponse.error("UNAUTHORIZED", "Missing token");
+        assertFalse(response.isSuccess());
+        assertEquals("UNAUTHORIZED", response.getCode());
+        assertEquals("Missing token", response.getMessage());
     }
 }
