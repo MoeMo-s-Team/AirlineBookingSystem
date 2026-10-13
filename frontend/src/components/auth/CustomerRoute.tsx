@@ -19,7 +19,7 @@ export const CustomerRoute: React.FC<CustomerRouteProps> = ({ children }) => {
   }
 
   // If an Admin is logged in, isolate them to the Ops Console
-  if (isAuthenticated && user?.role === 'admin') {
+  if (isAuthenticated && user?.role === 'ADMIN') {
     return <Navigate to="/admin/flights" replace />;
   }
 

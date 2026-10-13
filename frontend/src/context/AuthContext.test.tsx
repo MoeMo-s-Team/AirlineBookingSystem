@@ -70,6 +70,7 @@ describe('AuthContext', () => {
       id: 'u-1',
       email: 'customer@airline.com',
       fullName: 'Customer Test',
+      name: 'Customer Test',
       role: 'CUSTOMER',
     });
   });

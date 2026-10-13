@@ -31,7 +31,7 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   }
 
   // Logged in as customer -> Access Denied / Unauthorized for Admin Portal
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-surface-container-lowest border border-error/30 rounded-3xl p-8 text-center shadow-xl">

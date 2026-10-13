@@ -9,6 +9,7 @@ import { BookingConfirmationPage } from './pages/BookingConfirmationPage';
 import { MyBookingsPage } from './pages/MyBookingsPage';
 import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { AdminFlightsPage } from './pages/admin/AdminFlightsPage';
 import { AdminFareClassesPage } from './pages/admin/AdminFareClassesPage';
 import { AdminServicesPage } from './pages/admin/AdminServicesPage';
@@ -107,6 +108,7 @@ export const App: React.FC = () => {
         />
 
         {/* Unified Login Routes */}
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/login" element={<Navigate to="/sign-in" replace />} />
         <Route path="/admin/login" element={<Navigate to="/sign-in" replace />} />
         <Route path="/admin" element={<Navigate to="/admin/flights" replace />} />
