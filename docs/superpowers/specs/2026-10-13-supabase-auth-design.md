@@ -1,7 +1,7 @@
 # Thiết kế xác thực Supabase cho Airline Booking System
 
 Ngày: 2026-10-13  
-Trạng thái: Draft — chờ phê duyệt
+Trạng thái: Approved for implementation
 
 ## Mục tiêu
 
@@ -129,5 +129,3 @@ Giai đoạn frontend cần kiểm tra signup với cấu hình xác nhận emai
 - API quản trị để cấp role `ADMIN`.
 - Đặt chỗ, lưu hành khách, thanh toán thật hoặc thay thế các mock booking hiện tại.
 - Đồng bộ profile ngoài trigger Supabase hiện có.
-
-Sau khi nội dung được người dùng duyệt, đổi trạng thái tài liệu thành `Approved for implementation` trước khi viết implementation plan.
