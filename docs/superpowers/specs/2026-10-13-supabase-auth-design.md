@@ -1,7 +1,7 @@
 # Thiết kế xác thực Supabase cho Airline Booking System
 
 Ngày: 2026-10-13  
-Trạng thái: Đã duyệt trong hội thoại, chờ người dùng review đặc tả
+Trạng thái: Draft — chờ phê duyệt
 
 ## Mục tiêu
 
@@ -14,21 +14,21 @@ Thay đăng nhập/đăng ký mô phỏng bằng Supabase Auth thật, theo hai 
 
 ## Hiện trạng liên quan
 
-- `AuthContext` đang cấp session giả từ `MOCK_ACCOUNTS`; password không được xác minh.
+- `frontend/src/context/AuthContext.tsx` import và tra `MOCK_ACCOUNTS`; password bị bỏ qua, và role còn có thể được tự gán theo email chứa `admin`.
 - `apiClient` tìm token trong nhiều khóa storage và có fallback cho session giả.
-- Backend có `SupabaseJwtFilter` dùng secret HS256, lấy role từ JWT và đang chấp nhận `user_metadata.role`.
+- `backend/src/main/java/com/airline/infrastructure/security/SupabaseJwtFilter.java` dùng JJWT `Keys.hmacShaKeyFor` với secret cấu hình, tức xác minh HS256; filter lấy role từ claims và đang chấp nhận `user_metadata.role`.
 - Entity `Profile` và `Role` tồn tại; SQL init có `profiles`, trigger tạo profile sau khi user được tạo và seed `CUSTOMER`/`ADMIN`.
 - Chưa có `ProfileRepository`, service hồ sơ hoặc endpoint hồ sơ hiện tại.
-- Frontend chưa cài `@supabase/supabase-js`.
-- `GET /api/fares/dev-token` phát hành token giả để thử Swagger.
+- `@supabase/supabase-js` chưa có trong dependencies của `frontend/package.json` hoặc `frontend/pnpm-lock.yaml`.
+- `backend/src/main/java/com/airline/presentation/controller/FareController.java` có `GET /api/fares/dev-token`: endpoint không yêu cầu role, mặc định tạo token role `ADMIN`, ký bằng secret cấu hình và hết hạn sau bảy ngày. `SecurityConfig` permit GET `/api/fares/**`, nên endpoint này public.
 
 ## Thiết kế kiến trúc
 
 Frontend giao tiếp trực tiếp với Supabase Auth cho thao tác có password. Backend không nhận, lưu hoặc chuyển tiếp password. Supabase phát hành access token; frontend gửi token đó trong header `Authorization: Bearer …` khi gọi endpoint được bảo vệ.
 
-Backend xác minh chữ ký JWT bằng Supabase JWKS, đồng thời kiểm tra issuer, audience và thời hạn token. `sub` là UUID của người dùng. Backend dùng UUID này để tra `Profile`; role lấy từ quan hệ `Profile.role` trong database. Backend không lấy quyền từ `user_metadata`, `app_metadata` hoặc claim role của token.
+Security flow theo thứ tự: (1) xác minh chữ ký JWT bằng Supabase JWKS và kiểm tra issuer, audience, thời hạn; (2) lấy UUID từ `sub`; (3) query `Profile` và quan hệ `Role` theo UUID; (4) tạo authority `ROLE_CUSTOMER` hoặc `ROLE_ADMIN` từ role trong database. Không query profile trước khi token được xác minh. Backend không lấy quyền từ `user_metadata`, `app_metadata` hoặc claim role của token.
 
-Sử dụng Spring Security OAuth2 Resource Server/Nimbus để xác minh JWT và tải JWKS, thay cho việc tự viết tải khóa/cache JWKS. Cấu hình issuer/JWKS phải trỏ đúng project Supabase. Project cần phát hành user access token bằng signing key được công bố qua JWKS; không âm thầm fallback sang secret khi JWKS không xác minh được token.
+Sử dụng Spring Security OAuth2 Resource Server/Nimbus để xác minh JWT và tải JWKS, thay cho việc tự viết tải khóa/cache JWKS. Cấu hình issuer/JWKS phải trỏ đúng project Supabase. `SUPABASE_JWT_AUDIENCE` là cấu hình bắt buộc theo môi trường, không hard-code audience trong code. Project cần phát hành user access token bằng signing key được công bố qua JWKS; không âm thầm fallback sang secret khi JWKS không xác minh được token.
 
 Mỗi request được bảo vệ tra role của `sub` từ database để thay đổi role có hiệu lực ở request kế tiếp, không phải chờ user refresh token. Principal trong Spring Security chứa UUID và authority `ROLE_CUSTOMER` hoặc `ROLE_ADMIN` lấy từ profile.
 
@@ -40,9 +40,25 @@ Mỗi request được bảo vệ tra role của `sub` từ database để thay 
 - Tìm profile bằng `sub` trong token.
 - Trả `ApiResponse` hiện có với `id`, `email`, `fullName`, `role`.
 - Không chấp nhận user ID từ query, path hoặc body; người dùng chỉ đọc hồ sơ của chính mình.
-- Nếu JWT hợp lệ nhưng profile không tồn tại, trả lỗi xác thực/authorization rõ ràng, không tự tạo profile và không gán role mặc định.
+- JWT sai chữ ký, sai issuer/audience hoặc hết hạn trả `401 Unauthorized`.
+- JWT hợp lệ nhưng không có profile trả `403 Forbidden` với mã lỗi `PROFILE_NOT_FOUND`; role thiếu/không hợp lệ trả `403 Forbidden` với mã `PROFILE_ROLE_INVALID`.
+- Lỗi database nội bộ trả lỗi server `5xx`, không giả thành profile thiếu.
+- Error response thêm trường `code` vào cấu trúc `ApiResponse` hiện tại; success responses giữ nguyên. Mã xác thực dùng các giá trị ổn định trên, không suy luận từ chuỗi `message`.
 
-Các endpoint chuyến bay, hạng vé và dịch vụ public hiện tại tiếp tục public. Quy tắc admin hiện tại tiếp tục dùng `hasRole('ADMIN')`, nhưng authority được lấy từ profile tin cậy.
+### Phân loại route
+
+| Phân loại | Method và endpoint | Ghi chú |
+|---|---|---|
+| Public | `GET /api/flights`, `GET /api/flights/{id}` | Tìm kiếm, xem chuyến bay |
+| Admin | `POST /api/flights`, `PUT /api/flights/{id}`, `DELETE /api/flights/{id}` | CRUD chuyến bay |
+| Public | `GET /api/fares`, `GET /api/fares/{id}` | Hạng vé đang mở bán và chi tiết |
+| Admin | `GET /api/fares/all`, `POST /api/fares`, `PUT /api/fares/{id}`, `DELETE /api/fares/{id}` | Toàn bộ danh sách và CRUD hạng vé |
+| Public | `GET /api/services`, `GET /api/services/{id}` | Dịch vụ đang hoạt động và chi tiết |
+| Admin | `GET /api/services/all`, `POST /api/services`, `PUT /api/services/{id}`, `DELETE /api/services/{id}` | Toàn bộ danh sách và CRUD dịch vụ |
+| Đã tồn tại, cần xóa | `GET /api/fares/dev-token` | Hiện public; phát hành token giả role tùy query |
+| Authenticated | `GET /api/profile/me` | Endpoint mới, chỉ đọc profile của subject trong token |
+
+Swagger/API docs hiện public. Mọi request khác cần xác thực; CRUD quản trị và danh sách `/all` yêu cầu role `ADMIN`. Các resource CRUD hiện thực thi role bằng `@PreAuthorize("hasRole('ADMIN')")`.
 
 Không tạo endpoint backend cho signup, signin hay signout. Các thao tác đó thuộc Supabase Auth SDK.
 
@@ -61,13 +77,13 @@ Phạm vi:
 - Thêm `GET /api/profile/me` và response DTO phù hợp.
 - Giữ các route public; xác nhận các route CRUD admin vẫn yêu cầu `ROLE_ADMIN` từ database.
 - Xóa `/api/fares/dev-token`, endpoint phát hành JWT giả không thuộc luồng xác thực thật.
-- Cập nhật cấu hình backend để dùng issuer/JWKS URL của project Supabase; không đưa secret/service key vào frontend.
+- Cập nhật cấu hình backend để dùng issuer/JWKS URL và `SUPABASE_JWT_AUDIENCE` của project Supabase; không đưa secret/service key vào frontend.
 
 Điều kiện hoàn tất giai đoạn:
 
 - JWT hợp lệ của user hiện có xác thực được; `/api/profile/me` trả đúng profile và role.
-- Token thiếu, sai chữ ký, sai issuer/audience hoặc hết hạn bị từ chối.
-- User không có profile bị từ chối; metadata role không làm thay đổi quyền.
+- Token thiếu trên route cần auth, sai chữ ký, sai issuer/audience hoặc hết hạn bị từ chối với `401`; test audience đúng và sai.
+- JWT hợp lệ nhưng thiếu profile trả `403 PROFILE_NOT_FOUND`; role thiếu/không hợp lệ trả `403 PROFILE_ROLE_INVALID`; metadata/claim role không làm thay đổi quyền.
 - Customer không gọi được endpoint admin; admin có role trong database gọi được.
 - Kiểm tra được độc lập bằng token Supabase thật qua Swagger/curl.
 
@@ -94,8 +110,8 @@ Phạm vi:
 
 ## Lỗi và ranh giới tin cậy
 
-- JWT không hợp lệ: Spring Security trả `401`; request không được tiếp tục như user anonymous cho route cần xác thực.
-- JWT hợp lệ nhưng không có profile/role hợp lệ: từ chối truy cập; không cấp role fallback.
+- JWT thiếu trên route cần auth, sai chữ ký, sai issuer/audience hoặc hết hạn: trả `401`.
+- JWT hợp lệ nhưng profile không tồn tại: trả `403` với `PROFILE_NOT_FOUND`; role không hợp lệ: trả `403` với `PROFILE_ROLE_INVALID`; không cấp role fallback.
 - Lỗi signup từ Supabase hoặc trigger profile được hiển thị qua UI; không giả định signup thành công khi Supabase trả lỗi.
 - Lỗi tải `/api/profile/me` không được thay bằng role suy đoán từ email hoặc metadata.
 - Frontend chỉ dùng publishable/anon key. Supabase service role key và signing key chỉ nằm phía server hoặc dashboard.
@@ -103,7 +119,7 @@ Phạm vi:
 
 ## Kiểm chứng
 
-Giai đoạn backend cần unit/integration coverage cho token hợp lệ, chữ ký sai, issuer/audience sai, hết hạn, profile thiếu, role CUSTOMER và role ADMIN. Có ít nhất một kiểm tra HTTP cho `/api/profile/me` và route admin.
+Giai đoạn backend cần unit/integration coverage cho token hợp lệ, chữ ký sai, issuer sai, audience đúng, audience sai, hết hạn, profile thiếu, role CUSTOMER và role ADMIN. Có ít nhất một kiểm tra HTTP cho `/api/profile/me` và route admin. Các lỗi xác thực cần kiểm tra cả HTTP status và mã lỗi.
 
 Giai đoạn frontend cần kiểm tra signup với cấu hình xác nhận email bật/tắt, signin đúng/sai, session restore, signout, lỗi `/api/profile/me`, customer/admin route guards và việc gắn Bearer token vào API request.
 
@@ -113,3 +129,5 @@ Giai đoạn frontend cần kiểm tra signup với cấu hình xác nhận emai
 - API quản trị để cấp role `ADMIN`.
 - Đặt chỗ, lưu hành khách, thanh toán thật hoặc thay thế các mock booking hiện tại.
 - Đồng bộ profile ngoài trigger Supabase hiện có.
+
+Sau khi nội dung được người dùng duyệt, đổi trạng thái tài liệu thành `Approved for implementation` trước khi viết implementation plan.
