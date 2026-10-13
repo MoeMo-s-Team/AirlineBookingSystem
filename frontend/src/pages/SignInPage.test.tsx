@@ -36,12 +36,25 @@ describe('SignInPage', () => {
     });
   });
 
-  it('signs in with email only and navigates based on returned role (ADMIN -> /admin/flights)', async () => {
-    mockSignIn.mockResolvedValue({
+  it('signs in with email and navigates after the backend profile loads as ADMIN', async () => {
+    const user = {
       id: 'admin-id',
       email: 'admin@airline.com',
       fullName: 'Admin User',
       role: 'ADMIN',
+    } as const;
+    mockSignIn.mockImplementation(async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user,
+        isAuthenticated: true,
+        isAdmin: true,
+        isLoading: false,
+        profileError: null,
+        signIn: mockSignIn,
+        signUp: vi.fn(),
+        signOut: mockSignOut,
+        refreshProfile: vi.fn(),
+      });
     });
 
     render(
@@ -64,12 +77,25 @@ describe('SignInPage', () => {
     });
   });
 
-  it('navigates to /my-bookings when returned role is CUSTOMER, even if email has "admin"', async () => {
-    mockSignIn.mockResolvedValue({
+  it('navigates to /my-bookings when the backend profile is CUSTOMER', async () => {
+    const user = {
       id: 'cust-id',
       email: 'notanadmin@airline.com',
       fullName: 'Regular Customer',
       role: 'CUSTOMER',
+    } as const;
+    mockSignIn.mockImplementation(async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user,
+        isAuthenticated: true,
+        isAdmin: false,
+        isLoading: false,
+        profileError: null,
+        signIn: mockSignIn,
+        signUp: vi.fn(),
+        signOut: mockSignOut,
+        refreshProfile: vi.fn(),
+      });
     });
 
     render(

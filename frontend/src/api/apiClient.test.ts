@@ -51,6 +51,25 @@ describe('apiClient', () => {
     expect(res).toEqual({ result: 'ok' });
   });
 
+  it('resolves the profile endpoint under the configured API base path', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: () => Promise.resolve({ success: true, data: {} }),
+    });
+
+    await apiClient.get('/profile/me');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:8080/api/profile/me',
+      expect.anything()
+    );
+  });
+
   it('does not attach Authorization header when no session exists', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: null },
@@ -87,7 +106,7 @@ describe('apiClient', () => {
       }),
     });
 
-    await expect(apiClient.get('/api/profile/me')).rejects.toMatchObject({
+    await expect(apiClient.get('/profile/me')).rejects.toMatchObject({
       status: 403,
       code: 'PROFILE_NOT_FOUND',
       message: 'Profile not found for user',

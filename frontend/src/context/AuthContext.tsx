@@ -19,7 +19,7 @@ export interface AuthContextType {
   readonly isAdmin: boolean;
   readonly isLoading: boolean;
   readonly profileError: ApiError | null;
-  readonly signIn: (email: string, password: string) => Promise<AuthUser>;
+  readonly signIn: (email: string, password: string) => Promise<void>;
   readonly signUp: (fullName: string, email: string, password: string) => Promise<{ confirmationRequired: boolean }>;
   readonly signOut: () => Promise<void>;
   readonly refreshProfile: () => Promise<void>;
@@ -32,94 +32,130 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profileError, setProfileError] = useState<ApiError | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [authInitialized, setAuthInitialized] = useState<boolean>(false);
 
   // Generation counter to discard stale profile resolutions
   const requestGenRef = useRef<number>(0);
+  const sessionRef = useRef<Session | null>(null);
+  const profileUserIdRef = useRef<string | null>(null);
   const isInitialLoadRef = useRef<boolean>(true);
+  const preserveAuthErrorRef = useRef<boolean>(false);
 
-  const fetchProfile = useCallback(async (currentSession: Session | null): Promise<AuthUser | null> => {
+  const fetchProfile = useCallback(async (currentSession: Session): Promise<AuthUser | null> => {
+    if (sessionRef.current?.access_token !== currentSession.access_token) return null;
     const currentGen = ++requestGenRef.current;
 
-    if (!currentSession) {
-      setUser(null);
-      setProfileError(null);
-      return null;
-    }
-
     try {
-      const profile = await apiClient.get<AuthUser>('/api/profile/me');
+      const profile = await apiClient.get<AuthUser>('/profile/me');
       if (currentGen !== requestGenRef.current) return null;
 
       setUser({
         ...profile,
         name: profile.fullName,
       });
+      profileUserIdRef.current = profile.id;
       setProfileError(null);
       return profile;
     } catch (err) {
       if (currentGen !== requestGenRef.current) return null;
 
       const apiErr = err as ApiError;
+      if (apiErr.status === 401 && sessionRef.current?.access_token !== currentSession.access_token) {
+        return null;
+      }
       setUser(null);
+      profileUserIdRef.current = null;
 
       if (apiErr.status === 401) {
-        // Auth session invalid or expired
-        setProfileError(null);
+        preserveAuthErrorRef.current = true;
+        setProfileError(apiErr);
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // The backend rejected this token; clear local auth even if remote signout fails.
+        } finally {
+          if (sessionRef.current?.access_token === currentSession.access_token) {
+            sessionRef.current = null;
+            setSession(null);
+          }
+        }
       } else {
-        // 403 (PROFILE_NOT_FOUND, PROFILE_ROLE_INVALID) or 5xx (PROFILE_LOOKUP_FAILED)
         setProfileError(apiErr);
       }
       return null;
     }
   }, []);
 
-  // Initial bootstrap and auth state listener
+  // Initial bootstrap; the session effect owns profile requests.
   useEffect(() => {
     let mounted = true;
+    let authEventReceived = false;
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!mounted) return;
+      authEventReceived = true;
+      sessionRef.current = newSession;
+      setSession(newSession);
+    });
 
     async function initAuth() {
       try {
         const { data } = await supabase.auth.getSession();
         if (!mounted) return;
-
-        setSession(data.session);
-        if (data.session) {
-          await fetchProfile(data.session);
-        } else {
-          setUser(null);
-          setProfileError(null);
+        if (!authEventReceived) {
+          sessionRef.current = data.session;
+          setSession(data.session);
         }
       } catch (err) {
         if (!mounted) return;
-        setUser(null);
-        setProfileError(null);
-      } finally {
-        if (mounted && isInitialLoadRef.current) {
-          isInitialLoadRef.current = false;
-          setIsLoading(false);
+        if (!authEventReceived) {
+          sessionRef.current = null;
+          setSession(null);
         }
+      } finally {
+        if (mounted) setAuthInitialized(true);
       }
     }
 
     initAuth();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      if (!mounted) return;
-      setSession(newSession);
-
-      // Subsequent session changes or token refresh
-      if (!isInitialLoadRef.current) {
-        await fetchProfile(newSession);
-      }
-    });
-
     return () => {
       mounted = false;
       authListener?.subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, []);
 
-  const signIn = useCallback(async (email: string, password: string): Promise<AuthUser> => {
+  useEffect(() => {
+    if (!authInitialized) return;
+
+    if (!session) {
+      requestGenRef.current++;
+      sessionRef.current = null;
+      setUser(null);
+      profileUserIdRef.current = null;
+      const preserveAuthError = preserveAuthErrorRef.current;
+      preserveAuthErrorRef.current = false;
+      if (!preserveAuthError) setProfileError(null);
+      isInitialLoadRef.current = false;
+      setIsLoading(false);
+      return;
+    }
+
+    if (profileUserIdRef.current !== session.user.id) {
+      setUser(null);
+      profileUserIdRef.current = null;
+    }
+    setProfileError(null);
+    const wasInitialLoad = isInitialLoadRef.current;
+    fetchProfile(session).finally(() => {
+      if (wasInitialLoad && isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+        setIsLoading(false);
+      }
+    });
+  }, [authInitialized, session, fetchProfile]);
+
+  const signIn = useCallback(async (email: string, password: string): Promise<void> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -129,13 +165,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error || new Error('Đăng nhập thất bại: không có session');
     }
 
+    sessionRef.current = data.session;
     setSession(data.session);
-    const profile = await fetchProfile(data.session);
-    if (!profile) {
-      throw new Error('Không thể tải profile từ hệ thống');
-    }
-    return profile;
-  }, [fetchProfile]);
+  }, []);
 
   const signUp = useCallback(async (
     fullName: string,
@@ -162,19 +194,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (data.session) {
+      sessionRef.current = data.session;
       setSession(data.session);
-      await fetchProfile(data.session);
       return { confirmationRequired: false };
     }
 
     return { confirmationRequired: true };
-  }, [fetchProfile]);
+  }, []);
 
   const signOut = useCallback(async (): Promise<void> => {
     requestGenRef.current++;
     try {
       await supabase.auth.signOut();
     } finally {
+      sessionRef.current = null;
       setSession(null);
       setUser(null);
       setProfileError(null);
@@ -189,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = useMemo<AuthContextType>(() => ({
     user,
-    isAuthenticated: !!user,
+    isAuthenticated: !!session,
     isAdmin: user?.role === 'ADMIN',
     isLoading,
     profileError,
@@ -197,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     refreshProfile,
-  }), [user, isLoading, profileError, signIn, signUp, signOut, refreshProfile]);
+  }), [session, user, isLoading, profileError, signIn, signUp, signOut, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>

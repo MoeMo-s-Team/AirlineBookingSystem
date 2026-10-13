@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
@@ -10,7 +10,7 @@ export interface SignUpPageProps {
 
 export const SignUpPage: React.FC<SignUpPageProps> = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, signUp, signOut } = useAuth();
+  const { user, isAuthenticated, signUp, signOut, profileError, refreshProfile } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,6 +19,18 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
+  const [awaitingProfile, setAwaitingProfile] = useState(false);
+
+  useEffect(() => {
+    if (awaitingProfile && user) navigate('/my-bookings', { replace: true });
+  }, [awaitingProfile, user, navigate]);
+
+  useEffect(() => {
+    if (profileError) {
+      setAwaitingProfile(false);
+      setErrorMessage(profileError.message);
+    }
+  }, [profileError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +52,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
       if (res.confirmationRequired) {
         setInfoMessage('Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản của bạn trước khi đăng nhập.');
       } else {
-        navigate('/my-bookings');
+        setAwaitingProfile(true);
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Registration failed. Please try again.');
@@ -105,6 +117,11 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                 <div className="mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-body-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">error</span>
                   <span>{errorMessage}</span>
+                  {profileError?.status && profileError.status >= 500 && (
+                    <button type="button" onClick={() => void refreshProfile()} className="ml-auto underline">
+                      Retry
+                    </button>
+                  )}
                 </div>
               )}
 

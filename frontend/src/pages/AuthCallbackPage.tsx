@@ -4,12 +4,14 @@ import { useAuth } from '../context/AuthContext';
 
 export const AuthCallbackPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading, profileError } = useAuth();
+  const { user, isAuthenticated, isLoading, profileError, refreshProfile } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
 
     if (profileError) return;
+
+    if (isAuthenticated && !user) return;
 
     if (isAuthenticated && user) {
       if (user.role === 'ADMIN') {
@@ -22,7 +24,7 @@ export const AuthCallbackPage: React.FC = () => {
     }
   }, [isLoading, isAuthenticated, user, profileError, navigate]);
 
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && !user && !profileError)) {
     return (
       <div className="min-h-screen bg-surface-container-low flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -50,12 +52,22 @@ export const AuthCallbackPage: React.FC = () => {
           <p className="text-body-sm text-on-surface-variant mt-2 mb-6">
             {profileError.message || 'Không thể tải thông tin hồ sơ của bạn.'}
           </p>
-          <a
-            href="/sign-in"
-            className="inline-block w-full py-2.5 rounded-xl bg-primary text-on-primary text-label-md font-bold hover:bg-primary-container transition-colors"
-          >
-            Quay lại Đăng nhập
-          </a>
+          {profileError.status >= 500 ? (
+            <button
+              type="button"
+              onClick={() => void refreshProfile()}
+              className="w-full py-2.5 rounded-xl bg-primary text-on-primary text-label-md font-bold hover:bg-primary-container transition-colors"
+            >
+              Thử lại
+            </button>
+          ) : (
+            <a
+              href="/sign-in"
+              className="inline-block w-full py-2.5 rounded-xl bg-primary text-on-primary text-label-md font-bold hover:bg-primary-container transition-colors"
+            >
+              Quay lại Đăng nhập
+            </a>
+          )}
         </div>
       </div>
     );

@@ -57,8 +57,21 @@ describe('SignUpPage', () => {
     });
   });
 
-  it('navigates immediately to /my-bookings when confirmation is disabled (immediate session)', async () => {
-    mockSignUp.mockResolvedValue({ confirmationRequired: false });
+  it('navigates after the customer profile loads when confirmation is disabled', async () => {
+    mockSignUp.mockImplementation(async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user: { id: 'new-user', email: 'b@example.com', fullName: 'Nguyen Van B', role: 'CUSTOMER' },
+        isAuthenticated: true,
+        isAdmin: false,
+        isLoading: false,
+        profileError: null,
+        signIn: vi.fn(),
+        signUp: mockSignUp,
+        signOut: vi.fn(),
+        refreshProfile: vi.fn(),
+      });
+      return { confirmationRequired: false };
+    });
 
     render(
       <MemoryRouter>
@@ -73,7 +86,7 @@ describe('SignUpPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/my-bookings');
+      expect(mockNavigate).toHaveBeenCalledWith('/my-bookings', { replace: true });
     });
   });
 });

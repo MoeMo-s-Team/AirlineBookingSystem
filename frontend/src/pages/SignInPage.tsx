@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
@@ -10,12 +10,22 @@ export interface SignInPageProps {
 
 export const SignInPage: React.FC<SignInPageProps> = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, signIn, signOut } = useAuth();
+  const { user, isAuthenticated, signIn, signOut, profileError, refreshProfile } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [awaitingProfile, setAwaitingProfile] = useState(false);
+
+  useEffect(() => {
+    if (!awaitingProfile || !user) return;
+    navigate(user.role === 'ADMIN' ? '/admin/flights' : '/my-bookings', { replace: true });
+  }, [awaitingProfile, user, navigate]);
+
+  useEffect(() => {
+    if (profileError) setErrorMessage(profileError.message);
+  }, [profileError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,12 +37,8 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
     setIsSubmitting(true);
     setErrorMessage('');
     try {
-      const signedInUser = await signIn(email, password);
-      if (signedInUser.role === 'ADMIN') {
-        navigate('/admin/flights', { replace: true });
-      } else {
-        navigate('/my-bookings', { replace: true });
-      }
+      await signIn(email, password);
+      setAwaitingProfile(true);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Authentication failed. Please verify your credentials.');
     } finally {
@@ -109,6 +115,11 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
                 <div className="mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-body-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">error</span>
                   <span>{errorMessage}</span>
+                  {profileError?.status && profileError.status >= 500 && (
+                    <button type="button" onClick={() => void refreshProfile()} className="ml-auto underline">
+                      Retry
+                    </button>
+                  )}
                 </div>
               )}
 

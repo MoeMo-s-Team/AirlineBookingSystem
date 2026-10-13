@@ -115,4 +115,30 @@ describe('AuthCallbackPage', () => {
     expect(screen.getByText(/Tài khoản chưa được kích hoạt vai trò hợp lệ/i)).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
+
+  it('keeps the session callback visible and retries a temporary profile error', () => {
+    const refreshProfile = vi.fn();
+    vi.mocked(useAuth).mockReturnValue({
+      user: null,
+      isAuthenticated: true,
+      isAdmin: false,
+      isLoading: false,
+      profileError: { status: 503, code: 'PROFILE_LOOKUP_FAILED', message: 'Service unavailable' },
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
+      refreshProfile,
+    });
+
+    render(
+      <MemoryRouter>
+        <AuthCallbackPage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/Service unavailable/i)).toBeInTheDocument();
+    screen.getByRole('button', { name: /Thử lại/i }).click();
+    expect(refreshProfile).toHaveBeenCalledOnce();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
 });

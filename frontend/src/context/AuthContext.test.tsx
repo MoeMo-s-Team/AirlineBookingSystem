@@ -73,6 +73,198 @@ describe('AuthContext', () => {
       name: 'Customer Test',
       role: 'CUSTOMER',
     });
+    expect(apiClient.get).toHaveBeenCalledWith('/profile/me');
+  });
+
+  it('updates session synchronously in the auth listener', async () => {
+    let authCallback: any;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback: any) => {
+      authCallback = callback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+    vi.mocked(apiClient.get).mockReturnValue(new Promise(() => {}) as any);
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(authCallback).toBeDefined());
+
+    let callbackResult: unknown;
+    act(() => {
+      callbackResult = authCallback('TOKEN_REFRESHED', {
+        access_token: 'new-token',
+        user: { id: 'u-2' },
+      });
+    });
+
+    expect(callbackResult).toBeUndefined();
+  });
+
+  it('does not let a late bootstrap session overwrite a later signout event', async () => {
+    let authCallback: any;
+    let resolveInitialSession!: (value: unknown) => void;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback: any) => {
+      authCallback = callback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockReturnValue(
+      new Promise(resolve => { resolveInitialSession = resolve; }) as any
+    );
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(authCallback).toBeDefined());
+
+    act(() => authCallback('SIGNED_OUT', null));
+    await act(async () => resolveInitialSession({
+      data: { session: { access_token: 'stale-token', user: { id: 'stale-user' } } },
+      error: null,
+    }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(apiClient.get).not.toHaveBeenCalled();
+  });
+
+  it('keeps app bootstrap loading off during token refresh profile lookup', async () => {
+    let authCallback: any;
+    let resolveRefresh!: (value: unknown) => void;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback: any) => {
+      authCallback = callback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { access_token: 'initial-token', user: { id: 'u-1' } } as any },
+      error: null,
+    });
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce({
+        id: 'u-1', email: 'user@example.com', fullName: 'User', role: 'CUSTOMER',
+      })
+      .mockReturnValueOnce(new Promise(resolve => { resolveRefresh = resolve; }) as any);
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => authCallback('TOKEN_REFRESHED', {
+      access_token: 'refreshed-token', user: { id: 'u-1' },
+    }));
+    await waitFor(() => expect(apiClient.get).toHaveBeenCalledTimes(2));
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => resolveRefresh({
+      id: 'u-1', email: 'user@example.com', fullName: 'User', role: 'CUSTOMER',
+    }));
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('discards an older profile response after the session changes', async () => {
+    let authCallback: any;
+    let resolveOldProfile!: (value: unknown) => void;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback: any) => {
+      authCallback = callback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { access_token: 'old-token', user: { id: 'old-user' } } as any },
+      error: null,
+    });
+    vi.mocked(apiClient.get)
+      .mockReturnValueOnce(new Promise(resolve => { resolveOldProfile = resolve; }) as any)
+      .mockResolvedValueOnce({
+        id: 'new-user', email: 'new@example.com', fullName: 'New User', role: 'CUSTOMER',
+      });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(apiClient.get).toHaveBeenCalledTimes(1));
+
+    act(() => authCallback('SIGNED_IN', {
+      access_token: 'new-token', user: { id: 'new-user' },
+    }));
+    await waitFor(() => expect(result.current.user?.id).toBe('new-user'));
+
+    await act(async () => resolveOldProfile({
+      id: 'old-user', email: 'old@example.com', fullName: 'Old User', role: 'ADMIN',
+    }));
+    expect(result.current.user?.id).toBe('new-user');
+  });
+
+  it('discards an in-flight profile response after signout', async () => {
+    let authCallback: any;
+    let resolveProfile!: (value: unknown) => void;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback: any) => {
+      authCallback = callback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { access_token: 'old-token', user: { id: 'old-user' } } as any },
+      error: null,
+    });
+    vi.mocked(apiClient.get).mockReturnValue(
+      new Promise(resolve => { resolveProfile = resolve; }) as any
+    );
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(apiClient.get).toHaveBeenCalledOnce());
+
+    act(() => authCallback('SIGNED_OUT', null));
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(false));
+    await act(async () => resolveProfile({
+      id: 'old-user', email: 'old@example.com', fullName: 'Old User', role: 'ADMIN',
+    }));
+    expect(result.current.user).toBeNull();
+  });
+
+  it('does not clear a newer session when an older request returns 401', async () => {
+    let authCallback: any;
+    let finishSignOut!: (value?: unknown) => void;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback: any) => {
+      authCallback = callback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { access_token: 'old-token', user: { id: 'old-user' } } as any },
+      error: null,
+    });
+    vi.mocked(apiClient.get)
+      .mockRejectedValueOnce({ status: 401, code: 'UNAUTHORIZED', message: 'Expired' })
+      .mockResolvedValueOnce({
+        id: 'new-user', email: 'new@example.com', fullName: 'New User', role: 'CUSTOMER',
+      });
+    vi.mocked(supabase.auth.signOut).mockReturnValue(
+      new Promise(resolve => { finishSignOut = resolve; }) as any
+    );
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(supabase.auth.signOut).toHaveBeenCalledOnce());
+
+    act(() => authCallback('SIGNED_IN', {
+      access_token: 'new-token', user: { id: 'new-user' },
+    }));
+    await waitFor(() => expect(result.current.user?.id).toBe('new-user'));
+    await act(async () => finishSignOut());
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user?.id).toBe('new-user');
   });
 
   it('signs in with email and password, returning profile identity', async () => {
@@ -111,12 +303,8 @@ describe('AuthContext', () => {
       returnedUser = await result.current.signIn('admin@airline.com', 'secret123');
     });
 
-    expect(returnedUser).toEqual({
-      id: 'admin-1',
-      email: 'admin@airline.com',
-      fullName: 'Admin User',
-      role: 'ADMIN',
-    });
+    await waitFor(() => expect(result.current.user?.id).toBe('admin-1'));
+    expect(returnedUser).toBeUndefined();
     expect(result.current.isAdmin).toBe(true);
     expect(result.current.user?.role).toBe('ADMIN');
   });
@@ -165,7 +353,7 @@ describe('AuthContext', () => {
 
   it('handles 401 on profile fetch as unauthenticated', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { access_token: 'bad-token' } as any },
+      data: { session: { access_token: 'bad-token', user: { id: 'u-1' } } as any },
       error: null,
     });
 
@@ -187,11 +375,13 @@ describe('AuthContext', () => {
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.user).toBeNull();
+    expect(result.current.profileError).toMatchObject({ status: 401, code: 'UNAUTHORIZED' });
+    expect(supabase.auth.signOut).toHaveBeenCalledOnce();
   });
 
   it('handles 403 on profile fetch as invalid profile error without treating as signed out', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { access_token: 'valid-token' } as any },
+      data: { session: { access_token: 'valid-token', user: { id: 'u-1' } } as any },
       error: null,
     });
 
@@ -212,6 +402,7 @@ describe('AuthContext', () => {
     });
 
     expect(result.current.user).toBeNull();
+    expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.profileError).toMatchObject({
       status: 403,
       code: 'PROFILE_ROLE_INVALID',
@@ -220,7 +411,7 @@ describe('AuthContext', () => {
 
   it('handles 5xx on profile fetch by keeping session and allowing refreshProfile retry', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { access_token: 'valid-token' } as any },
+      data: { session: { access_token: 'valid-token', user: { id: 'u-1' } } as any },
       error: null,
     });
 
@@ -248,6 +439,7 @@ describe('AuthContext', () => {
     });
 
     expect(result.current.profileError?.status).toBe(500);
+    expect(result.current.isAuthenticated).toBe(true);
 
     await act(async () => {
       await result.current.refreshProfile();

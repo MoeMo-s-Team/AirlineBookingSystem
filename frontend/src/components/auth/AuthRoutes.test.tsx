@@ -15,6 +15,61 @@ describe('Route Guards', () => {
   });
 
   describe('AdminRoute', () => {
+    it('keeps a session with a profile server error and offers retry', () => {
+      const refreshProfile = vi.fn();
+      vi.mocked(useAuth).mockReturnValue({
+        user: null,
+        isAuthenticated: true,
+        isAdmin: false,
+        isLoading: false,
+        profileError: { status: 503, code: 'PROFILE_LOOKUP_FAILED', message: 'Service unavailable' },
+        signIn: vi.fn(),
+        signUp: vi.fn(),
+        signOut: vi.fn(),
+        refreshProfile,
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/admin/flights']}>
+          <Routes>
+            <Route path="/admin/flights" element={<AdminRoute><div>Admin Content</div></AdminRoute>} />
+            <Route path="/sign-in" element={<div>Sign In Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText(/Service unavailable/i)).toBeInTheDocument();
+      expect(screen.queryByText('Sign In Page')).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /retry/i }).click();
+      expect(refreshProfile).toHaveBeenCalledOnce();
+    });
+
+    it('shows invalid profile instead of redirecting to sign-in on 403', () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user: null,
+        isAuthenticated: true,
+        isAdmin: false,
+        isLoading: false,
+        profileError: { status: 403, code: 'PROFILE_ROLE_INVALID', message: 'Invalid profile role' },
+        signIn: vi.fn(),
+        signUp: vi.fn(),
+        signOut: vi.fn(),
+        refreshProfile: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/admin/flights']}>
+          <Routes>
+            <Route path="/admin/flights" element={<AdminRoute><div>Admin Content</div></AdminRoute>} />
+            <Route path="/sign-in" element={<div>Sign In Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText(/Invalid profile role/i)).toBeInTheDocument();
+      expect(screen.queryByText('Sign In Page')).not.toBeInTheDocument();
+    });
+
     it('shows loading view without redirecting while isLoading is true', () => {
       vi.mocked(useAuth).mockReturnValue({
         user: null,

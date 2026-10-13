@@ -85,7 +85,12 @@ public class SecurityConfig {
             }
         }
 
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUrl).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUrl)
+                .jwsAlgorithms(algs -> {
+                    algs.add(org.springframework.security.oauth2.jose.jws.SignatureAlgorithm.RS256);
+                    algs.add(org.springframework.security.oauth2.jose.jws.SignatureAlgorithm.ES256);
+                })
+                .build();
 
         String issuer = supabaseProperties.getIssuerUri();
         if (issuer == null || issuer.isBlank()) {
