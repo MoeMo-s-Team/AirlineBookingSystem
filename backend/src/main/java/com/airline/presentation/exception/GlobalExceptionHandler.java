@@ -20,6 +20,13 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(com.airline.application.exception.BookingConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBookingConflict(com.airline.application.exception.BookingConflictException ex) {
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationErrors(MethodArgumentNotValidException ex) {
         List<ApiResponse.ValidationError> errors = ex.getBindingResult()

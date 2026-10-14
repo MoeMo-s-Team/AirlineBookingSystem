@@ -479,7 +479,7 @@ FR-BOOK-002 View Booking Customer
 FR-BOOK-003 View Booking History Customer
 FR-BOOK-004 Cancel Booking Customer
 FR-BOOK-005 Manage Bookings Admin
-FR-BOOK-006 Update Booking Status Admin/System
+FR-BOOK-006 Track Booking Status System
 
 ### Create Booking
 
@@ -506,12 +506,14 @@ Customer hủy Booking theo trạng thái Booking.
 
 ### Manage Bookings
 
-Admin quản lý các Booking trong hệ thống.
+Admin xem và lọc các Booking trong hệ thống. Trạng thái chỉ được thay đổi
+qua nghiệp vụ thanh toán hoặc hủy Booking; hệ thống không cung cấp API ghi
+trạng thái Booking cho Admin.
 
-### Update Booking Status
+### Track Booking Status
 
-Admin/System cập nhật trạng thái Booking theo các transition được quy
-định.
+Hệ thống cập nhật trạng thái Booking qua các nghiệp vụ thanh toán và hủy
+Booking theo các transition được quy định.
 
 ---
 
@@ -639,7 +641,7 @@ Customer có thể xem notification trong hệ thống.
 | BOOKING      | FR-BOOK-003  | View Booking History        |
 | BOOKING      | FR-BOOK-004  | Cancel Booking              |
 | BOOKING      | FR-BOOK-005  | Manage Bookings             |
-| BOOKING      | FR-BOOK-006  | Update Booking Status       |
+| BOOKING      | FR-BOOK-006  | Track Booking Status        |
 | PAYMENT      | FR-PAY-001   | Make Payment                |
 | NOTIFICATION | FR-NOTI-001  | Send Booking Notification   |
 
@@ -667,7 +669,7 @@ Customer có thể xem notification trong hệ thống.
 | UC14 | Manage Fare Classes Admin                |
 | UC15 | Manage Services Admin                    |
 | UC16 | Manage Bookings Admin                    |
-| UC17 | Track/Update Booking Status Admin/System |
+| UC17 | Track Booking Status System             |
 | UC18 | Send Booking Notification System         |
 
 ## 5.2. Quan hệ giữa các Use Case
@@ -1067,8 +1069,7 @@ POST `/api/bookings` Create Booking
 GET `/api/bookings/{id}` View Booking
 GET `/api/bookings/me` View Booking History
 PATCH `/api/bookings/{id}/cancel` Cancel Booking
-GET `/api/bookings` Manage/List Bookings
-PATCH `/api/bookings/{id}/status` Update Booking Status
+GET `/api/bookings` Manage/List Bookings (Admin)
 
 ## 9.6. Payment API
 
@@ -1508,6 +1509,19 @@ Role: ADMIN
 Authorization: Bearer {access_token}
 ```
 
+**Business Rules:**
+- Server tự tính giá và tự sinh `bookingCode` duy nhất; không nhận `userId`, `amount`, hoặc `status` từ client.
+- Từ chối hạng vé (`fareClass`) hoặc dịch vụ bổ sung (`additionalService`) đang ở trạng thái không hoạt động (`active: false`).
+
+#### GET /api/bookings/{id}
+
+**Mô tả:** Lấy chi tiết booking (chỉ cho phép chính chủ sở hữu đơn đặt vé).
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
 **Request Body:**
 ```json
 {
@@ -1709,11 +1723,11 @@ Authorization: Bearer {access_token}
 }
 ```
 
-**Response 400:**
+**Response 409:**
 ```json
 {
   "success": false,
-  "message": "Cannot cancel booking with status CONFIRMED"
+  "message": "Cannot cancel booking that is already confirmed"
 }
 ```
 
@@ -1865,37 +1879,6 @@ Role: ADMIN
     "page": 0,
     "size": 20,
     "totalPages": 5
-  }
-}
-```
-
----
-
-#### PATCH /api/bookings/{id}/status (Admin)
-
-**Mô tả:** Cập nhật trạng thái booking (admin).
-
-**Request Body:**
-```json
-{
-  "status": "CONFIRMED"
-}
-```
-
-**Allowed Transitions:**
-- `PENDING` → `CONFIRMED`, `CANCELLED`, `PAYMENT_FAILED`
-- `CONFIRMED` → không thể chuyển về `PENDING`
-- `CANCELLED` → terminal state
-- `PAYMENT_FAILED` → có thể retry payment
-
-**Response 200:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "bookingCode": "BK-ABC123",
-    "status": "CONFIRMED"
   }
 }
 ```
@@ -2198,7 +2181,7 @@ Manage Booking Booking `/bookings` BookingService \-
 
 Payment Payment POST `/payments` PaymentService Strategy
 
-Booking Status Booking PATCH `/status` Booking State State
+Booking Status Booking Payment/cancel BookingService State
 
 Notification Notification `/notifications` NotificationService Observer
 

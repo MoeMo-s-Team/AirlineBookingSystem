@@ -234,8 +234,8 @@ backend/
 |-------|-----------------|---------------|
 | **presentation** | HTTP handling, DTO conversion | application |
 | **application** | Business logic, orchestration | domain |
-| **domain** | Business rules, entities | None (pure Java) |
-| **infrastructure** | External integrations | domain, application |
+| **domain** | Business rules, JPA entities, Spring Data repositories | JPA and Spring Data |
+| **infrastructure** | Security and external integrations | domain, application |
 | **pattern** | Pattern implementations | domain |
 
 ### 3.3 Package Dependencies

@@ -55,6 +55,12 @@ class SecurityConfigRouteTest {
     private com.airline.application.service.FlightService flightService;
     @MockBean
     private com.airline.application.service.AdditionalServiceService additionalServiceService;
+    @MockBean
+    private com.airline.application.service.BookingService bookingService;
+    @MockBean
+    private com.airline.application.service.PaymentService paymentService;
+    @MockBean
+    private com.airline.application.service.NotificationService notificationService;
 
     private static HttpServer jwksServer;
     private static RSAKey rsaJwk;
