@@ -1,14 +1,20 @@
 package com.airline.presentation.controller;
 
 import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.dto.PaymentResult;
+import com.airline.application.dto.ProcessPaymentCommand;
 import com.airline.application.service.PaymentService;
 import com.airline.domain.enums.PaymentStatus;
 import com.airline.presentation.dto.request.PaymentRequest;
 import com.airline.presentation.dto.response.ApiResponse;
 import com.airline.presentation.dto.response.PaymentResponse;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -23,6 +29,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentControllerTest {
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Mock
     private PaymentService paymentService;
@@ -49,17 +56,10 @@ class PaymentControllerTest {
                 .paymentMethod("CREDIT_CARD")
                 .build();
 
-        PaymentResponse mockResponse = PaymentResponse.builder()
-                .id(1L)
-                .bookingId(10L)
-                .amount(new BigDecimal("1500000.00"))
-                .paymentMethod("CREDIT_CARD")
-                .status(PaymentStatus.SUCCESS)
-                .transactionRef("TXN_123456")
-                .paidAt(LocalDateTime.now())
-                .build();
+        PaymentResult mockResponse = new PaymentResult(1L, 10L, new BigDecimal("1500000.00"), "CREDIT_CARD",
+                PaymentStatus.SUCCESS, "TXN_123456", LocalDateTime.now(), null);
 
-        when(paymentService.processPayment(customerPrincipal, request)).thenReturn(mockResponse);
+        when(paymentService.processPayment(eq(customerPrincipal), any(ProcessPaymentCommand.class))).thenReturn(mockResponse);
 
         ResponseEntity<ApiResponse<PaymentResponse>> response = controller.processPayment(customerPrincipal, request);
 
@@ -75,20 +75,27 @@ class PaymentControllerTest {
                 .paymentMethod("CREDIT_CARD")
                 .build();
 
-        PaymentResponse mockResponse = PaymentResponse.builder()
-                .id(2L)
-                .bookingId(10L)
-                .amount(new BigDecimal("1500000.00"))
-                .paymentMethod("CREDIT_CARD")
-                .status(PaymentStatus.FAILED)
-                .build();
+        PaymentResult mockResponse = new PaymentResult(2L, 10L, new BigDecimal("1500000.00"), "CREDIT_CARD",
+                PaymentStatus.FAILED, null, null, null);
 
-        when(paymentService.processPayment(customerPrincipal, request)).thenReturn(mockResponse);
+        when(paymentService.processPayment(eq(customerPrincipal), any(ProcessPaymentCommand.class))).thenReturn(mockResponse);
 
         ResponseEntity<ApiResponse<PaymentResponse>> response = controller.processPayment(customerPrincipal, request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().isSuccess());
         assertEquals(PaymentStatus.FAILED, response.getBody().getData().getStatus());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"CREDIT_CARD", "BANK_TRANSFER", "MOCK"})
+    void paymentRequest_acceptsMethodsFromSrs(String method) {
+        assertTrue(validator.validate(new PaymentRequest(10L, method)).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DEBIT_CARD", "E_WALLET", "UNKNOWN", ""})
+    void paymentRequest_rejectsMethodsOutsideSrs(String method) {
+        assertFalse(validator.validate(new PaymentRequest(10L, method)).isEmpty());
     }
 }

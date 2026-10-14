@@ -1,6 +1,7 @@
 package com.airline.presentation.controller;
 
 import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.dto.ProcessPaymentCommand;
 import com.airline.application.service.PaymentService;
 import com.airline.presentation.dto.request.PaymentRequest;
 import com.airline.presentation.dto.response.ApiResponse;
@@ -29,7 +30,8 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<PaymentResponse>> processPayment(
             @AuthenticationPrincipal ProfileIdentity principal,
             @Valid @RequestBody PaymentRequest request) {
-        PaymentResponse response = paymentService.processPayment(principal, request);
+        PaymentResponse response = PaymentResponse.from(paymentService.processPayment(principal,
+                new ProcessPaymentCommand(request.getBookingId(), request.getPaymentMethod())));
         return ResponseEntity.ok(ApiResponse.success("Xử lý thanh toán thành công", response));
     }
 }

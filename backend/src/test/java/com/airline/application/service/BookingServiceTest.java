@@ -1,15 +1,13 @@
 package com.airline.application.service;
 
 import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.dto.BookingView;
+import com.airline.application.dto.CreateBookingCommand;
 import com.airline.application.exception.BookingConflictException;
 import com.airline.domain.entity.*;
 import com.airline.domain.enums.BookingStatus;
 import com.airline.domain.repository.*;
 import com.airline.pattern.observer.BookingSubject;
-import com.airline.presentation.dto.request.BookingCreateRequest;
-import com.airline.presentation.dto.request.BookingServiceItemRequest;
-import com.airline.presentation.dto.request.PassengerRequest;
-import com.airline.presentation.dto.response.BookingResponse;
 import com.airline.presentation.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,31 +80,20 @@ class BookingServiceTest {
             return b;
         });
 
-        PassengerRequest p1 = PassengerRequest.builder()
-                .fullName("Nguyen Van A")
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .passportNo("B1234567")
-                .phone("0901234567")
-                .build();
-        BookingServiceItemRequest s1 = BookingServiceItemRequest.builder()
-                .serviceId(3L)
-                .quantity(2)
-                .build();
+        CreateBookingCommand request = new CreateBookingCommand(1L, 2L,
+                List.of(new CreateBookingCommand.PassengerInput("Nguyen Van A", LocalDate.of(1990, 1, 1), "B1234567", "0901234567")),
+                List.of(new CreateBookingCommand.ServiceInput(3L, 2)));
 
-        BookingCreateRequest request = BookingCreateRequest.builder()
-                .flightId(1L)
-                .fareClassId(2L)
-                .passengers(List.of(p1))
-                .services(List.of(s1))
-                .build();
-
-        BookingResponse response = bookingService.createBooking(customerPrincipal, request);
+        BookingView response = bookingService.createBooking(customerPrincipal, request);
 
         assertNotNull(response);
-        assertEquals(10L, response.getId());
-        assertEquals(BookingStatus.PENDING, response.getStatus());
+        assertEquals(10L, response.id());
+        assertEquals(BookingStatus.PENDING, response.status());
         // Price: 1,000,000 * 2.00 * 1 passenger + 200,000 * 2 = 2,000,000 + 400,000 = 2,400,000
-        assertEquals(new BigDecimal("2400000.00"), response.getTotalPrice());
+        assertEquals(new BigDecimal("2400000.00"), response.totalPrice());
+        assertEquals(3L, response.services().getFirst().id());
+        assertEquals(0, new BigDecimal("2000000.00").compareTo(response.priceBreakdown().baseFare()));
+        assertEquals(0, new BigDecimal("400000.00").compareTo(response.priceBreakdown().servicesTotal()));
 
         ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
         verify(bookingSubject).publishStatusChanged(bookingCaptor.capture(), isNull());
@@ -123,11 +110,8 @@ class BookingServiceTest {
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(fareClassRepository.findById(2L)).thenReturn(Optional.of(inactiveFare));
 
-        BookingCreateRequest request = BookingCreateRequest.builder()
-                .flightId(1L)
-                .fareClassId(2L)
-                .passengers(List.of(PassengerRequest.builder().fullName("A").dateOfBirth(LocalDate.of(1990, 1, 1)).passportNo("P1").phone("090").build()))
-                .build();
+        CreateBookingCommand request = new CreateBookingCommand(1L, 2L,
+                List.of(new CreateBookingCommand.PassengerInput("A", LocalDate.of(1990, 1, 1), "P1", "090")), List.of());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> bookingService.createBooking(customerPrincipal, request));
         assertTrue(ex.getMessage().contains("ngừng áp dụng"));
@@ -143,14 +127,9 @@ class BookingServiceTest {
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(fareClassRepository.findById(2L)).thenReturn(Optional.of(fareClass));
 
-        PassengerRequest p1 = PassengerRequest.builder().fullName("A").dateOfBirth(LocalDate.of(1990, 1, 1)).passportNo("P123").phone("0901").build();
-        PassengerRequest p2 = PassengerRequest.builder().fullName("B").dateOfBirth(LocalDate.of(1992, 1, 1)).passportNo("p123").phone("0902").build();
-
-        BookingCreateRequest request = BookingCreateRequest.builder()
-                .flightId(1L)
-                .fareClassId(2L)
-                .passengers(List.of(p1, p2))
-                .build();
+        CreateBookingCommand request = new CreateBookingCommand(1L, 2L, List.of(
+                new CreateBookingCommand.PassengerInput("A", LocalDate.of(1990, 1, 1), "P123", "0901"),
+                new CreateBookingCommand.PassengerInput("B", LocalDate.of(1992, 1, 1), "p123", "0902")), List.of());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> bookingService.createBooking(customerPrincipal, request));
         assertTrue(ex.getMessage().contains("trùng lặp"));
@@ -162,14 +141,16 @@ class BookingServiceTest {
                 .id(10L)
                 .status(BookingStatus.PENDING)
                 .totalPrice(new BigDecimal("1000000.00"))
+                .flight(Flight.builder().basePrice(new BigDecimal("1000000.00")).build())
+                .fareClass(FareClass.builder().priceMultiplier(BigDecimal.ONE).build())
                 .build();
 
         when(bookingRepository.findByIdAndUserIdForUpdate(10L, userId)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
 
-        BookingResponse response = bookingService.cancelBooking(customerPrincipal, 10L);
+        BookingView response = bookingService.cancelBooking(customerPrincipal, 10L);
 
-        assertEquals(BookingStatus.CANCELLED, response.getStatus());
+        assertEquals(BookingStatus.CANCELLED, response.status());
         verify(bookingSubject).publishStatusChanged(booking, BookingStatus.PENDING);
     }
 
@@ -191,5 +172,28 @@ class BookingServiceTest {
         when(bookingRepository.findByIdAndUserId(10L, userId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> bookingService.getBookingDetail(customerPrincipal, 10L));
+    }
+
+    @Test
+    void mapToView_usesPersistedServicePriceForHistoricalBreakdown() {
+        Booking booking = Booking.builder()
+                .id(1L)
+                .status(BookingStatus.CONFIRMED)
+                .flight(Flight.builder().basePrice(new BigDecimal("9000000.00")).build())
+                .fareClass(FareClass.builder().priceMultiplier(new BigDecimal("2.00")).build())
+                .totalPrice(new BigDecimal("7300000.00"))
+                .services(List.of(BookingServiceItem.builder()
+                        .id(5L)
+                        .service(AdditionalService.builder().id(3L).name("Baggage").price(new BigDecimal("900000.00")).build())
+                        .quantity(2)
+                        .unitPrice(new BigDecimal("650000.00"))
+                        .build()))
+                .build();
+
+        BookingView view = bookingService.mapToView(booking);
+
+        assertEquals(0, new BigDecimal("6000000.00").compareTo(view.priceBreakdown().baseFare()));
+        assertEquals(0, new BigDecimal("1300000.00").compareTo(view.priceBreakdown().servicesTotal()));
+        assertEquals(3L, view.services().getFirst().id());
     }
 }

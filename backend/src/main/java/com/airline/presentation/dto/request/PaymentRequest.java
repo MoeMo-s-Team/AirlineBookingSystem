@@ -18,6 +18,6 @@ public class PaymentRequest {
     private Long bookingId;
 
     @NotBlank(message = "Phương thức thanh toán không được để trống")
-    @Pattern(regexp = "^(CREDIT_CARD|DEBIT_CARD|E_WALLET|BANK_TRANSFER)$", message = "Phương thức thanh toán không hợp lệ")
+    @Pattern(regexp = "^(CREDIT_CARD|BANK_TRANSFER|MOCK)$", message = "Phương thức thanh toán không hợp lệ")
     private String paymentMethod;
 }

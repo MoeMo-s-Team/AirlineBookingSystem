@@ -1,18 +1,14 @@
 package com.airline.application.service;
 
 import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.dto.BookingView;
+import com.airline.application.dto.CreateBookingCommand;
 import com.airline.application.exception.BookingConflictException;
 import com.airline.domain.entity.*;
 import com.airline.domain.enums.BookingStatus;
 import com.airline.domain.repository.*;
 import com.airline.pattern.observer.BookingSubject;
 import com.airline.pattern.state.BookingStateContext;
-import com.airline.presentation.dto.request.BookingCreateRequest;
-import com.airline.presentation.dto.request.BookingServiceItemRequest;
-import com.airline.presentation.dto.request.PassengerRequest;
-import com.airline.presentation.dto.response.BookingResponse;
-import com.airline.presentation.dto.response.BookingServiceItemResponse;
-import com.airline.presentation.dto.response.PassengerResponse;
 import com.airline.presentation.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,14 +35,14 @@ public class BookingService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     @Transactional
-    public BookingResponse createBooking(ProfileIdentity principal, BookingCreateRequest request) {
+    public BookingView createBooking(ProfileIdentity principal, CreateBookingCommand request) {
         Profile user = profileRepository.findById(principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
 
-        Flight flight = flightRepository.findById(request.getFlightId())
+        Flight flight = flightRepository.findById(request.flightId())
                 .orElseThrow(() -> new ResourceNotFoundException("Chuyến bay không tồn tại"));
 
-        FareClass fareClass = fareClassRepository.findById(request.getFareClassId())
+        FareClass fareClass = fareClassRepository.findById(request.fareClassId())
                 .orElseThrow(() -> new ResourceNotFoundException("Hạng vé không tồn tại"));
 
         if (Boolean.FALSE.equals(fareClass.getActive())) {
@@ -54,14 +50,14 @@ public class BookingService {
         }
 
         // Validate passengers
-        if (request.getPassengers() == null || request.getPassengers().isEmpty()) {
+        if (request.passengers() == null || request.passengers().isEmpty()) {
             throw new IllegalArgumentException("Danh sách hành khách không được để trống");
         }
 
         Set<String> passportSet = new HashSet<>();
-        for (PassengerRequest pReq : request.getPassengers()) {
-            if (!passportSet.add(pReq.getPassportNo().trim().toUpperCase())) {
-                throw new IllegalArgumentException("Số hộ chiếu/CCCD trùng lặp trong cùng đơn đặt vé: " + pReq.getPassportNo());
+        for (CreateBookingCommand.PassengerInput pReq : request.passengers()) {
+            if (!passportSet.add(pReq.passportNo().trim().toUpperCase())) {
+                throw new IllegalArgumentException("Số hộ chiếu/CCCD trùng lặp trong cùng đơn đặt vé: " + pReq.passportNo());
             }
         }
 
@@ -69,29 +65,29 @@ public class BookingService {
         BigDecimal flightBasePrice = flight.getBasePrice();
         BigDecimal fareMultiplier = fareClass.getPriceMultiplier();
         BigDecimal perPassengerFare = flightBasePrice.multiply(fareMultiplier);
-        BigDecimal totalPassengerFare = perPassengerFare.multiply(BigDecimal.valueOf(request.getPassengers().size()));
+        BigDecimal totalPassengerFare = perPassengerFare.multiply(BigDecimal.valueOf(request.passengers().size()));
 
         BigDecimal totalServiceFare = BigDecimal.ZERO;
         List<BookingServiceItem> serviceItems = new ArrayList<>();
 
-        if (request.getServices() != null) {
-            for (BookingServiceItemRequest sReq : request.getServices()) {
-                if (sReq.getQuantity() == null || sReq.getQuantity() <= 0) {
+        if (request.services() != null) {
+            for (CreateBookingCommand.ServiceInput sReq : request.services()) {
+                if (sReq.quantity() == null || sReq.quantity() <= 0) {
                     throw new IllegalArgumentException("Số lượng dịch vụ phải lớn hơn 0");
                 }
-                AdditionalService service = additionalServiceRepository.findById(sReq.getServiceId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Dịch vụ bổ sung không tồn tại: " + sReq.getServiceId()));
+                AdditionalService service = additionalServiceRepository.findById(sReq.serviceId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Dịch vụ bổ sung không tồn tại: " + sReq.serviceId()));
 
                 if (Boolean.FALSE.equals(service.getActive())) {
                     throw new IllegalArgumentException("Dịch vụ bổ sung đã ngừng cung cấp: " + service.getName());
                 }
 
-                BigDecimal lineTotal = service.getPrice().multiply(BigDecimal.valueOf(sReq.getQuantity()));
+                BigDecimal lineTotal = service.getPrice().multiply(BigDecimal.valueOf(sReq.quantity()));
                 totalServiceFare = totalServiceFare.add(lineTotal);
 
                 BookingServiceItem item = BookingServiceItem.builder()
                         .service(service)
-                        .quantity(sReq.getQuantity())
+                        .quantity(sReq.quantity())
                         .unitPrice(service.getPrice())
                         .build();
                 serviceItems.add(item);
@@ -110,13 +106,13 @@ public class BookingService {
                 .totalPrice(totalPrice)
                 .build();
 
-        for (PassengerRequest pReq : request.getPassengers()) {
+        for (CreateBookingCommand.PassengerInput pReq : request.passengers()) {
             Passenger passenger = Passenger.builder()
                     .booking(booking)
-                    .fullName(pReq.getFullName().trim())
-                    .dateOfBirth(pReq.getDateOfBirth())
-                    .passportNo(pReq.getPassportNo().trim().toUpperCase())
-                    .phone(pReq.getPhone().trim())
+                    .fullName(pReq.fullName().trim())
+                    .dateOfBirth(pReq.dateOfBirth())
+                    .passportNo(pReq.passportNo().trim().toUpperCase())
+                    .phone(pReq.phone().trim())
                     .build();
             booking.getPassengers().add(passenger);
         }
@@ -131,32 +127,32 @@ public class BookingService {
         // Publish event: created with previousStatus = null
         bookingSubject.publishStatusChanged(savedBooking, null);
 
-        return mapToResponse(savedBooking);
+        return mapToView(savedBooking);
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse getBookingDetail(ProfileIdentity principal, Long id) {
+    public BookingView getBookingDetail(ProfileIdentity principal, Long id) {
         Booking booking = bookingRepository.findByIdAndUserId(id, principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt vé không tồn tại"));
-        return mapToResponse(booking);
+        return mapToView(booking);
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getMyBookings(ProfileIdentity principal, BookingStatus status) {
+    public List<BookingView> getMyBookings(ProfileIdentity principal, BookingStatus status) {
         List<Booking> bookings = (status != null)
                 ? bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(principal.getId(), status)
                 : bookingRepository.findByUserIdOrderByCreatedAtDesc(principal.getId());
-        return bookings.stream().map(this::mapToResponse).toList();
+        return bookings.stream().map(this::mapToView).toList();
     }
 
     @Transactional(readOnly = true)
-    public Page<BookingResponse> getBookingsAdmin(BookingStatus status, UUID userId, Pageable pageable) {
+    public Page<BookingView> getBookingsAdmin(BookingStatus status, UUID userId, Pageable pageable) {
         return bookingRepository.findWithFilters(status, userId, pageable)
-                .map(this::mapToResponse);
+                .map(this::mapToView);
     }
 
     @Transactional
-    public BookingResponse cancelBooking(ProfileIdentity principal, Long id) {
+    public BookingView cancelBooking(ProfileIdentity principal, Long id) {
         Booking booking = bookingRepository.findByIdAndUserIdForUpdate(id, principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt vé không tồn tại"));
 
@@ -168,7 +164,7 @@ public class BookingService {
         Booking saved = bookingRepository.save(booking);
 
         bookingSubject.publishStatusChanged(saved, previousStatus);
-        return mapToResponse(saved);
+        return mapToView(saved);
     }
 
     private String generateUniqueBookingCode() {
@@ -185,44 +181,38 @@ public class BookingService {
         return "BK" + UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
     }
 
-    public BookingResponse mapToResponse(Booking booking) {
-        List<PassengerResponse> passengerResponses = booking.getPassengers().stream()
-                .map(p -> PassengerResponse.builder()
-                        .id(p.getId())
-                        .fullName(p.getFullName())
-                        .dateOfBirth(p.getDateOfBirth())
-                        .passportNo(p.getPassportNo())
-                        .phone(p.getPhone())
-                        .build())
+    public BookingView mapToView(Booking booking) {
+        List<BookingView.PassengerView> passengerResponses = booking.getPassengers().stream()
+                .map(p -> new BookingView.PassengerView(p.getId(), p.getFullName(), p.getDateOfBirth(), p.getPassportNo()))
                 .toList();
 
-        List<BookingServiceItemResponse> serviceResponses = booking.getServices().stream()
-                .map(s -> BookingServiceItemResponse.builder()
-                        .id(s.getId())
-                        .serviceId(s.getService() != null ? s.getService().getId() : null)
-                        .serviceName(s.getService() != null ? s.getService().getName() : null)
-                        .quantity(s.getQuantity())
-                        .unitPrice(s.getUnitPrice())
-                        .totalPrice(s.getUnitPrice() != null && s.getQuantity() != null
-                                ? s.getUnitPrice().multiply(BigDecimal.valueOf(s.getQuantity()))
-                                : BigDecimal.ZERO)
-                        .build())
+        List<BookingView.ServiceView> serviceResponses = booking.getServices().stream()
+                .map(s -> new BookingView.ServiceView(s.getService() == null ? null : s.getService().getId(),
+                        s.getService() == null ? null : s.getService().getName(), s.getQuantity(), s.getUnitPrice()))
                 .toList();
 
-        return BookingResponse.builder()
-                .id(booking.getId())
-                .bookingCode(booking.getBookingCode())
-                .userId(booking.getUser() != null ? booking.getUser().getId() : null)
-                .flightId(booking.getFlight() != null ? booking.getFlight().getId() : null)
-                .flightNumber(booking.getFlight() != null ? booking.getFlight().getFlightNumber() : null)
-                .fareClassId(booking.getFareClass() != null ? booking.getFareClass().getId() : null)
-                .fareClassName(booking.getFareClass() != null ? booking.getFareClass().getName() : null)
-                .status(booking.getStatus())
-                .totalPrice(booking.getTotalPrice())
-                .passengers(passengerResponses)
-                .services(serviceResponses)
-                .createdAt(booking.getCreatedAt())
-                .updatedAt(booking.getUpdatedAt())
-                .build();
+        BigDecimal servicesTotal = booking.getServices().stream()
+                .map(s -> s.getUnitPrice().multiply(BigDecimal.valueOf(s.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal baseFare = booking.getTotalPrice().subtract(servicesTotal);
+        Payment latestPayment = booking.getPayments().stream()
+                .max(Comparator.comparing(Payment::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder())))
+                .orElse(null);
+
+        return new BookingView(
+                booking.getId(),
+                booking.getBookingCode(),
+                booking.getStatus(),
+                new BookingView.FlightSummary(booking.getFlight().getId(), booking.getFlight().getFlightNumber(),
+                        booking.getFlight().getOrigin(), booking.getFlight().getDestination(), booking.getFlight().getDepartureTime()),
+                new BookingView.FareClassSummary(booking.getFareClass().getId(), booking.getFareClass().getCode(), booking.getFareClass().getName()),
+                passengerResponses,
+                serviceResponses,
+                new BookingView.PriceBreakdown(baseFare, servicesTotal, booking.getTotalPrice()),
+                booking.getTotalPrice(),
+                latestPayment == null ? null : new BookingView.PaymentSummary(
+                        latestPayment.getId(), latestPayment.getAmount(), latestPayment.getStatus(), latestPayment.getPaidAt()),
+                booking.getCreatedAt(),
+                booking.getUpdatedAt());
     }
 }

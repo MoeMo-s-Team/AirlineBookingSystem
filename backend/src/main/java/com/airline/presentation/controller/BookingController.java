@@ -1,6 +1,7 @@
 package com.airline.presentation.controller;
 
 import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.dto.CreateBookingCommand;
 import com.airline.application.service.BookingService;
 import com.airline.domain.enums.BookingStatus;
 import com.airline.presentation.dto.request.BookingCreateRequest;
@@ -35,7 +36,7 @@ public class BookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
             @AuthenticationPrincipal ProfileIdentity principal,
             @Valid @RequestBody BookingCreateRequest request) {
-        BookingResponse created = bookingService.createBooking(principal, request);
+        BookingResponse created = BookingResponse.from(bookingService.createBooking(principal, toCommand(request)));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt vé thành công", created));
     }
@@ -45,7 +46,7 @@ public class BookingController {
     public ResponseEntity<ApiResponse<List<BookingResponse>>> getMyBookings(
             @AuthenticationPrincipal ProfileIdentity principal,
             @RequestParam(required = false) BookingStatus status) {
-        List<BookingResponse> list = bookingService.getMyBookings(principal, status);
+        List<BookingResponse> list = bookingService.getMyBookings(principal, status).stream().map(BookingResponse::from).toList();
         return ResponseEntity.ok(ApiResponse.success(list));
     }
 
@@ -54,7 +55,7 @@ public class BookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(
             @AuthenticationPrincipal ProfileIdentity principal,
             @PathVariable Long id) {
-        BookingResponse booking = bookingService.getBookingDetail(principal, id);
+        BookingResponse booking = BookingResponse.from(bookingService.getBookingDetail(principal, id));
         return ResponseEntity.ok(ApiResponse.success(booking));
     }
 
@@ -63,7 +64,7 @@ public class BookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
             @AuthenticationPrincipal ProfileIdentity principal,
             @PathVariable Long id) {
-        BookingResponse cancelled = bookingService.cancelBooking(principal, id);
+        BookingResponse cancelled = BookingResponse.from(bookingService.cancelBooking(principal, id));
         return ResponseEntity.ok(ApiResponse.success("Hủy đơn đặt vé thành công", cancelled));
     }
 
@@ -74,7 +75,17 @@ public class BookingController {
             @RequestParam(required = false) BookingStatus status,
             @RequestParam(required = false) UUID userId,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<BookingResponse> page = bookingService.getBookingsAdmin(status, userId, pageable);
+        Page<BookingResponse> page = bookingService.getBookingsAdmin(status, userId, pageable).map(BookingResponse::from);
         return ResponseEntity.ok(ApiResponse.success(page));
+    }
+
+    private CreateBookingCommand toCommand(BookingCreateRequest request) {
+        return new CreateBookingCommand(request.getFlightId(), request.getFareClassId(),
+                request.getPassengers().stream()
+                        .map(p -> new CreateBookingCommand.PassengerInput(p.getFullName(), p.getDateOfBirth(), p.getPassportNo(), p.getPhone()))
+                        .toList(),
+                request.getServices() == null ? List.of() : request.getServices().stream()
+                        .map(s -> new CreateBookingCommand.ServiceInput(s.getServiceId(), s.getQuantity()))
+                        .toList());
     }
 }

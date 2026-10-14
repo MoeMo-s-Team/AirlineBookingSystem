@@ -1,6 +1,7 @@
 package com.airline.application.service;
 
 import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.dto.ProcessPaymentCommand;
 import com.airline.application.exception.BookingConflictException;
 import com.airline.domain.entity.*;
 import com.airline.domain.enums.BookingStatus;
@@ -132,10 +133,7 @@ class BookingPaymentConcurrencyTest {
         Future<?> f1 = executor.submit(() -> {
             try {
                 barrier.await();
-                paymentService.processPayment(principal, PaymentRequest.builder()
-                        .bookingId(booking.getId())
-                        .paymentMethod("CREDIT_CARD")
-                        .build());
+                paymentService.processPayment(principal, new ProcessPaymentCommand(booking.getId(), "CREDIT_CARD"));
                 successCount.incrementAndGet();
             } catch (BookingConflictException e) {
                 conflictCount.incrementAndGet();

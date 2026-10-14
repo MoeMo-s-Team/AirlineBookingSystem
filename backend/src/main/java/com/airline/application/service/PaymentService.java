@@ -1,6 +1,9 @@
 package com.airline.application.service;
 
 import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.dto.PaymentResult;
+import com.airline.application.dto.ProcessPaymentCommand;
+import com.airline.application.exception.BookingConflictException;
 import com.airline.domain.entity.Booking;
 import com.airline.domain.entity.Payment;
 import com.airline.domain.enums.BookingStatus;
@@ -9,8 +12,6 @@ import com.airline.domain.repository.BookingRepository;
 import com.airline.domain.repository.PaymentRepository;
 import com.airline.pattern.observer.BookingSubject;
 import com.airline.pattern.state.BookingStateContext;
-import com.airline.presentation.dto.request.PaymentRequest;
-import com.airline.presentation.dto.response.PaymentResponse;
 import com.airline.presentation.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,14 +30,18 @@ public class PaymentService {
     private final BookingSubject bookingSubject;
 
     @Transactional
-    public PaymentResponse processPayment(ProfileIdentity principal, PaymentRequest request) {
-        Booking booking = bookingRepository.findByIdAndUserIdForUpdate(request.getBookingId(), principal.getId())
+    public PaymentResult processPayment(ProfileIdentity principal, ProcessPaymentCommand request) {
+        Booking booking = bookingRepository.findByIdAndUserIdForUpdate(request.bookingId(), principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt vé không tồn tại"));
 
         BookingStatus previousStatus = booking.getStatus();
         BookingStateContext stateContext = new BookingStateContext(previousStatus);
 
-        PaymentStatus gatewayResult = paymentGateway.processPayment(booking.getId(), request.getPaymentMethod());
+        if (previousStatus != BookingStatus.PENDING) {
+            throw new BookingConflictException("Only pending bookings can be paid");
+        }
+
+        PaymentStatus gatewayResult = paymentGateway.processPayment(booking.getId(), request.paymentMethod());
 
         String transactionRef = null;
         LocalDateTime paidAt = null;
@@ -52,7 +57,7 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .booking(booking)
                 .amount(booking.getTotalPrice())
-                .paymentMethod(request.getPaymentMethod())
+                .paymentMethod(request.paymentMethod())
                 .status(gatewayResult)
                 .transactionRef(transactionRef)
                 .paidAt(paidAt)
@@ -65,15 +70,8 @@ public class PaymentService {
 
         bookingSubject.publishStatusChanged(savedBooking, previousStatus);
 
-        return PaymentResponse.builder()
-                .id(savedPayment.getId())
-                .bookingId(booking.getId())
-                .amount(savedPayment.getAmount())
-                .paymentMethod(savedPayment.getPaymentMethod())
-                .status(savedPayment.getStatus())
-                .transactionRef(savedPayment.getTransactionRef())
-                .paidAt(savedPayment.getPaidAt())
-                .createdAt(savedPayment.getCreatedAt())
-                .build();
+        return new PaymentResult(savedPayment.getId(), booking.getId(), savedPayment.getAmount(),
+                savedPayment.getPaymentMethod(), savedPayment.getStatus(), savedPayment.getTransactionRef(),
+                savedPayment.getPaidAt(), savedPayment.getCreatedAt());
     }
 }

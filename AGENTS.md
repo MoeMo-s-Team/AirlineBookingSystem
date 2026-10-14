@@ -52,8 +52,8 @@ presentation → application → domain ← infrastructure
 
 - **presentation**: HTTP handling, DTOs, exception mapping
 - **application**: Business logic, orchestration
-- **domain**: Entities, repository interfaces (pure Java, no dependencies)
-- **infrastructure**: Security, external integrations, repository implementations
+- **domain**: JPA entities, enums, and Spring Data repositories (currently coupled to JPA/Spring Data)
+- **infrastructure**: Security and external integrations; repository interfaces currently live in `domain/repository`
 
 ## Design Patterns (`pattern/` package)
 
