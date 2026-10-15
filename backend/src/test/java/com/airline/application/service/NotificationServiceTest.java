@@ -4,8 +4,8 @@ import com.airline.domain.entity.Booking;
 import com.airline.domain.entity.Notification;
 import com.airline.domain.entity.Profile;
 import com.airline.domain.repository.NotificationRepository;
-import com.airline.presentation.dto.response.NotificationPageResponse;
-import com.airline.presentation.exception.ResourceNotFoundException;
+import com.airline.application.dto.NotificationPageView;
+import com.airline.application.exception.NotificationNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,10 +39,10 @@ class NotificationServiceTest {
         when(repository.findForUserByReadStatus(owner, false, 20, 5)).thenReturn(List.of(notification));
         when(repository.countByUser_IdAndIsRead(owner, false)).thenReturn(6L);
 
-        NotificationPageResponse result = service.list(owner, false, 20, 5);
+        NotificationPageView result = service.list(owner, false, 20, 5);
 
-        assertEquals(6, result.pagination().total());
-        assertEquals(5, result.pagination().offset());
+        assertEquals(6, result.total());
+        assertEquals(5, result.offset());
         assertEquals(7L, result.data().get(0).bookingId());
         assertFalse(result.data().get(0).isRead());
         verify(repository).findForUserByReadStatus(owner, false, 20, 5);
@@ -53,7 +53,7 @@ class NotificationServiceTest {
     void refusesMarkReadForAnotherUsersNotification() {
         when(repository.findByIdAndUser_Id(9L, owner)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> service.markRead(owner, 9L));
+        assertThrows(NotificationNotFoundException.class, () -> service.markRead(owner, 9L));
 
         verify(repository).findByIdAndUser_Id(9L, owner);
         verify(repository, never()).save(any());
@@ -64,9 +64,18 @@ class NotificationServiceTest {
         Notification notification = Notification.builder().id(9L).isRead(false).build();
         when(repository.findByIdAndUser_Id(9L, owner)).thenReturn(Optional.of(notification));
 
-        assertTrue(service.markRead(owner, 9L).isRead());
+        service.markRead(owner, 9L);
         assertTrue(notification.getIsRead());
         verify(repository).save(notification);
+    }
+
+    @Test
+    void marksAllUnreadNotificationsForCurrentUserOnly() {
+        when(repository.markAllReadForUser(owner)).thenReturn(3);
+
+        assertEquals(3, service.markAllRead(owner));
+        verify(repository).markAllReadForUser(owner);
+        verifyNoMoreInteractions(repository);
     }
 
     @Test

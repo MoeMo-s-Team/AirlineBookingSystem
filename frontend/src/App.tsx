@@ -19,6 +19,8 @@ import { CustomerRoute } from './components/auth/CustomerRoute';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { NotificationListPage } from './pages/NotificationListPage';
+import { NotificationBookingDetailPage } from './pages/NotificationBookingDetailPage';
+import { NotificationToast } from './components/notification/NotificationToast';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -34,6 +36,7 @@ export const App: React.FC = () => {
   return (
     <AuthProvider>
       <NotificationProvider>
+      <NotificationToast />
       <ScrollToTop />
       <Routes>
         {/* Passenger Experience Routes (Guarded: Admins are redirected to /admin/flights) */}
@@ -98,6 +101,14 @@ export const App: React.FC = () => {
           element={
             <CustomerRoute>
               <NotificationListPage />
+            </CustomerRoute>
+          }
+        />
+        <Route
+          path="/my-bookings/:bookingId"
+          element={
+            <CustomerRoute>
+              <NotificationBookingDetailPage />
             </CustomerRoute>
           }
         />

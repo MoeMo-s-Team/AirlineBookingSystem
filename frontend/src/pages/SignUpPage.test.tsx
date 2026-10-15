@@ -17,6 +17,11 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+// The auth page tests do not mount the app-level NotificationProvider.
+vi.mock('../components/notification/NotificationBell', () => ({
+  NotificationBell: () => null,
+}));
+
 describe('SignUpPage', () => {
   const mockSignUp = vi.fn();
 

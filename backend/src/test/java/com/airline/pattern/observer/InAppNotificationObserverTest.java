@@ -9,6 +9,19 @@ import static org.mockito.Mockito.*;
 
 class InAppNotificationObserverTest {
     @Test
+    void newBookingNotificationRemindsCustomerToPay() {
+        NotificationService service = mock(NotificationService.class);
+        InAppNotificationObserver observer = new InAppNotificationObserver(service);
+        Booking booking = Booking.builder().bookingCode("BK-123").build();
+
+        observer.onStatusChanged(new BookingStatusChangedEvent(
+                booking, null, BookingStatus.PENDING));
+
+        verify(service).createForBooking(booking, "BOOKING_CREATED",
+                "Your booking BK-123 has been created and is awaiting payment.");
+    }
+
+    @Test
     void createsInAppNotificationForConfirmedBooking() {
         NotificationService service = mock(NotificationService.class);
         InAppNotificationObserver observer = new InAppNotificationObserver(service);
