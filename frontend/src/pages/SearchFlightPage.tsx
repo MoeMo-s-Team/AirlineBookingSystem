@@ -14,6 +14,7 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
   const { searchParams, setSearchParams } = useBookingFlow();
 
   const handleSearch = () => {
+    sessionStorage.removeItem('booking-create-outcome-unknown');
     const query = new URLSearchParams({
       origin: searchParams.origin,
       destination: searchParams.destination,

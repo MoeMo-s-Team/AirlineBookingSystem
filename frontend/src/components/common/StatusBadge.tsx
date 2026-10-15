@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface StatusBadgeProps {
-  readonly status: 'SCHEDULED' | 'BOARDING' | 'DEPARTED' | 'DELAYED' | 'CANCELLED' | 'CONFIRMED' | 'PENDING' | 'COMPLETED';
+  readonly status: 'SCHEDULED' | 'BOARDING' | 'DEPARTED' | 'DELAYED' | 'CANCELLED' | 'CONFIRMED' | 'PENDING' | 'COMPLETED' | 'PAYMENT_FAILED';
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
@@ -18,6 +18,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       case 'DELAYED':
         return 'bg-error-container text-on-error-container border-error/20';
       case 'CANCELLED':
+      case 'PAYMENT_FAILED':
         return 'bg-error text-on-error border-error';
       case 'PENDING':
         return 'bg-tertiary-fixed text-on-tertiary-container border-tertiary-container';
@@ -38,6 +39,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       case 'DELAYED':
         return 'error_outline';
       case 'CANCELLED':
+      case 'PAYMENT_FAILED':
         return 'cancel';
       case 'CONFIRMED':
         return 'task_alt';
