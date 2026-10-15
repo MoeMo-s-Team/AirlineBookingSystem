@@ -24,7 +24,7 @@ The backend already provides customer create/detail/list/cancel endpoints, an ad
 2. Add typed booking and payment API calls using the existing `apiClient`. Keep backend booking response fields in their API shape; map only where a presentational component needs it.
 3. Load active fares with `fareApi` and active services with `serviceApi`. Fare cards retain their presentation metadata, but use the numeric backend fare ID and live multiplier/price. Preserve the raw `FlightApiModel.basePrice` for preview calculations; `useFlights` currently substitutes an economy price in its view model. Send numeric IDs and service quantities in the create request. Avoid mock fare or service IDs in submitted data.
 4. On fare selection, a guest goes to sign-in with the search URL as the return destination. Sign-in and auth callback return the customer to that URL; the customer then selects the fare. Admin redirects remain unchanged.
-5. After a booking is created, persist its ID in the checkout URL. Confirmation uses an ID in its URL and fetches `GET /api/bookings/{id}`. My Bookings and admin fetch their own list endpoints. Persisted bookings are never reconstructed from draft state.
+5. After a booking is created with a known response, persist its ID in the checkout URL. Confirmation uses an ID in its URL and fetches `GET /api/bookings/{id}`. My Bookings and admin fetch their own list endpoints. Admin detail uses only the full booking data returned by the admin list; do not assume or call an admin booking-detail endpoint. Persisted bookings are never reconstructed from draft state.
 
 ## Customer data flow
 
@@ -36,23 +36,27 @@ Checkout has two steps: create the booking with `POST /api/bookings`, then show 
 
 If checkout reloads after booking creation, its URL ID restores the persisted booking. On an uncertain payment response, read the booking status before offering another action: `CONFIRMED` goes to confirmation, `PENDING` can retry payment, and `PAYMENT_FAILED` shows failure and requires a new booking. A payment response of `FAILED` follows the same terminal failure path. Do not create another booking merely because payment transport failed.
 
+Treat a timeout, connection loss, malformed response, or HTTP 5xx from `POST /api/bookings` after dispatch as an unknown outcome. Never automatically retry that POST and do not show a retry button on the same draft, because the backend may already have committed the booking and has no idempotency key. A definitive validation/authentication 4xx response is a known rejection and can be corrected before a new submit. For unknown outcomes, send the customer to My Bookings to inspect the authoritative list; do not guess-match a booking by its fields. If the customer cannot determine whether it was created, require support/manual resolution before starting another booking.
+
 ## Booking lists and display
 
 My Bookings reads `GET /api/bookings/me`, filters the actual backend statuses, and opens details from backend data. Only `PENDING` shows a cancel action; `PATCH /api/bookings/{id}/cancel` updates the displayed booking after success. Remove refund language because cancellation does not refund a payment.
 
-The admin page reads `GET /api/bookings` with backend pagination and optional status filtering. Search by booking code or passenger within the loaded page is local unless a matching backend filter exists; do not imply global search. The existing response already includes enough fields for its detail view. Remove admin refund/cancel actions because no admin mutation endpoint exists.
+The admin page reads `GET /api/bookings` with backend pagination and optional status filtering. Search by booking code or passenger within the loaded page is local unless a matching backend filter exists; do not imply global search. Admin detail views use the selected record from the admin list response only; do not assume an admin detail endpoint. Remove admin refund/cancel actions because no admin mutation endpoint exists.
 
 Confirmation, booking cards, and dossier display only fields in `BookingResponse`: booking code/status, route and departure, fare name, passenger names, selected services, price breakdown, and payment status when present. Remove or relabel mock-only gate, seat, passenger email, boarding pass, ticket issuance, completed status, and refunded status claims. A confirmed booking is a confirmed reservation, not proof of an issued ticket.
 
 ## Errors and boundaries
 
 - Keep the customer on the current step and show API errors for missing/invalid selection, create failure, payment failure, list load failure, and cancel conflict. If the backend amount differs from the preview, show the backend amount before payment.
+- Treat an uncertain create response as unknown outcome: never automatically repeat `POST /api/bookings`, and direct the customer to My Bookings for reconciliation. Do not infer that no booking exists from the missing response.
+- On HTTP 409 from payment or cancellation, refetch `GET /api/bookings/{id}` and render the authoritative current booking/status. For payment, route `CONFIRMED` to confirmation, keep `PENDING` eligible for an explicit payment attempt, and show `PAYMENT_FAILED` as terminal. For cancellation, reflect the fetched status and show a conflict only if the refreshed state still requires explanation.
 - Never display confirmation from local state or mock fallback. An invalid or inaccessible booking ID shows a recoverable error with a link to My Bookings.
 - Prevent duplicate requests while a call is in progress. A known booking ID is reused for payment and status checks.
 - Backend validation, ownership checks, state transitions, and final amount remain authoritative. The frontend sends only data required by the existing contracts.
 
 ## Acceptance and review
 
-The integrated journey can select a real one-way flight and fare, enter a passenger, choose active services, create a `PENDING` booking, inspect the backend amount, run mock payment, and see the same booking code and `CONFIRMED` status in confirmation, My Bookings, and the admin list. A `PENDING` booking can be cancelled from My Bookings. A failed or interrupted payment does not display success or silently create a duplicate booking. Guest sign-in returns to flight selection. Unsupported payment, refund, and ticket claims are absent.
+The integrated journey can select a real one-way flight and fare, enter a passenger, choose active services, create a `PENDING` booking, inspect the backend amount, run mock payment, and see the same booking code and `CONFIRMED` status in confirmation, My Bookings, and the admin list. Admin detail uses only admin-list data. A `PENDING` booking can be cancelled from My Bookings. A failed or interrupted payment does not display success or silently create a duplicate booking. An uncertain create response never repeats the create request and sends the customer to My Bookings for reconciliation. Payment and cancellation 409 responses trigger a booking refetch and display its authoritative state. Guest sign-in returns to flight selection. Unsupported payment, refund, and ticket claims are absent.
 
 Review the existing frontend auth, fare/service, and page contracts while implementing. Check the journey against the scenarios above and preserve unrelated changes already in the worktree. No real payment provider, refund, inventory reservation, return flight, multi-city booking, or backend schema change is part of this design.
