@@ -1,8 +1,7 @@
 import React from 'react';
-import { Flight } from '../../types';
 
 export interface FlightDetailsModalProps {
-  readonly flight: Flight | null;
+  readonly flight: any | null;
   readonly isOpen: boolean;
   readonly onClose: () => void;
 }

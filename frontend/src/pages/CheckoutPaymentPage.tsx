@@ -1,40 +1,163 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { PriceSummaryCard } from '../components/booking/PriceSummaryCard';
 import { useBookingFlow } from '../hooks/useBookingFlow';
+import { bookingApi, type BookingDetail, type CreateBookingRequest } from '../api/bookingApi';
+import { paymentApi } from '../api/paymentApi';
+import type { ApiError } from '../api/apiClient';
+import { formatCurrency } from '../utils/formatCurrency';
 
-export interface CheckoutPaymentPageProps {
-  readonly onPaymentSuccess?: () => void;
-}
+export type CheckoutState =
+  | 'draft'
+  | 'creating'
+  | 'create-unknown'
+  | 'persisted-pending'
+  | 'paying'
+  | 'payment-failed'
+  | 'confirmed';
 
-export const CheckoutPaymentPage: React.FC<CheckoutPaymentPageProps> = () => {
+export const CheckoutPaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryBookingId = searchParams.get('bookingId');
+
   const {
     selectedFlight,
     selectedFareClass,
     passengers,
     selectedServices,
-    paymentMethod,
-    setPaymentMethod,
-    confirmBooking
   } = useBookingFlow();
 
-  const [cardName, setCardName] = useState('NGUYEN VAN A');
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 9012');
-  const [cardExpiry, setCardExpiry] = useState('08/29');
-  const [cardCvv, setCardCvv] = useState('889');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [checkoutState, setCheckoutState] = useState<CheckoutState>(
+    queryBookingId ? 'persisted-pending' : 'draft'
+  );
+  const [persistedBooking, setPersistedBooking] = useState<BookingDetail | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoadingPersisted, setIsLoadingPersisted] = useState(false);
 
-  const handlePay = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      confirmBooking();
-      setIsProcessing(false);
-      navigate('/confirmation');
-    }, 800);
+  const fetchPersistedBooking = useCallback(async (id: number): Promise<BookingDetail | null> => {
+    try {
+      setIsLoadingPersisted(true);
+      const data = await bookingApi.getBooking(id);
+      setPersistedBooking(data);
+      if (data.status === 'CONFIRMED') {
+        navigate(`/confirmation/${id}`);
+      } else if (data.status === 'PAYMENT_FAILED') {
+        setCheckoutState('payment-failed');
+      } else {
+        setCheckoutState('persisted-pending');
+      }
+      return data;
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Không thể tải thông tin đơn đặt vé.');
+      return null;
+    } finally {
+      setIsLoadingPersisted(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (queryBookingId) {
+      fetchPersistedBooking(Number(queryBookingId));
+    }
+  }, [queryBookingId, fetchPersistedBooking]);
+
+  // Handle Initial Booking Creation
+  const handleCreateBooking = async () => {
+    if (!selectedFlight || !selectedFareClass || passengers.length === 0) {
+      setErrorMessage('Thông tin đặt vé chưa đầy đủ. Vui lòng quay lại kiểm tra.');
+      return;
+    }
+
+    setCheckoutState('creating');
+    setErrorMessage(null);
+    sessionStorage.setItem('booking-create-outcome-unknown', 'true');
+
+    try {
+      const payload: CreateBookingRequest = {
+        flightId: selectedFlight.id,
+        fareClassId: selectedFareClass.id,
+        passengers: passengers.map(p => ({
+          fullName: p.fullName,
+          dateOfBirth: p.dateOfBirth,
+          passportNo: p.passportNo,
+          phone: p.phone,
+        })),
+        services: selectedServices.map(s => ({
+          serviceId: s.id,
+          quantity: 1,
+        })),
+      };
+
+      const created = await bookingApi.createBooking(payload);
+
+      // Persist returned ID in URL before clearing marker
+      setSearchParams({ bookingId: String(created.id) }, { replace: true });
+      sessionStorage.removeItem('booking-create-outcome-unknown');
+      setPersistedBooking(created);
+      setCheckoutState('persisted-pending');
+    } catch (err: any) {
+      const apiErr = err as ApiError;
+      const isKnown4xx = apiErr && typeof apiErr.status === 'number' && apiErr.status >= 400 && apiErr.status < 500;
+
+      if (isKnown4xx) {
+        // Known rejection can be corrected
+        sessionStorage.removeItem('booking-create-outcome-unknown');
+        setErrorMessage(apiErr.message || 'Yêu cầu đặt vé không hợp lệ.');
+        setCheckoutState('draft');
+      } else {
+        // Timeout, connection drop, 5xx: unknown outcome
+        setCheckoutState('create-unknown');
+        navigate('/my-bookings?createOutcome=unknown', { replace: true });
+      }
+    }
   };
+
+  // Handle Mock Payment Submission
+  const handleProcessPayment = async () => {
+    const bookingId = persistedBooking?.id || (queryBookingId ? Number(queryBookingId) : null);
+    if (!bookingId) return;
+
+    setCheckoutState('paying');
+    setErrorMessage(null);
+
+    try {
+      const res = await paymentApi.processPayment({
+        bookingId,
+        paymentMethod: 'MOCK',
+      });
+
+      if (res.status === 'SUCCESS') {
+        navigate(`/confirmation/${bookingId}`);
+      } else {
+        setCheckoutState('payment-failed');
+      }
+    } catch (err: any) {
+      // 409 Conflict or network issue -> refetch booking to follow authoritative backend status
+      try {
+        const refreshed = await bookingApi.getBooking(bookingId);
+        setPersistedBooking(refreshed);
+        if (refreshed.status === 'CONFIRMED') {
+          navigate(`/confirmation/${bookingId}`);
+          return;
+        }
+        if (refreshed.status === 'PAYMENT_FAILED') {
+          setCheckoutState('payment-failed');
+          return;
+        }
+        setCheckoutState('persisted-pending');
+        setErrorMessage('Đã xảy ra xung đột khi thanh toán. Trạng thái hiện tại: ' + refreshed.status);
+      } catch {
+        setCheckoutState('payment-failed');
+        setErrorMessage('Không thể xác nhận trạng thái thanh toán.');
+      }
+    }
+  };
+
+  const isPersistedMode = Boolean(queryBookingId || persistedBooking);
+  const activeAmount = persistedBooking?.totalPrice ?? null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -77,156 +200,139 @@ export const CheckoutPaymentPage: React.FC<CheckoutPaymentPageProps> = () => {
           </div>
         </section>
 
-        {/* Payment Form */}
+        {/* Payment Body */}
         <section className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Payment Method Column */}
+            {/* Payment Interaction Column */}
             <div className="lg:col-span-8 space-y-6">
               <div>
                 <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-                  Secure Checkout & Payment
+                  Checkout & Payment
                 </h1>
                 <p className="text-body-md text-on-surface-variant mt-1">
-                  Transactions are encrypted end-to-end with 256-bit bank-grade TLS security protocols.
+                  Xác nhận đơn đặt vé và xử lý thanh toán qua cổng thử nghiệm Mock Gateway.
                 </p>
               </div>
 
-              {/* Payment Methods Selector Tabs */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: 'card', label: 'Credit / Debit Card', icon: 'credit_card' },
-                  { id: 'bank', label: 'VietQR / Bank Wire', icon: 'account_balance' },
-                  { id: 'wallet', label: 'Apple / Google Pay', icon: 'contactless' }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setPaymentMethod(tab.id as any)}
-                    className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${
-                      paymentMethod === tab.id
-                        ? 'bg-surface-container-low border-primary ring-2 ring-primary/20 text-primary font-bold shadow-sm'
-                        : 'bg-surface-container-lowest border-outline-variant text-on-surface-variant hover:border-secondary'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[24px]">{tab.icon}</span>
-                    <span className="text-label-md">{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Card Form */}
-              {paymentMethod === 'card' && (
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-4">
+              {errorMessage && (
+                <div className="rounded-xl border border-error/30 bg-error-container/30 p-4 text-on-error-container flex items-start gap-2">
+                  <span className="material-symbols-outlined text-error">error</span>
                   <div>
-                    <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                      Name on Card *
-                    </label>
-                    <input
-                      type="text"
-                      value={cardName}
-                      onChange={e => setCardName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase"
-                    />
+                    <p className="font-semibold">{errorMessage}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Terminal Payment Failure Notice */}
+              {checkoutState === 'payment-failed' && (
+                <div className="rounded-2xl border border-error bg-error-container/20 p-6 text-on-surface space-y-3">
+                  <div className="flex items-center gap-2 text-error font-bold text-headline-sm">
+                    <span className="material-symbols-outlined text-[28px]">cancel</span>
+                    <span>Thanh toán thất bại (PAYMENT_FAILED)</span>
+                  </div>
+                  <p className="text-body-md text-on-surface-variant">
+                    Giao dịch thanh toán không thành công. Đơn đặt vé này đã chuyển sang trạng thái thất bại.
+                    Vui lòng bắt đầu một hành trình đặt vé mới.
+                  </p>
+                  <Link
+                    to="/"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold hover:bg-primary-container transition-colors"
+                  >
+                    <span>Tìm chuyến bay mới</span>
+                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                  </Link>
+                </div>
+              )}
+
+              {/* Draft Mode: Confirm & Create Booking */}
+              {!isPersistedMode && checkoutState !== 'payment-failed' && (
+                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-4">
+                  <h3 className="text-headline-sm font-bold text-primary">
+                    Xác nhận thông tin đặt vé
+                  </h3>
+                  <p className="text-body-md text-on-surface-variant">
+                    Nhấn nút bên dưới để tạo đơn đặt vé chính thức trên hệ thống. Sau khi tạo thành công, mã đặt chỗ sẽ được cấp phát và bạn có thể tiến hành thanh toán.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCreateBooking}
+                    disabled={checkoutState === 'creating'}
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {checkoutState === 'creating' ? (
+                      <>
+                        <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                        <span>Đang tạo đơn đặt vé...</span>
+                      </>
+                    ) : (
+                      <span>Confirm & Create Booking</span>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Persisted Mode: Show Pending Booking & Demo Gateway */}
+              {isPersistedMode && checkoutState !== 'payment-failed' && (
+                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-6">
+                  <div className="flex items-center justify-between pb-4 border-b border-outline-variant">
+                    <div>
+                      <span className="text-label-sm font-bold uppercase tracking-wider text-secondary">
+                        Mã đơn đặt vé
+                      </span>
+                      <h3 className="text-headline-md font-bold text-primary font-mono">
+                        {persistedBooking?.bookingCode || `ID: ${queryBookingId}`}
+                      </h3>
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-label-sm font-bold bg-amber-100 text-amber-800">
+                      {persistedBooking?.status || 'PENDING'}
+                    </span>
                   </div>
 
-                  <div>
-                    <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                      Card Number *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={cardNumber}
-                        onChange={e => setCardNumber(e.target.value)}
-                        className="w-full pl-3.5 pr-12 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
-                      />
-                      <span className="material-symbols-outlined absolute right-3 top-2.5 text-secondary text-[22px]">
-                        credit_card
+                  {activeAmount != null && (
+                    <div className="p-4 rounded-xl bg-surface-container-low flex items-center justify-between">
+                      <span className="text-label-md font-semibold text-on-surface-variant">
+                        Tổng tiền cần thanh toán (xác nhận từ hệ thống):
+                      </span>
+                      <span className="text-headline-md font-bold text-primary">
+                        {formatCurrency(activeAmount)}
                       </span>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                        Expiry Date *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={cardExpiry}
-                        onChange={e => setCardExpiry(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-center font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                        Security Code (CVV) *
-                      </label>
-                      <input
-                        type="password"
-                        maxLength={4}
-                        placeholder="•••"
-                        value={cardCvv}
-                        onChange={e => setCardCvv(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-center font-mono"
-                      />
-                    </div>
+                  <div className="space-y-3">
+                    <h4 className="text-label-lg font-bold text-primary">
+                      Cổng thanh toán thử nghiệm (Mock Gateway)
+                    </h4>
+                    <p className="text-body-sm text-on-surface-variant">
+                      Đây là cổng thanh toán mô phỏng phục vụ thử nghiệm tính năng. Không yêu cầu nhập thẻ tín dụng hay chuyển khoản thực tế.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleProcessPayment}
+                      disabled={checkoutState === 'paying' || isLoadingPersisted}
+                      className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {checkoutState === 'paying' ? (
+                        <>
+                          <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                          <span>Đang xử lý thanh toán...</span>
+                        </>
+                      ) : (
+                        <span>Pay with Mock Gateway</span>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
-
-              {/* VietQR Mock */}
-              {paymentMethod === 'bank' && (
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm text-center">
-                  <span className="text-label-md font-bold text-primary block mb-2">
-                    Scan VietQR Code with any Banking App in Vietnam
-                  </span>
-                  <div className="w-48 h-48 mx-auto bg-surface-container border border-outline-variant rounded-xl flex items-center justify-center p-4 my-4">
-                    <span className="material-symbols-outlined text-[80px] text-primary">qr_code_2</span>
-                  </div>
-                  <p className="text-body-sm text-on-surface-variant">
-                    Instant automated confirmation upon successful wire transfer
-                  </p>
-                </div>
-              )}
-
-              {/* Digital Wallets */}
-              {paymentMethod === 'wallet' && (
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm text-center">
-                  <span className="material-symbols-outlined text-[48px] text-primary mb-2">contactless</span>
-                  <h3 className="text-headline-sm font-bold text-primary mb-1">
-                    Express 1-Click Biometric Checkout
-                  </h3>
-                  <p className="text-body-sm text-on-surface-variant max-w-sm mx-auto">
-                    Authorize payment securely via Apple Touch ID / Face ID or Google Pay.
-                  </p>
-                </div>
-              )}
-
-              {/* Security Badges */}
-              <div className="flex items-center gap-6 text-on-surface-variant text-body-sm pt-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-secondary text-[20px]">lock</span>
-                  <span>256-Bit SSL Encryption</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-secondary text-[20px]">verified_user</span>
-                  <span>PCI-DSS Level 1 Certified</span>
-                </div>
-              </div>
             </div>
 
-            {/* Summary Column */}
+            {/* Price Preview Column */}
             <div className="lg:col-span-4">
               <PriceSummaryCard
                 flight={selectedFlight}
                 fareClass={selectedFareClass}
                 passengerCount={passengers.length}
                 selectedServices={selectedServices}
-                ctaLabel={isProcessing ? 'Authorizing Payment...' : 'Authorize & Issue E-Ticket'}
-                onCtaClick={handlePay}
-                isCtaDisabled={isProcessing}
               />
             </div>
           </div>

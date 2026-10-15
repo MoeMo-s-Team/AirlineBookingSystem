@@ -1,19 +1,25 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import type { Flight, FareClass, AncillaryService, Passenger, Booking, FlightSearchParams } from '../types';
+import type { FlightSearchParams } from '../types';
+import type {
+  BookingFlightSelection,
+  BookingFareOption,
+  BookingPassengerDraft,
+  BookingSelectedService,
+} from '../types/bookingFlow';
 
 export interface BookingFlowContextType {
   searchParams: FlightSearchParams;
   setSearchParams: React.Dispatch<React.SetStateAction<FlightSearchParams>>;
-  selectedFlight: Flight | null;
-  setSelectedFlight: React.Dispatch<React.SetStateAction<Flight | null>>;
-  selectedFareClass: FareClass | null;
-  setSelectedFareClass: React.Dispatch<React.SetStateAction<FareClass | null>>;
-  passengers: Passenger[];
-  setPassengers: React.Dispatch<React.SetStateAction<Passenger[]>>;
-  updatePassenger: (index: number, updated: Partial<Passenger>) => void;
-  selectedServices: AncillaryService[];
-  setSelectedServices?: React.Dispatch<React.SetStateAction<AncillaryService[]>>;
-  toggleService: (service: AncillaryService) => void;
+  selectedFlight: BookingFlightSelection | null;
+  setSelectedFlight: React.Dispatch<React.SetStateAction<BookingFlightSelection | null>>;
+  selectedFareClass: BookingFareOption | null;
+  setSelectedFareClass: React.Dispatch<React.SetStateAction<BookingFareOption | null>>;
+  passengers: BookingPassengerDraft[];
+  setPassengers: React.Dispatch<React.SetStateAction<BookingPassengerDraft[]>>;
+  updatePassenger: (index: number, updated: Partial<BookingPassengerDraft>) => void;
+  selectedServices: BookingSelectedService[];
+  setSelectedServices?: React.Dispatch<React.SetStateAction<BookingSelectedService[]>>;
+  toggleService: (service: BookingSelectedService) => void;
   paymentMethod: 'card' | 'bank' | 'wallet';
   setPaymentMethod: React.Dispatch<React.SetStateAction<'card' | 'bank' | 'wallet'>>;
   priceSummary: {
@@ -24,8 +30,8 @@ export interface BookingFlowContextType {
     discount: number;
     grandTotal: number;
   };
-  confirmedBooking: Booking | null;
-  confirmBooking: () => Booking | null;
+  confirmedBooking: any | null;
+  confirmBooking: () => any | null;
   resetDraft: () => void;
 }
 
@@ -41,14 +47,14 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
     cabinClass: 'Economy',
   });
 
-  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
-  const [selectedFareClass, setSelectedFareClass] = useState<FareClass | null>(null);
-  const [passengers, setPassengers] = useState<Passenger[]>([]);
-  const [selectedServices, setSelectedServices] = useState<AncillaryService[]>([]);
+  const [selectedFlight, setSelectedFlight] = useState<BookingFlightSelection | null>(null);
+  const [selectedFareClass, setSelectedFareClass] = useState<BookingFareOption | null>(null);
+  const [passengers, setPassengers] = useState<BookingPassengerDraft[]>([]);
+  const [selectedServices, setSelectedServices] = useState<BookingSelectedService[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | 'wallet'>('card');
-  const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<any | null>(null);
 
-  const toggleService = useCallback((service: AncillaryService) => {
+  const toggleService = useCallback((service: BookingSelectedService) => {
     setSelectedServices(prev => {
       const exists = prev.some(s => s.id === service.id);
       if (exists) {
@@ -58,21 +64,32 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
   }, []);
 
-  const updatePassenger = useCallback((index: number, updated: Partial<Passenger>) => {
+  const updatePassenger = useCallback((index: number, updated: Partial<BookingPassengerDraft>) => {
     setPassengers(prev => {
       const next = [...prev];
-      next[index] = { ...next[index], ...updated };
+      if (!next[index]) {
+        next[index] = {
+          fullName: '',
+          dateOfBirth: '',
+          passportNo: '',
+          phone: '',
+          ...updated,
+        };
+      } else {
+        next[index] = { ...next[index], ...updated };
+      }
       return next;
     });
   }, []);
 
   const priceSummary = useMemo(() => {
     const flightPrice = selectedFareClass ? selectedFareClass.price : (selectedFlight?.basePrice ?? 0);
-    const baseTotal = flightPrice * passengers.length;
-    const taxesAndFees = Math.round(baseTotal * 0.12);
+    const count = passengers.length > 0 ? passengers.length : (searchParams.passengers || 1);
+    const baseTotal = flightPrice * count;
+    const taxesAndFees = 0;
     const servicesTotal = selectedServices.reduce((sum, s) => sum + (s.price || 0), 0);
     const discount = 0;
-    const grandTotal = baseTotal + taxesAndFees + servicesTotal - discount;
+    const grandTotal = baseTotal + servicesTotal;
 
     return {
       flightPrice,
@@ -82,43 +99,12 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
       discount,
       grandTotal,
     };
-  }, [selectedFlight, selectedFareClass, passengers, selectedServices]);
+  }, [selectedFlight, selectedFareClass, passengers, searchParams.passengers, selectedServices]);
 
   const confirmBooking = useCallback(() => {
     if (!selectedFlight || !selectedFareClass) return null;
-    if (passengers.length === 0) return null;
-
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let pnr = 'SW';
-    for (let i = 0; i < 4; i++) {
-      pnr += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    const newBooking: Booking = {
-      pnr,
-      flight: selectedFlight,
-      fareClass: selectedFareClass,
-      passengers,
-      services: selectedServices,
-      tripType: searchParams.tripType,
-      departureDate: searchParams.departureDate,
-      returnDate: searchParams.returnDate,
-      baseFare: priceSummary.baseTotal,
-      taxesAndFees: priceSummary.taxesAndFees,
-      servicesTotal: priceSummary.servicesTotal,
-      discount: priceSummary.discount,
-      grandTotal: priceSummary.grandTotal,
-      status: 'CONFIRMED',
-      bookingDate: new Date().toISOString().split('T')[0],
-      paymentMethod: paymentMethod === 'card' ? 'Visa •••• 8812' : paymentMethod === 'bank' ? 'VietQR Transfer' : 'Apple Pay',
-      paymentStatus: 'PAID',
-      gate: 'Gate ' + (Math.floor(Math.random() * 18) + 1),
-      seatAssignment: '03A',
-    };
-
-    setConfirmedBooking(newBooking);
-    return newBooking;
-  }, [selectedFlight, selectedFareClass, passengers, selectedServices, searchParams, priceSummary, paymentMethod]);
+    return null;
+  }, [selectedFlight, selectedFareClass]);
 
   const resetDraft = useCallback(() => {
     setSelectedFlight(null);

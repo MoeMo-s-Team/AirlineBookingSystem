@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { PassengerForm } from '../components/passenger/PassengerForm';
 import { PriceSummaryCard } from '../components/booking/PriceSummaryCard';
 import { useBookingFlow } from '../hooks/useBookingFlow';
+import type { BookingPassengerDraft } from '../types/bookingFlow';
 
 export interface PassengerInfoPageProps {
   readonly onProceed?: () => void;
@@ -17,24 +18,35 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
     selectedFareClass,
     passengers,
     updatePassenger,
-    selectedServices
+    selectedServices,
   } = useBookingFlow();
   const [showValidationError, setShowValidationError] = useState(false);
 
-  const validatePassenger = (p: typeof passengers[0]): boolean => {
-    if (!p.firstName.trim() || p.firstName.trim().length < 2) return false;
-    if (!p.lastName.trim() || p.lastName.trim().length < 2) return false;
+  useEffect(() => {
+    if (passengers.length === 0) {
+      updatePassenger(0, {
+        fullName: '',
+        dateOfBirth: '',
+        passportNo: '',
+        phone: '',
+      });
+    }
+  }, [passengers.length, updatePassenger]);
+
+  const validatePassenger = (p: BookingPassengerDraft): boolean => {
+    if (!p) return false;
+    if (!p.fullName?.trim() || p.fullName.trim().length < 2) return false;
     if (!p.dateOfBirth) return false;
     const dob = new Date(p.dateOfBirth);
-    if (dob >= new Date()) return false;
-    if (!p.nationality.trim()) return false;
-    if (!p.passportNumber.trim() || p.passportNumber.trim().length < 5) return false;
-    if (!p.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) return false;
-    if (!p.phone.trim() || !/^[\d\s\-+()]{8,20}$/.test(p.phone)) return false;
+    if (isNaN(dob.getTime()) || dob >= new Date()) return false;
+    if (!p.passportNo?.trim() || p.passportNo.trim().length < 5) return false;
+    if (!p.phone?.trim() || !/^[\d\s\-+()]{7,20}$/.test(p.phone)) return false;
     return true;
   };
 
-  const isFormValid = useMemo(() => passengers.every(validatePassenger), [passengers]);
+  const isFormValid = useMemo(() => {
+    return passengers.length > 0 && passengers.every(validatePassenger);
+  }, [passengers]);
 
   const handleContinue = () => {
     if (!isFormValid) {
@@ -116,45 +128,13 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
 
               {passengers.map((passenger, index) => (
                 <PassengerForm
-                  key={passenger.id}
+                  key={index}
                   passenger={passenger}
                   passengerIndex={index}
                   onChange={updatePassenger}
                   forceShowErrors={showValidationError}
                 />
               ))}
-
-              {/* Emergency Contact */}
-              <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm">
-                <h3 className="text-headline-sm font-bold text-primary mb-3">
-                  Emergency Contact & Flight Alert Notification
-                </h3>
-                <p className="text-body-sm text-on-surface-variant mb-4">
-                  We will send automated SMS gate changes and flight departure alerts to this traveler.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                      Contact Person Full Name
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue="Nguyen Van B"
-                      className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                      Emergency Telephone
-                    </label>
-                    <input
-                      type="tel"
-                      defaultValue="+84 903 999 888"
-                      className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Price Summary Column */}
@@ -164,7 +144,7 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
                 fareClass={selectedFareClass}
                 passengerCount={passengers.length}
                 selectedServices={selectedServices}
-                ctaLabel="Continue to Add-on Services"
+                ctaLabel="Proceed to Services"
                 onCtaClick={handleContinue}
               />
             </div>

@@ -88,6 +88,14 @@ export const App: React.FC = () => {
           }
         />
         <Route
+          path="/confirmation/:bookingId"
+          element={
+            <CustomerRoute>
+              <BookingConfirmationPage />
+            </CustomerRoute>
+          }
+        />
+        <Route
           path="/my-bookings"
           element={
             <CustomerRoute>

@@ -7,9 +7,9 @@ import { FlightDetailsModal } from '../components/flight/FlightDetailsModal';
 import { useFlights } from '../hooks/useFlights';
 import { useBookingFlow } from '../hooks/useBookingFlow';
 import { useAuth } from '../context/AuthContext';
-import { Flight, FareClass } from '../types';
 import { AIRPORTS } from '../data/mockData';
 import { formatCurrency } from '../utils/formatCurrency';
+import type { BookingFlightSelection, BookingFareOption } from '../types/bookingFlow';
 
 export interface FlightResultsPageProps {
   readonly initialOrigin?: string;
@@ -47,7 +47,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
     error
   } = useFlights(activeSearchParams);
 
-  const [modalFlight, setModalFlight] = useState<Flight | null>(null);
+  const [modalFlight, setModalFlight] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const originAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.origin);
   const destinationAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.destination);
@@ -58,7 +58,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
     day: 'numeric'
   }).format(new Date(`${activeSearchParams.departureDate}T00:00:00`));
 
-  const handleSelectFare = (flight: Flight, fareClass: FareClass) => {
+  const handleSelectFare = (flight: BookingFlightSelection, fareClass: BookingFareOption) => {
     if (!isAuthenticated) {
       const returnTo = location.pathname + location.search;
       navigate(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`);

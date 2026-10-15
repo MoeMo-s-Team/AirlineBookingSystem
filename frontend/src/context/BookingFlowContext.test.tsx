@@ -31,7 +31,7 @@ const ConsumerA: React.FC = () => {
       <button
         onClick={() => {
           setSelectedFlight({
-            id: 'FL-1',
+            id: 101,
             flightNumber: 'SW101',
             airline: 'SkyWing',
             departureCity: 'Hanoi',
@@ -54,9 +54,11 @@ const ConsumerA: React.FC = () => {
             fareClasses: [],
           });
           setSelectedFareClass({
-            id: 'FARE-1',
+            id: 1,
+            code: 'ECO',
             tier: 'Economy',
             name: 'Economy Saver',
+            priceMultiplier: 1.0,
             price: 1000000,
             baggage: '7kg',
             seatPitch: '30in',
@@ -69,25 +71,18 @@ const ConsumerA: React.FC = () => {
           });
           setPassengers([
             {
-              id: 'p-1',
-              title: 'Mr',
-              firstName: 'Van',
-              lastName: 'Nguyen',
+              fullName: 'Van Nguyen',
               dateOfBirth: '1990-01-01',
-              nationality: 'VN',
-              passportNumber: 'C123',
-              passportExpiry: '2030-01-01',
-              email: 'a@b.com',
+              passportNo: 'C123',
               phone: '0901234567',
             },
           ]);
           toggleService({
-            id: 'svc-1',
+            id: 5,
             name: 'Extra Baggage 20kg',
-            category: 'baggage',
-            description: '20kg check-in',
+            type: 'BAGGAGE',
             price: 250000,
-            icon: 'luggage',
+            active: true,
           });
         }}
       >
