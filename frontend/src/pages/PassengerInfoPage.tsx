@@ -14,24 +14,28 @@ export interface PassengerInfoPageProps {
 export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
   const navigate = useNavigate();
   const {
+    searchParams,
     selectedFlight,
     selectedFareClass,
     passengers,
+    setPassengers,
     updatePassenger,
     selectedServices,
   } = useBookingFlow();
   const [showValidationError, setShowValidationError] = useState(false);
+  const passengerCount = Math.min(9, Math.max(1, Math.trunc(searchParams.passengers || 1)));
 
   useEffect(() => {
-    if (passengers.length === 0) {
-      updatePassenger(0, {
+    setPassengers(current => {
+      if (current.length === passengerCount) return current;
+      return Array.from({ length: passengerCount }, (_, index) => current[index] ?? {
         fullName: '',
         dateOfBirth: '',
         passportNo: '',
         phone: '',
       });
-    }
-  }, [passengers.length, updatePassenger]);
+    });
+  }, [passengerCount, setPassengers]);
 
   const validatePassenger = (p: BookingPassengerDraft): boolean => {
     if (!p) return false;
@@ -142,7 +146,7 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
               <PriceSummaryCard
                 flight={selectedFlight}
                 fareClass={selectedFareClass}
-                passengerCount={passengers.length}
+                passengerCount={passengerCount}
                 selectedServices={selectedServices}
                 ctaLabel="Proceed to Services"
                 onCtaClick={handleContinue}

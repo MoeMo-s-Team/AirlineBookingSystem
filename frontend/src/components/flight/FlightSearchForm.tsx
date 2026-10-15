@@ -92,7 +92,7 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
         </div>
 
         {/* Dates Field */}
-        <div className="lg:col-span-3 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
+        <div className="lg:col-span-5 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
           <div className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold mb-1">
             <span className="material-symbols-outlined text-[16px] text-secondary">calendar_today</span>
             Departure Date
@@ -108,11 +108,11 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
           </div>
         </div>
 
-        {/* Passengers & Class Field */}
-        <div className="lg:col-span-2 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
+        {/* Cabin Class Field */}
+        <div className="lg:col-span-3 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
           <div className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold mb-1">
-            <span className="material-symbols-outlined text-[16px] text-secondary">group</span>
-            Cabin & Pax
+            <span className="material-symbols-outlined text-[16px] text-secondary">airline_seat_recline_extra</span>
+            Cabin Class
           </div>
           <select
             value={searchParams.cabinClass}
@@ -123,8 +123,41 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
             <option value="Premium Economy">Premium Eco</option>
             <option value="Business">Business</option>
           </select>
-          <div className="text-label-sm text-on-surface-variant mt-0.5">
-            {searchParams.passengers} Adult Passenger
+        </div>
+
+        {/* Passengers Field */}
+        <div className="lg:col-span-3 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
+          <div className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold mb-1">
+            <span className="material-symbols-outlined text-[16px] text-secondary">group</span>
+            Passengers
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-label-sm text-on-surface-variant">
+              {searchParams.passengers === 1 ? 'Adult' : 'Adults'}
+            </span>
+            <div className="flex items-center gap-2" role="group" aria-label="Number of adult passengers">
+              <button
+                type="button"
+                onClick={() => onChange({ ...searchParams, passengers: Math.max(1, searchParams.passengers - 1) })}
+                disabled={searchParams.passengers <= 1}
+                aria-label="Decrease passengers"
+                className="w-9 h-9 rounded-lg border border-outline-variant text-primary hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="material-symbols-outlined text-[18px]">remove</span>
+              </button>
+              <output aria-live="polite" aria-atomic="true" className="min-w-6 text-center text-label-lg font-bold text-primary">
+                {searchParams.passengers}
+              </output>
+              <button
+                type="button"
+                onClick={() => onChange({ ...searchParams, passengers: Math.min(9, searchParams.passengers + 1) })}
+                disabled={searchParams.passengers >= 9}
+                aria-label="Increase passengers"
+                className="w-9 h-9 rounded-lg border border-outline-variant text-primary hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
