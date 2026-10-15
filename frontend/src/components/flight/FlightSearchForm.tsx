@@ -23,24 +23,6 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
 
   return (
     <div className="bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant p-6 lg:p-8">
-      {/* Trip Type Selector Tabs */}
-      <div className="inline-flex p-1 mb-6 rounded-xl bg-surface-container-low border border-outline-variant" role="tablist">
-        {(['round-trip', 'one-way', 'multi-city'] as const).map(type => (
-          <button
-            key={type}
-            type="button"
-            onClick={() => onChange({ ...searchParams, tripType: type })}
-            className={`px-5 py-2 rounded-lg text-label-md font-semibold capitalize transition-all ${
-              searchParams.tripType === type
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-on-surface-variant hover:text-primary'
-            }`}
-          >
-            {type.replace('-', ' ')}
-          </button>
-        ))}
-      </div>
-
       {/* Inputs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
         {/* Origin Field */}
@@ -122,7 +104,7 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
           />
           <div className="text-label-sm text-on-surface-variant mt-0.5">
-            {searchParams.tripType === 'round-trip' ? 'Return: Oct 22, 2026' : 'One way flight'}
+            One way flight
           </div>
         </div>
 

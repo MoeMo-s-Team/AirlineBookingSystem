@@ -94,7 +94,7 @@ export interface Booking {
 }
 
 export interface FlightSearchParams {
-  readonly tripType: 'round-trip' | 'one-way' | 'multi-city';
+  readonly tripType: 'one-way';
   readonly origin: string;
   readonly destination: string;
   readonly departureDate: string;

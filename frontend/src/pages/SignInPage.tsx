@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
+import { safeReturnTo } from '../utils/safeReturnTo';
 
 export interface SignInPageProps {
   readonly onSignInSuccess?: () => void;
@@ -10,6 +11,7 @@ export interface SignInPageProps {
 
 export const SignInPage: React.FC<SignInPageProps> = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isAuthenticated, signIn, signOut, profileError, refreshProfile } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -20,8 +22,13 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
 
   useEffect(() => {
     if (!awaitingProfile || !user) return;
-    navigate(user.role === 'ADMIN' ? '/admin/flights' : '/my-bookings', { replace: true });
-  }, [awaitingProfile, user, navigate]);
+    if (user.role === 'ADMIN') {
+      navigate('/admin/flights', { replace: true });
+    } else {
+      const returnTo = searchParams.get('returnTo');
+      navigate(safeReturnTo(returnTo, '/my-bookings'), { replace: true });
+    }
+  }, [awaitingProfile, user, navigate, searchParams]);
 
   useEffect(() => {
     if (profileError) setErrorMessage(profileError.message);
@@ -186,7 +193,10 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
               {/* Footer link */}
               <p className="text-center text-body-sm text-on-surface-variant mt-6">
                 Not a member yet?{' '}
-                <Link to="/sign-up" className="font-bold text-primary hover:text-secondary">
+                <Link
+                  to={searchParams.get('returnTo') ? `/sign-up?returnTo=${encodeURIComponent(searchParams.get('returnTo')!)}` : '/sign-up'}
+                  className="font-bold text-primary hover:text-secondary"
+                >
                   Join SkyWing Club
                 </Link>
               </p>
