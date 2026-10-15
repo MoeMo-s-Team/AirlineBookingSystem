@@ -16,6 +16,8 @@ export type CheckoutState =
   | 'persisted-pending'
   | 'paying'
   | 'payment-failed'
+  | 'status-unknown'
+  | 'cancelled'
   | 'confirmed';
 
 export const CheckoutPaymentPage: React.FC = () => {
@@ -36,21 +38,30 @@ export const CheckoutPaymentPage: React.FC = () => {
   const [persistedBooking, setPersistedBooking] = useState<BookingDetail | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoadingPersisted, setIsLoadingPersisted] = useState(false);
+  const bookingId = persistedBooking?.id ?? (queryBookingId ? Number(queryBookingId) : null);
+  const hasValidBookingId = bookingId !== null && Number.isSafeInteger(bookingId) && bookingId > 0;
 
   const fetchPersistedBooking = useCallback(async (id: number): Promise<BookingDetail | null> => {
     try {
       setIsLoadingPersisted(true);
+      setErrorMessage(null);
       const data = await bookingApi.getBooking(id);
       setPersistedBooking(data);
       if (data.status === 'CONFIRMED') {
         navigate(`/confirmation/${id}`);
       } else if (data.status === 'PAYMENT_FAILED') {
         setCheckoutState('payment-failed');
-      } else {
+      } else if (data.status === 'CANCELLED') {
+        setCheckoutState('cancelled');
+      } else if (data.status === 'PENDING') {
         setCheckoutState('persisted-pending');
+      } else {
+        setCheckoutState('status-unknown');
+        setErrorMessage('Không thể xác nhận trạng thái đơn đặt vé.');
       }
       return data;
     } catch (err: any) {
+      setCheckoutState('status-unknown');
       setErrorMessage(err?.message || 'Không thể tải thông tin đơn đặt vé.');
       return null;
     } finally {
@@ -92,6 +103,17 @@ export const CheckoutPaymentPage: React.FC = () => {
       };
 
       const created = await bookingApi.createBooking(payload);
+      if (
+        !created ||
+        !Number.isSafeInteger(created.id) ||
+        created.id <= 0 ||
+        !created.bookingCode?.trim() ||
+        created.status !== 'PENDING' ||
+        typeof created.totalPrice !== 'number' ||
+        !Number.isFinite(created.totalPrice)
+      ) {
+        throw new Error('Phản hồi tạo đơn đặt vé không hợp lệ.');
+      }
 
       // Persist returned ID in URL before clearing marker
       setSearchParams({ bookingId: String(created.id) }, { replace: true });
@@ -117,8 +139,13 @@ export const CheckoutPaymentPage: React.FC = () => {
 
   // Handle Mock Payment Submission
   const handleProcessPayment = async () => {
-    const bookingId = persistedBooking?.id || (queryBookingId ? Number(queryBookingId) : null);
-    if (!bookingId) return;
+    if (
+      !hasValidBookingId ||
+      bookingId === null ||
+      isLoadingPersisted ||
+      checkoutState !== 'persisted-pending' ||
+      persistedBooking?.status !== 'PENDING'
+    ) return;
 
     setCheckoutState('paying');
     setErrorMessage(null);
@@ -131,8 +158,10 @@ export const CheckoutPaymentPage: React.FC = () => {
 
       if (res.status === 'SUCCESS') {
         navigate(`/confirmation/${bookingId}`);
-      } else {
+      } else if (res.status === 'FAILED') {
         setCheckoutState('payment-failed');
+      } else {
+        throw new Error('Phản hồi thanh toán không hợp lệ.');
       }
     } catch (err: any) {
       // 409 Conflict or network issue -> refetch booking to follow authoritative backend status
@@ -147,10 +176,20 @@ export const CheckoutPaymentPage: React.FC = () => {
           setCheckoutState('payment-failed');
           return;
         }
-        setCheckoutState('persisted-pending');
-        setErrorMessage('Đã xảy ra xung đột khi thanh toán. Trạng thái hiện tại: ' + refreshed.status);
+        if (refreshed.status === 'CANCELLED') {
+          setCheckoutState('cancelled');
+          setErrorMessage('Đơn đặt vé đã bị hủy và không thể thanh toán.');
+          return;
+        }
+        if (refreshed.status === 'PENDING') {
+          setCheckoutState('persisted-pending');
+          setErrorMessage('Đã xảy ra xung đột khi thanh toán. Trạng thái hiện tại: PENDING');
+          return;
+        }
+        setCheckoutState('status-unknown');
+        setErrorMessage('Không thể xác nhận trạng thái đơn đặt vé.');
       } catch {
-        setCheckoutState('payment-failed');
+        setCheckoutState('status-unknown');
         setErrorMessage('Không thể xác nhận trạng thái thanh toán.');
       }
     }
@@ -284,7 +323,9 @@ export const CheckoutPaymentPage: React.FC = () => {
                       </h3>
                     </div>
                     <span className="px-3 py-1 rounded-full text-label-sm font-bold bg-amber-100 text-amber-800">
-                      {persistedBooking?.status || 'PENDING'}
+                      {checkoutState === 'status-unknown'
+                        ? 'UNKNOWN'
+                        : persistedBooking?.status || 'Đang xác minh'}
                     </span>
                   </div>
 
@@ -299,29 +340,65 @@ export const CheckoutPaymentPage: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="space-y-3">
-                    <h4 className="text-label-lg font-bold text-primary">
-                      Cổng thanh toán thử nghiệm (Mock Gateway)
-                    </h4>
-                    <p className="text-body-sm text-on-surface-variant">
-                      Đây là cổng thanh toán mô phỏng phục vụ thử nghiệm tính năng. Không yêu cầu nhập thẻ tín dụng hay chuyển khoản thực tế.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleProcessPayment}
-                      disabled={checkoutState === 'paying' || isLoadingPersisted}
-                      className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {checkoutState === 'paying' ? (
-                        <>
-                          <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                          <span>Đang xử lý thanh toán...</span>
-                        </>
-                      ) : (
-                        <span>Pay with Mock Gateway</span>
-                      )}
-                    </button>
-                  </div>
+                  {checkoutState === 'status-unknown' && (
+                    <div className="space-y-3">
+                      <p className="text-body-sm text-on-surface-variant">
+                        Chưa xác minh được trạng thái. Thanh toán đang tạm dừng; hãy kiểm tra lại trước khi tiếp tục.
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        {hasValidBookingId && bookingId !== null && (
+                          <button
+                            type="button"
+                            onClick={() => fetchPersistedBooking(bookingId)}
+                            disabled={isLoadingPersisted}
+                            className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold disabled:opacity-50"
+                          >
+                            {isLoadingPersisted ? 'Đang kiểm tra...' : 'Kiểm tra trạng thái lại'}
+                          </button>
+                        )}
+                        <Link to="/my-bookings" className="px-5 py-2.5 rounded-xl border border-outline text-primary font-label-md font-bold">
+                          Xem đơn đặt vé
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  {checkoutState === 'cancelled' && (
+                    <div className="space-y-3">
+                      <p className="text-body-sm text-on-surface-variant">
+                        Đơn đặt vé đã bị hủy và không thể thanh toán.
+                      </p>
+                      <Link to="/my-bookings" className="inline-flex px-5 py-2.5 rounded-xl border border-outline text-primary font-label-md font-bold">
+                        Xem đơn đặt vé
+                      </Link>
+                    </div>
+                  )}
+
+                  {(checkoutState === 'persisted-pending' || checkoutState === 'paying') && persistedBooking?.status === 'PENDING' && (
+                    <div className="space-y-3">
+                      <h4 className="text-label-lg font-bold text-primary">
+                        Cổng thanh toán thử nghiệm (Mock Gateway)
+                      </h4>
+                      <p className="text-body-sm text-on-surface-variant">
+                        Đây là cổng thanh toán mô phỏng phục vụ thử nghiệm tính năng. Không yêu cầu nhập thẻ tín dụng hay chuyển khoản thực tế.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleProcessPayment}
+                        disabled={checkoutState === 'paying' || isLoadingPersisted}
+                        className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {checkoutState === 'paying' ? (
+                          <>
+                            <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                            <span>Đang xử lý thanh toán...</span>
+                          </>
+                        ) : (
+                          <span>Pay with Mock Gateway</span>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

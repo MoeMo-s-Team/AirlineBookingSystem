@@ -115,6 +115,30 @@ describe('CheckoutPaymentPage', () => {
     });
   });
 
+  it('treats a malformed successful create response as an unknown outcome', async () => {
+    vi.mocked(bookingApi.createBooking).mockResolvedValue({
+      id: 505,
+      bookingCode: 'SW-505',
+      status: 'CONFIRMED',
+      totalPrice: 1450000,
+    } as any);
+
+    render(
+      <MemoryRouter initialEntries={['/checkout']}>
+        <Routes>
+          <Route path="/checkout" element={<CheckoutPaymentPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Confirm & Create Booking/i }));
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem('booking-create-outcome-unknown')).toBe('true');
+      expect(mockNavigate).toHaveBeenCalledWith('/my-bookings?createOutcome=unknown', { replace: true });
+    });
+  });
+
   it('creates booking with numeric IDs, enters persisted mode, and avoids second create', async () => {
     const createdBooking = {
       id: 505,
@@ -160,16 +184,31 @@ describe('CheckoutPaymentPage', () => {
     });
 
     // Clicking pay invokes processPayment with bookingId: 505, paymentMethod: 'MOCK'
-    vi.mocked(paymentApi.processPayment).mockResolvedValue({
+    let finishPayment!: (result: {
+      id: number;
+      bookingId: number;
+      amount: number;
+      paymentMethod: string;
+      status: 'SUCCESS';
+    }) => void;
+    vi.mocked(paymentApi.processPayment).mockReturnValueOnce(new Promise((resolve) => {
+      finishPayment = resolve;
+    }));
+
+    const paymentResult = {
       id: 999,
       bookingId: 505,
       amount: 1450000,
       paymentMethod: 'MOCK',
       status: 'SUCCESS',
-    });
+    } as const;
 
     const payBtn = screen.getByRole('button', { name: /Pay with Mock Gateway/i });
     fireEvent.click(payBtn);
+
+    const processingButton = await screen.findByRole('button', { name: /Đang xử lý thanh toán/i });
+    expect(processingButton).toBeDisabled();
+    finishPayment(paymentResult);
 
     await waitFor(() => {
       expect(paymentApi.processPayment).toHaveBeenCalledWith({
@@ -225,6 +264,99 @@ describe('CheckoutPaymentPage', () => {
     await waitFor(() => {
       expect(bookingApi.getBooking).toHaveBeenCalledTimes(2);
       expect(mockNavigate).toHaveBeenCalledWith('/confirmation/777');
+    });
+  });
+
+  it('does not offer payment for a cancelled booking', async () => {
+    vi.mocked(bookingApi.getBooking).mockResolvedValue({
+      id: 888,
+      bookingCode: 'SW-888',
+      status: 'CANCELLED',
+      totalPrice: 1200000,
+    } as any);
+
+    render(
+      <MemoryRouter initialEntries={['/checkout?bookingId=888']}>
+        <Routes>
+          <Route path="/checkout" element={<CheckoutPaymentPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/đã bị hủy và không thể thanh toán/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Pay with Mock Gateway/i })).not.toBeInTheDocument();
+    });
+    expect(paymentApi.processPayment).not.toHaveBeenCalled();
+  });
+
+  it('keeps payment paused after an uncertain payment result until status can be reloaded', async () => {
+    vi.mocked(bookingApi.getBooking)
+      .mockResolvedValueOnce({
+        id: 777,
+        bookingCode: 'SW-777',
+        status: 'PENDING',
+        totalPrice: 1200000,
+      } as any)
+      .mockRejectedValueOnce(new Error('Network timeout'))
+      .mockResolvedValueOnce({
+        id: 777,
+        bookingCode: 'SW-777',
+        status: 'PENDING',
+        totalPrice: 1200000,
+      } as any);
+    vi.mocked(paymentApi.processPayment).mockRejectedValueOnce(new Error('Network timeout'));
+
+    render(
+      <MemoryRouter initialEntries={['/checkout?bookingId=777']}>
+        <Routes>
+          <Route path="/checkout" element={<CheckoutPaymentPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /Pay with Mock Gateway/i }));
+
+    const retryButton = await screen.findByRole('button', { name: /Kiểm tra trạng thái lại/i });
+    expect(screen.queryByRole('button', { name: /Pay with Mock Gateway/i })).not.toBeInTheDocument();
+    expect(paymentApi.processPayment).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(retryButton);
+
+    await waitFor(() => {
+      expect(bookingApi.getBooking).toHaveBeenCalledTimes(3);
+      expect(screen.getByRole('button', { name: /Pay with Mock Gateway/i })).toBeInTheDocument();
+    });
+  });
+
+  it('shows a terminal failure when the gateway reports failed payment', async () => {
+    vi.mocked(bookingApi.getBooking).mockResolvedValueOnce({
+      id: 999,
+      bookingCode: 'SW-999',
+      status: 'PENDING',
+      totalPrice: 1200000,
+    } as any);
+    vi.mocked(paymentApi.processPayment).mockResolvedValue({
+      id: 1000,
+      bookingId: 999,
+      amount: 1200000,
+      paymentMethod: 'MOCK',
+      status: 'FAILED',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/checkout?bookingId=999']}>
+        <Routes>
+          <Route path="/checkout" element={<CheckoutPaymentPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /Pay with Mock Gateway/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Thanh toán thất bại \(PAYMENT_FAILED\)/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Pay with Mock Gateway/i })).not.toBeInTheDocument();
     });
   });
 });

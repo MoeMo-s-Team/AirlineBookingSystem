@@ -162,9 +162,13 @@ export interface AdminBookingPage<T> {
   pagination: AdminBookingPagination;
 }
 
-export type AdminBookingEnvelope<T> = ApiResponse<T[]> & {
-  pagination: AdminBookingPagination;
-};
+export type AdminBookingEnvelope<T> = ApiResponse<{
+  content: T[];
+  totalElements: number;
+  number: number;
+  size: number;
+  totalPages: number;
+}>;
 
 export const bookingApi = {
   createBooking: (request: CreateBookingRequest): Promise<BookingDetail> =>
@@ -187,8 +191,13 @@ export const bookingApi = {
       userId: query.userId,
     });
     return {
-      data: envelope.data,
-      pagination: envelope.pagination,
+      data: envelope.data.content,
+      pagination: {
+        total: envelope.data.totalElements,
+        page: envelope.data.number,
+        size: envelope.data.size,
+        totalPages: envelope.data.totalPages,
+      },
     };
   },
 };

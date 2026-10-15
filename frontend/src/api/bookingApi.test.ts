@@ -134,10 +134,10 @@ describe('bookingApi', () => {
       const envelopeFixture = {
         success: true,
         message: 'OK',
-        data: [{ id: 123, bookingCode: 'BK123' }],
-        pagination: {
-          total: 1,
-          page: 0,
+        data: {
+          content: [{ id: 123, bookingCode: 'BK123' }],
+          totalElements: 1,
+          number: 0,
           size: 20,
           totalPages: 1,
         },
@@ -158,8 +158,13 @@ describe('bookingApi', () => {
         status: 'PENDING',
       });
       expect(result).toEqual({
-        data: envelopeFixture.data,
-        pagination: envelopeFixture.pagination,
+        data: envelopeFixture.data.content,
+        pagination: {
+          total: 1,
+          page: 0,
+          size: 20,
+          totalPages: 1,
+        },
       });
       expect((result as any).success).toBeUndefined();
       expect((result as any).message).toBeUndefined();
@@ -168,8 +173,7 @@ describe('bookingApi', () => {
     it('omits status when status is undefined', async () => {
       const envelopeFixture = {
         success: true,
-        data: [],
-        pagination: { total: 0, page: 1, size: 10, totalPages: 0 },
+        data: { content: [], totalElements: 0, number: 1, size: 10, totalPages: 0 },
       };
       vi.mocked(apiClient.getEnvelope).mockResolvedValue(envelopeFixture);
 
