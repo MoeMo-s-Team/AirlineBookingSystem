@@ -36,6 +36,7 @@ async function getAuthToken(): Promise<string | null> {
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined | null>;
+  unwrap?: boolean;
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -83,7 +84,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   // Backend Spring Boot luôn bọc dữ liệu trong ApiResponse { success, message, data }
-  if (data && typeof data === 'object' && 'data' in data && 'success' in data) {
+  if (options.unwrap !== false && data && typeof data === 'object' && 'data' in data && 'success' in data) {
     return (data as ApiResponse<T>).data;
   }
 
@@ -94,9 +95,18 @@ export const apiClient = {
   get: <T>(endpoint: string, params?: RequestOptions['params']) =>
     request<T>(endpoint, { method: 'GET', params }),
 
+  getEnvelope: <T>(endpoint: string, params?: RequestOptions['params']) =>
+    request<T>(endpoint, { method: 'GET', params, unwrap: false }),
+
   post: <T>(endpoint: string, body?: unknown) =>
     request<T>(endpoint, {
       method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+
+  patch: <T>(endpoint: string, body?: unknown) =>
+    request<T>(endpoint, {
+      method: 'PATCH',
       body: body ? JSON.stringify(body) : undefined,
     }),
 
