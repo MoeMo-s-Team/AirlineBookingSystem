@@ -2,10 +2,9 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
-import { ServiceCard } from '../components/service/ServiceCard';
+import { ServiceSelector } from '../components/service/ServiceSelector';
 import { PriceSummaryCard } from '../components/booking/PriceSummaryCard';
 import { useBookingFlow } from '../hooks/useBookingFlow';
-import { MOCK_SERVICES } from '../data/mockData';
 
 export interface AdditionalServicesPageProps {
   readonly onProceed?: () => void;
@@ -80,16 +79,10 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {MOCK_SERVICES.map(service => (
-                  <ServiceCard
-                    key={service.id}
-                    service={service}
-                    isSelected={selectedServices.some(s => s.id === service.id)}
-                    onToggle={toggleService}
-                  />
-                ))}
-              </div>
+              <ServiceSelector
+                selectedServices={selectedServices}
+                onToggleService={toggleService}
+              />
             </div>
 
             {/* Price Summary Column */}

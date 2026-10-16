@@ -1,5 +1,6 @@
 import React from 'react';
 import { Flight, FareClass, AncillaryService } from '../../types';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface PriceSummaryCardProps {
   readonly flight: Flight | null;
@@ -48,12 +49,12 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
       <div className="space-y-2.5 text-body-sm">
         <div className="flex items-center justify-between text-on-surface">
           <span>Flight Fare ({passengerCount}x Adult)</span>
-          <span className="font-semibold text-primary">${baseTotal}</span>
+          <span className="font-semibold text-primary">{formatCurrency(baseTotal)}</span>
         </div>
 
         <div className="flex items-center justify-between text-on-surface">
           <span>Aviation Taxes & Security Fees</span>
-          <span className="font-semibold text-primary">${taxesAndFees}</span>
+          <span className="font-semibold text-primary">{formatCurrency(taxesAndFees)}</span>
         </div>
 
         {selectedServices.length > 0 && (
@@ -64,7 +65,7 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
             {selectedServices.map(service => (
               <div key={service.id} className="flex items-center justify-between text-on-surface-variant text-[13px]">
                 <span className="truncate pr-2">{service.name}</span>
-                <span className="font-medium text-primary">+${service.price}</span>
+                <span className="font-medium text-primary">+{formatCurrency(service.price)}</span>
               </div>
             ))}
           </div>
@@ -78,7 +79,7 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
             Total Payable
           </span>
           <span className="text-headline-lg font-bold text-primary">
-            ${grandTotal}
+            {formatCurrency(grandTotal)}
           </span>
         </div>
         <span className="text-[11px] text-secondary font-semibold bg-surface-container px-2 py-1 rounded">
