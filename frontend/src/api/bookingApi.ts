@@ -190,13 +190,16 @@ export const bookingApi = {
       status: query.status,
       userId: query.userId,
     });
+    const pageData = (envelope && typeof envelope === 'object' && 'data' in envelope && envelope.data)
+      ? (envelope as AdminBookingEnvelope<AdminBookingListRecord>).data
+      : (envelope as any);
     return {
-      data: envelope.data.content,
+      data: Array.isArray(pageData?.content) ? pageData.content : [],
       pagination: {
-        total: envelope.data.totalElements,
-        page: envelope.data.number,
-        size: envelope.data.size,
-        totalPages: envelope.data.totalPages,
+        total: typeof pageData?.totalElements === 'number' ? pageData.totalElements : 0,
+        page: typeof pageData?.number === 'number' ? pageData.number : 0,
+        size: typeof pageData?.size === 'number' ? pageData.size : 10,
+        totalPages: typeof pageData?.totalPages === 'number' ? pageData.totalPages : 0,
       },
     };
   },

@@ -49,7 +49,12 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Không thể tải danh sách đặt chỗ');
+          const status = (err as any)?.status;
+          let message = err?.message || (err instanceof Error ? err.message : 'Không thể tải danh sách đặt chỗ');
+          if (status === 403) {
+            message = 'Tài khoản hiện tại không có quyền Quản trị viên (403 Forbidden). Vui lòng đăng nhập bằng tài khoản Admin.';
+          }
+          setError(message);
         }
       })
       .finally(() => {
@@ -139,7 +144,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                     <thead>
                       <tr className="bg-surface-container-low border-b border-outline-variant text-label-sm text-outline uppercase tracking-wider font-semibold">
                         <th className="py-3.5 px-6">Mã đặt chỗ</th>
-                        <th className="py-3.5 px-6">Hành khách / Khách hàng</th>
+                        <th className="py-3.5 px-6">Khách hàng đặt vé</th>
+                        <th className="py-3.5 px-6">Hành khách bay</th>
                         <th className="py-3.5 px-6">Chuyến bay</th>
                         <th className="py-3.5 px-6">Ngày tạo</th>
                         <th className="py-3.5 px-6">Tổng tiền</th>
@@ -150,14 +156,16 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                     <tbody className="divide-y divide-outline-variant text-body-sm text-on-surface">
                       {filteredRecords.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-on-surface-variant">
+                          <td colSpan={8} className="py-8 text-center text-on-surface-variant">
                             Không tìm thấy bản ghi nào.
                           </td>
                         </tr>
                       ) : (
                         filteredRecords.map((b) => {
-                          const primaryPassenger =
-                            b.passengers?.[0]?.fullName || b.user?.fullName || 'N/A';
+                          const customerName = b.user?.fullName || 'Khách vãng lai';
+                          const passengerNames = b.passengers && b.passengers.length > 0
+                            ? b.passengers.map((p) => p.fullName).filter(Boolean).join(', ')
+                            : (b.passengers?.[0]?.fullName || 'Chưa cập nhật');
                           const flightInfo = b.flight?.flightNumber
                             ? `${b.flight.flightNumber} (${b.flight.originAirport || ''} → ${
                                 b.flight.destinationAirport || ''
@@ -182,13 +190,38 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                                 </span>
                               </td>
 
+                              {/* Khách hàng sở hữu / đặt / hủy đơn vé */}
                               <td className="py-4 px-6">
-                                <span className="font-bold text-primary block">
-                                  {primaryPassenger}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[16px] text-primary">account_circle</span>
+                                  <span className="font-bold text-primary">
+                                    {customerName}
+                                  </span>
+                                </div>
                                 {b.user?.email && (
-                                  <span className="text-[12px] text-on-surface-variant block">
+                                  <span className="text-[12px] text-on-surface-variant block font-mono mt-0.5">
                                     {b.user.email}
+                                  </span>
+                                )}
+                                {b.status === 'CANCELLED' && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[11px] font-bold bg-error-container/30 text-error">
+                                    <span className="material-symbols-outlined text-[12px]">cancel</span>
+                                    Đã hủy bởi khách
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Hành khách bay */}
+                              <td className="py-4 px-6">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[16px] text-outline">group</span>
+                                  <span className="font-semibold text-on-surface">
+                                    {passengerNames}
+                                  </span>
+                                </div>
+                                {b.passengers && b.passengers.length > 1 && (
+                                  <span className="text-[11px] text-secondary font-medium block mt-0.5">
+                                    ({b.passengers.length} hành khách)
                                   </span>
                                 )}
                               </td>

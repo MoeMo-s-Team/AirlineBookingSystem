@@ -15,11 +15,18 @@ export interface ApiResponse<T> {
   timestamp?: string;
 }
 
-export interface ApiError {
+export class ApiError extends Error {
   status: number;
   code?: string;
-  message: string;
   timestamp?: string;
+
+  constructor(status: number, message: string, code?: string, timestamp?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.timestamp = timestamp;
+  }
 }
 
 /**
@@ -74,13 +81,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   if (!response.ok) {
     const errorMsg = data?.message || `Lỗi yêu cầu HTTP: ${response.status} ${response.statusText}`;
-    const error: ApiError = {
-      status: response.status,
-      code: data?.code,
-      message: errorMsg,
-      timestamp: data?.timestamp,
-    };
-    throw error;
+    throw new ApiError(response.status, errorMsg, data?.code, data?.timestamp);
   }
 
   // Backend Spring Boot luôn bọc dữ liệu trong ApiResponse { success, message, data }

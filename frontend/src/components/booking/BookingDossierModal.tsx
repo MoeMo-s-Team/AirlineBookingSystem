@@ -100,6 +100,36 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
           </div>
         ) : (
           <div className="p-6 space-y-6">
+            {/* Customer Account Details (Người đặt / hủy vé) */}
+            <div className="bg-surface-container-low border border-outline-variant/60 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-[20px] text-primary">account_circle</span>
+                <span className="text-label-md font-bold text-primary uppercase tracking-wider">
+                  Khách hàng đặt vé
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-label-sm text-outline font-semibold block">Họ và tên tài khoản</span>
+                  <span className="text-label-lg font-bold text-primary block mt-0.5">
+                    {booking?.user?.fullName || 'Khách vãng lai'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-label-sm text-outline font-semibold block">Email đăng ký</span>
+                  <span className="text-label-md font-mono text-on-surface-variant block mt-0.5">
+                    {booking?.user?.email || 'N/A'}
+                  </span>
+                </div>
+              </div>
+              {booking?.status === 'CANCELLED' && (
+                <div className="mt-3 p-2.5 rounded-lg bg-error-container/20 border border-error/30 flex items-center gap-2 text-error text-body-sm">
+                  <span className="material-symbols-outlined text-[18px]">cancel</span>
+                  <span>Đơn vé này đã được hủy bởi khách hàng ({booking?.user?.fullName || 'Khách hàng'}).</span>
+                </div>
+              )}
+            </div>
+
             {/* Flight Route Summary */}
             <div className="bg-surface-container-low border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
               <div className="flex justify-between items-start mb-4">
