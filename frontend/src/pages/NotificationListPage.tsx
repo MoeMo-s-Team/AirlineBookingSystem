@@ -12,24 +12,28 @@ type Filter = 'all' | 'unread';
 
 export const NotificationListPage: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
-  const { listPage, markRead } = useNotifications();
+  const { listPage, markRead, markAllRead, refresh, unreadCount } = useNotifications();
   const [filter, setFilter] = useState<Filter>('all');
   const [offset, setOffset] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const [items, setItems] = useState<readonly NotificationModel[]>([]);
   const [total, setTotal] = useState(0);
+  const [listOwnerId, setListOwnerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [markingAll, setMarkingAll] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       setItems([]);
       setTotal(0);
+      setListOwnerId(null);
       setLoading(false);
       return;
     }
+    const ownerId = user?.id ?? null;
     let active = true;
     setLoading(true);
     setError(null);
@@ -43,16 +47,21 @@ export const NotificationListPage: React.FC = () => {
         }
         setItems(page.data);
         setTotal(page.pagination.total);
+        setListOwnerId(ownerId);
       })
       .catch(cause => {
         if (!active) return;
         setItems([]);
+        setListOwnerId(ownerId);
         setUnavailable(cause instanceof MissingNotificationSessionError);
         setError(cause instanceof Error ? cause.message : 'Could not load notifications.');
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [isAuthenticated, user?.id, listPage, filter, offset, reloadKey]);
+
+  const visibleItems = listOwnerId === (user?.id ?? null) ? items : [];
+  const visibleTotal = listOwnerId === (user?.id ?? null) ? total : 0;
 
   const handleMarkRead = async (id: number) => {
     setSavingId(id);
@@ -70,6 +79,19 @@ export const NotificationListPage: React.FC = () => {
   const changeFilter = (next: Filter) => {
     setFilter(next);
     setOffset(0);
+  };
+
+  const handleMarkAllRead = async () => {
+    setMarkingAll(true);
+    setError(null);
+    try {
+      await markAllRead();
+      setReloadKey(value => value + 1);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not update notifications.');
+    } finally {
+      setMarkingAll(false);
+    }
   };
 
   return (
@@ -96,11 +118,15 @@ export const NotificationListPage: React.FC = () => {
           ) : (
             <div className="max-w-3xl">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div role="group" aria-label="Filter notifications" className="inline-flex gap-1 rounded-lg border border-outline-variant bg-surface-container-lowest p-1">
-                  <button type="button" aria-pressed={filter === 'all'} onClick={() => changeFilter('all')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'all' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>All</button>
-                  <button type="button" aria-pressed={filter === 'unread'} onClick={() => changeFilter('unread')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'unread' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>Unread</button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div role="group" aria-label="Filter notifications" className="inline-flex gap-1 rounded-lg border border-outline-variant bg-surface-container-lowest p-1">
+                    <button type="button" aria-pressed={filter === 'all'} onClick={() => changeFilter('all')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'all' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>All</button>
+                    <button type="button" aria-pressed={filter === 'unread'} onClick={() => changeFilter('unread')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'unread' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>Unread</button>
+                  </div>
+                  <button type="button" onClick={() => { setReloadKey(value => value + 1); void refresh(); }} disabled={loading} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-secondary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">Refresh</button>
+                  <button type="button" onClick={() => { void handleMarkAllRead(); }} disabled={loading || markingAll || (unreadCount === 0 && !visibleItems.some(item => !item.isRead))} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-secondary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">{markingAll ? 'Updating...' : 'Mark all as read'}</button>
                 </div>
-                {!unavailable && !error && !loading && <span className="text-label-md text-on-surface-variant">{total} {total === 1 ? 'notification' : 'notifications'}</span>}
+                {!unavailable && !error && !loading && <span className="text-label-md text-on-surface-variant">{visibleTotal} {visibleTotal === 1 ? 'notification' : 'notifications'}</span>}
               </div>
 
               <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest" aria-live="polite">
@@ -109,30 +135,30 @@ export const NotificationListPage: React.FC = () => {
                     {[1, 2, 3].map(row => <div key={row} className="h-20 animate-pulse rounded-lg bg-surface-container" />)}
                   </div>
                 )}
-                {!loading && unavailable && <p className="p-6 text-body-md text-on-surface-variant">Notifications will be available after Supabase sign-in is connected.</p>}
+                {!loading && unavailable && <p className="p-6 text-body-md text-on-surface-variant">Your session is unavailable. Sign in again to view notifications.</p>}
                 {!loading && error && !unavailable && (
                   <div role="alert" className="p-6 text-body-md text-error">
                     <p>{error}</p>
                     <button type="button" onClick={() => setReloadKey(value => value + 1)} className="mt-3 font-semibold underline">Try again</button>
                   </div>
                 )}
-                {!loading && !error && items.length === 0 && (
+                {!loading && !error && visibleItems.length === 0 && (
                   <div className="px-6 py-12 text-center">
                     <span aria-hidden="true" className="material-symbols-outlined text-[30px] text-secondary">notifications_none</span>
                     <h2 className="mt-2 text-headline-sm font-semibold text-primary">{filter === 'unread' ? 'No unread notifications' : "You're all caught up"}</h2>
                     <p className="mt-1 text-body-sm text-on-surface-variant">Booking updates will appear here when they are available.</p>
                   </div>
                 )}
-                {!loading && !error && items.map(item => (
+                {!loading && !error && visibleItems.map(item => (
                   <NotificationItem key={item.id} notification={item} onMarkRead={id => { void handleMarkRead(id); }} saving={savingId === item.id} />
                 ))}
               </div>
 
-              {!loading && !error && total > PAGE_SIZE && (
+              {!loading && !error && visibleTotal > PAGE_SIZE && (
                 <nav aria-label="Notification pages" className="mt-5 flex items-center justify-between gap-3">
                   <button type="button" disabled={offset === 0} onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">Previous</button>
-                  <span className="text-label-md text-on-surface-variant">{offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}</span>
-                  <button type="button" disabled={offset + PAGE_SIZE >= total} onClick={() => setOffset(value => value + PAGE_SIZE)} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">Next</button>
+                  <span className="text-label-md text-on-surface-variant">{offset + 1}–{Math.min(offset + PAGE_SIZE, visibleTotal)} of {visibleTotal}</span>
+                  <button type="button" disabled={offset + PAGE_SIZE >= visibleTotal} onClick={() => setOffset(value => value + PAGE_SIZE)} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">Next</button>
                 </nav>
               )}
             </div>

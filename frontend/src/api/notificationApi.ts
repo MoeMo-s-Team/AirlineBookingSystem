@@ -105,3 +105,10 @@ export async function markNotificationRead(token: string, id: number): Promise<v
     method: 'PATCH'
   });
 }
+
+export async function markAllNotificationsRead(token: string): Promise<number> {
+  const result = await request<{ readonly updatedCount: number }>('/notifications/read-all', token, {
+    method: 'PATCH'
+  });
+  return result.updatedCount;
+}

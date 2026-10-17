@@ -20,6 +20,8 @@ import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { BookingFlowProvider } from './context/BookingFlowContext';
 import { NotificationListPage } from './pages/NotificationListPage';
+import { NotificationBookingDetailPage } from './pages/NotificationBookingDetailPage';
+import { NotificationToast } from './components/notification/NotificationToast';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,6 +37,7 @@ export const App: React.FC = () => {
   return (
     <AuthProvider>
       <NotificationProvider>
+        <NotificationToast />
         <BookingFlowProvider>
           <ScrollToTop />
           <Routes>
@@ -108,6 +111,14 @@ export const App: React.FC = () => {
           element={
             <CustomerRoute>
               <NotificationListPage />
+            </CustomerRoute>
+          }
+        />
+        <Route
+          path="/my-bookings/:bookingId"
+          element={
+            <CustomerRoute>
+              <NotificationBookingDetailPage />
             </CustomerRoute>
           }
         />

@@ -4,6 +4,8 @@ import com.airline.application.dto.ProfileIdentity;
 import com.airline.application.service.ProfileService;
 import com.airline.config.SecurityConfig;
 import com.airline.config.SupabaseProperties;
+import com.airline.application.dto.NotificationPageView;
+import com.airline.application.exception.NotificationNotFoundException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -38,6 +40,7 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
@@ -234,5 +237,76 @@ class SupabaseSecurityIntegrationTest {
                 .andExpect(status().isOk());
 
         verify(profileService).requireIdentity(userId);
+    }
+
+    @Test
+    void notificationRoutes_useVerifiedProfileIdForListCountAndRead() throws Exception {
+        UUID userId = UUID.randomUUID();
+        String token = createToken(rsaJwk, ISSUER, List.of(AUDIENCE),
+                Instant.now().plus(1, ChronoUnit.HOURS), userId);
+        when(profileService.requireIdentity(userId)).thenReturn(ProfileIdentity.builder()
+                .id(userId).email("customer@airline.com").fullName("Customer").role("CUSTOMER").build());
+        when(notificationService.list(userId, false, 20, 0)).thenReturn(
+                new NotificationPageView(List.of(), 0, 20, 0));
+        when(notificationService.unreadCount(userId)).thenReturn(1L);
+
+        mockMvc.perform(get("/api/notifications?isRead=false")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagination.limit").value(20));
+        mockMvc.perform(get("/api/notifications/unread-count")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.count").value(1));
+        mockMvc.perform(patch("/api/notifications/42/read")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.isRead").value(true));
+
+        verify(notificationService).list(userId, false, 20, 0);
+        verify(notificationService).unreadCount(userId);
+        verify(notificationService).markRead(userId, 42L);
+    }
+
+    @Test
+    void notificationRead_returns404WhenNotificationDoesNotBelongToUser() throws Exception {
+        UUID userId = UUID.randomUUID();
+        String token = createToken(rsaJwk, ISSUER, List.of(AUDIENCE),
+                Instant.now().plus(1, ChronoUnit.HOURS), userId);
+        when(profileService.requireIdentity(userId)).thenReturn(ProfileIdentity.builder()
+                .id(userId).email("customer@airline.com").role("CUSTOMER").build());
+        doThrow(new NotificationNotFoundException()).when(notificationService).markRead(userId, 99L);
+
+        mockMvc.perform(patch("/api/notifications/99/read")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(notificationService).markRead(userId, 99L);
+    }
+
+    @Test
+    void notificationReadAll_usesVerifiedProfileId() throws Exception {
+        UUID userId = UUID.randomUUID();
+        String token = createToken(rsaJwk, ISSUER, List.of(AUDIENCE),
+                Instant.now().plus(1, ChronoUnit.HOURS), userId);
+        when(profileService.requireIdentity(userId)).thenReturn(ProfileIdentity.builder()
+                .id(userId).email("customer@airline.com").role("CUSTOMER").build());
+        when(notificationService.markAllRead(userId)).thenReturn(3);
+
+        mockMvc.perform(patch("/api/notifications/read-all")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updatedCount").value(3));
+
+        verify(notificationService).markAllRead(userId);
+    }
+
+    @Test
+    void notificationReadAll_rejectsMissingAccessToken() throws Exception {
+        mockMvc.perform(patch("/api/notifications/read-all"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(notificationService);
     }
 }

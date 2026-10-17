@@ -16,7 +16,7 @@ public class InAppNotificationObserver implements BookingObserver {
             case PENDING -> {
                 if (event.previousStatus() == null) {
                     notificationService.createForBooking(event.booking(), "BOOKING_CREATED",
-                            "Your booking " + bookingCode + " has been created.");
+                            "Your booking " + bookingCode + " has been created and is awaiting payment.");
                 }
             }
             case CONFIRMED -> notificationService.createForBooking(event.booking(), "BOOKING_CONFIRMED",
