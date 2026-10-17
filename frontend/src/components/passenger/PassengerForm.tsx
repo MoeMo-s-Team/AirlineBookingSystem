@@ -1,30 +1,22 @@
 import React, { useState, useMemo } from 'react';
-import { Passenger } from '../../types';
+import type { BookingPassengerDraft } from '../../types/bookingFlow';
 
 export interface PassengerFormProps {
-  readonly passenger: Passenger;
+  readonly passenger: BookingPassengerDraft;
   readonly passengerIndex: number;
-  readonly onChange: (index: number, updated: Partial<Passenger>) => void;
+  readonly onChange: (index: number, updated: Partial<BookingPassengerDraft>) => void;
   readonly forceShowErrors?: boolean;
 }
 
 export interface ValidationErrors {
-  firstName?: string;
-  lastName?: string;
+  fullName?: string;
   dateOfBirth?: string;
-  nationality?: string;
-  passportNumber?: string;
-  passportExpiry?: string;
-  email?: string;
+  passportNo?: string;
   phone?: string;
 }
 
-const validateEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
-
 const validatePhone = (phone: string): boolean => {
-  return /^[\d\s\-+()]{8,20}$/.test(phone);
+  return /^[\d\s\-+()]{7,20}$/.test(phone);
 };
 
 const getInputClass = (hasError: boolean) => `
@@ -45,60 +37,32 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
   const errors = useMemo<ValidationErrors>(() => {
     const errs: ValidationErrors = {};
 
-    if (!passenger.firstName.trim()) {
-      errs.firstName = 'First name is required';
-    } else if (passenger.firstName.trim().length < 2) {
-      errs.firstName = 'At least 2 characters required';
+    if (!passenger?.fullName?.trim()) {
+      errs.fullName = 'Full name is required';
+    } else if (passenger.fullName.trim().length < 2) {
+      errs.fullName = 'At least 2 characters required';
     }
 
-    if (!passenger.lastName.trim()) {
-      errs.lastName = 'Last name is required';
-    } else if (passenger.lastName.trim().length < 2) {
-      errs.lastName = 'At least 2 characters required';
-    }
-
-    if (!passenger.dateOfBirth) {
+    if (!passenger?.dateOfBirth) {
       errs.dateOfBirth = 'Date of birth is required';
     } else {
       const dob = new Date(passenger.dateOfBirth);
       const today = new Date();
-      if (dob >= today) {
+      if (isNaN(dob.getTime()) || dob >= today) {
         errs.dateOfBirth = 'Date of birth must be in the past';
-      } else {
-        const age = today.getFullYear() - dob.getFullYear();
-        if (age > 120) errs.dateOfBirth = 'Invalid date of birth';
       }
     }
 
-    if (!passenger.nationality.trim()) {
-      errs.nationality = 'Nationality is required';
+    if (!passenger?.passportNo?.trim()) {
+      errs.passportNo = 'Passport / National ID is required';
+    } else if (passenger.passportNo.trim().length < 5) {
+      errs.passportNo = 'At least 5 characters required';
     }
 
-    if (!passenger.passportNumber.trim()) {
-      errs.passportNumber = 'Passport number is required';
-    } else if (passenger.passportNumber.trim().length < 5) {
-      errs.passportNumber = 'At least 5 characters required';
-    }
-
-    if (passenger.passportExpiry) {
-      const expiry = new Date(passenger.passportExpiry);
-      const minExpiry = new Date();
-      minExpiry.setMonth(minExpiry.getMonth() + 6);
-      if (expiry <= minExpiry) {
-        errs.passportExpiry = 'Passport must be valid for at least 6 months';
-      }
-    }
-
-    if (!passenger.email.trim()) {
-      errs.email = 'Email is required';
-    } else if (!validateEmail(passenger.email)) {
-      errs.email = 'Invalid email format';
-    }
-
-    if (!passenger.phone.trim()) {
+    if (!passenger?.phone?.trim()) {
       errs.phone = 'Phone number is required';
     } else if (!validatePhone(passenger.phone)) {
-      errs.phone = 'Invalid phone format';
+      errs.phone = 'Invalid phone number format';
     }
 
     return errs;
@@ -134,58 +98,22 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Title */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Full Name */}
         <div>
           <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Title *
-          </label>
-          <select
-            value={passenger.title}
-            onChange={e => onChange(passengerIndex, { title: e.target.value as Passenger['title'] })}
-            className={getInputClass(false)}
-          >
-            <option value="Mr">Mr.</option>
-            <option value="Mrs">Mrs.</option>
-            <option value="Ms">Ms.</option>
-            <option value="Dr">Dr.</option>
-            <option value="Prof">Prof.</option>
-          </select>
-        </div>
-
-        {/* First & Middle Name */}
-        <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            First & Middle Name *
+            Full Name (as in Passport / ID) *
           </label>
           <input
             type="text"
-            placeholder="e.g. VAN A"
-            value={passenger.firstName}
-            onChange={e => onChange(passengerIndex, { firstName: e.target.value })}
-            onBlur={() => handleBlur('firstName')}
-            className={getInputClass(!!shouldShowError('firstName', errors.firstName))}
+            placeholder="e.g. NGUYEN VAN A"
+            value={passenger?.fullName || ''}
+            onChange={e => onChange(passengerIndex, { fullName: e.target.value.toUpperCase() })}
+            onBlur={() => handleBlur('fullName')}
+            className={getInputClass(!!shouldShowError('fullName', errors.fullName))}
           />
-          {shouldShowError('firstName', errors.firstName) && (
-            <p className="text-error text-label-sm mt-1">{errors.firstName}</p>
-          )}
-        </div>
-
-        {/* Last Name */}
-        <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Last Name (Surname) *
-          </label>
-          <input
-            type="text"
-            placeholder="e.g. NGUYEN"
-            value={passenger.lastName}
-            onChange={e => onChange(passengerIndex, { lastName: e.target.value })}
-            onBlur={() => handleBlur('lastName')}
-            className={getInputClass(!!shouldShowError('lastName', errors.lastName))}
-          />
-          {shouldShowError('lastName', errors.lastName) && (
-            <p className="text-error text-label-sm mt-1">{errors.lastName}</p>
+          {shouldShowError('fullName', errors.fullName) && (
+            <p className="text-error text-label-sm mt-1">{errors.fullName}</p>
           )}
         </div>
 
@@ -196,7 +124,7 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
           </label>
           <input
             type="date"
-            value={passenger.dateOfBirth}
+            value={passenger?.dateOfBirth || ''}
             max={new Date().toISOString().split('T')[0]}
             onChange={e => onChange(passengerIndex, { dateOfBirth: e.target.value })}
             onBlur={() => handleBlur('dateOfBirth')}
@@ -207,24 +135,6 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
           )}
         </div>
 
-        {/* Nationality */}
-        <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Nationality *
-          </label>
-          <input
-            type="text"
-            placeholder="e.g. Vietnamese"
-            value={passenger.nationality}
-            onChange={e => onChange(passengerIndex, { nationality: e.target.value })}
-            onBlur={() => handleBlur('nationality')}
-            className={getInputClass(!!shouldShowError('nationality', errors.nationality))}
-          />
-          {shouldShowError('nationality', errors.nationality) && (
-            <p className="text-error text-label-sm mt-1">{errors.nationality}</p>
-          )}
-        </div>
-
         {/* Passport Number */}
         <div>
           <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
@@ -232,63 +142,26 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
           </label>
           <input
             type="text"
-            placeholder="e.g. C8941203"
-            value={passenger.passportNumber}
-            onChange={e => onChange(passengerIndex, { passportNumber: e.target.value.toUpperCase() })}
-            onBlur={() => handleBlur('passportNumber')}
-            className={`${getInputClass(!!shouldShowError('passportNumber', errors.passportNumber))} uppercase`}
+            placeholder="e.g. C1234567"
+            value={passenger?.passportNo || ''}
+            onChange={e => onChange(passengerIndex, { passportNo: e.target.value.toUpperCase() })}
+            onBlur={() => handleBlur('passportNo')}
+            className={`${getInputClass(!!shouldShowError('passportNo', errors.passportNo))} uppercase`}
           />
-          {shouldShowError('passportNumber', errors.passportNumber) && (
-            <p className="text-error text-label-sm mt-1">{errors.passportNumber}</p>
+          {shouldShowError('passportNo', errors.passportNo) && (
+            <p className="text-error text-label-sm mt-1">{errors.passportNo}</p>
           )}
         </div>
 
-        {/* Passport Expiry */}
+        {/* Phone Number */}
         <div>
           <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Passport Expiry Date
-          </label>
-          <input
-            type="date"
-            value={passenger.passportExpiry || ''}
-            min={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-            onChange={e => onChange(passengerIndex, { passportExpiry: e.target.value })}
-            onBlur={() => handleBlur('passportExpiry')}
-            className={getInputClass(!!shouldShowError('passportExpiry', errors.passportExpiry))}
-          />
-          {shouldShowError('passportExpiry', errors.passportExpiry) && (
-            <p className="text-error text-label-sm mt-1">{errors.passportExpiry}</p>
-          )}
-          <p className="text-on-surface-variant text-label-sm mt-1">Must be valid for at least 6 months</p>
-        </div>
-
-        {/* Contact Email */}
-        <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Email for E-Ticket Delivery *
-          </label>
-          <input
-            type="email"
-            placeholder="traveler@email.com"
-            value={passenger.email}
-            onChange={e => onChange(passengerIndex, { email: e.target.value })}
-            onBlur={() => handleBlur('email')}
-            className={getInputClass(!!shouldShowError('email', errors.email))}
-          />
-          {shouldShowError('email', errors.email) && (
-            <p className="text-error text-label-sm mt-1">{errors.email}</p>
-          )}
-        </div>
-
-        {/* Contact Phone */}
-        <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Mobile Phone Number *
+            Phone Number *
           </label>
           <input
             type="tel"
-            placeholder="+84 908 123 456"
-            value={passenger.phone}
+            placeholder="e.g. 0901234567"
+            value={passenger?.phone || ''}
             onChange={e => onChange(passengerIndex, { phone: e.target.value })}
             onBlur={() => handleBlur('phone')}
             className={getInputClass(!!shouldShowError('phone', errors.phone))}
@@ -296,20 +169,6 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
           {shouldShowError('phone', errors.phone) && (
             <p className="text-error text-label-sm mt-1">{errors.phone}</p>
           )}
-        </div>
-
-        {/* Frequent Flyer Number */}
-        <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            SkyWing Club Frequent Flyer
-          </label>
-          <input
-            type="text"
-            placeholder="e.g. SW-88910"
-            value={passenger.frequentFlyerNumber || ''}
-            onChange={e => onChange(passengerIndex, { frequentFlyerNumber: e.target.value.toUpperCase() })}
-            className={`${getInputClass(false)} uppercase`}
-          />
         </div>
       </div>
     </div>

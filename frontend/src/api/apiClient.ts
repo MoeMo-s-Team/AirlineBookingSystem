@@ -15,11 +15,18 @@ export interface ApiResponse<T> {
   timestamp?: string;
 }
 
-export interface ApiError {
+export class ApiError extends Error {
   status: number;
   code?: string;
-  message: string;
   timestamp?: string;
+
+  constructor(status: number, message: string, code?: string, timestamp?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.timestamp = timestamp;
+  }
 }
 
 /**
@@ -36,6 +43,7 @@ async function getAuthToken(): Promise<string | null> {
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined | null>;
+  unwrap?: boolean;
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -73,17 +81,11 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   if (!response.ok) {
     const errorMsg = data?.message || `Lỗi yêu cầu HTTP: ${response.status} ${response.statusText}`;
-    const error: ApiError = {
-      status: response.status,
-      code: data?.code,
-      message: errorMsg,
-      timestamp: data?.timestamp,
-    };
-    throw error;
+    throw new ApiError(response.status, errorMsg, data?.code, data?.timestamp);
   }
 
   // Backend Spring Boot luôn bọc dữ liệu trong ApiResponse { success, message, data }
-  if (data && typeof data === 'object' && 'data' in data && 'success' in data) {
+  if (options.unwrap !== false && data && typeof data === 'object' && 'data' in data && 'success' in data) {
     return (data as ApiResponse<T>).data;
   }
 
@@ -94,9 +96,18 @@ export const apiClient = {
   get: <T>(endpoint: string, params?: RequestOptions['params']) =>
     request<T>(endpoint, { method: 'GET', params }),
 
+  getEnvelope: <T>(endpoint: string, params?: RequestOptions['params']) =>
+    request<T>(endpoint, { method: 'GET', params, unwrap: false }),
+
   post: <T>(endpoint: string, body?: unknown) =>
     request<T>(endpoint, {
       method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+
+  patch: <T>(endpoint: string, body?: unknown) =>
+    request<T>(endpoint, {
+      method: 'PATCH',
       body: body ? JSON.stringify(body) : undefined,
     }),
 

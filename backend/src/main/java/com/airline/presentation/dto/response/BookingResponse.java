@@ -21,6 +21,7 @@ public class BookingResponse {
     private Long id;
     private String bookingCode;
     private BookingStatus status;
+    private BookingView.UserSummary user;
     private BookingView.FlightSummary flight;
     private BookingView.FareClassSummary fareClass;
     private List<BookingView.PassengerView> passengers;
@@ -36,6 +37,7 @@ public class BookingResponse {
                 .id(view.id())
                 .bookingCode(view.bookingCode())
                 .status(view.status())
+                .user(view.user())
                 .flight(view.flight())
                 .fareClass(view.fareClass())
                 .passengers(view.passengers())

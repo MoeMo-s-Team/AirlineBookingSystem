@@ -351,6 +351,46 @@ describe('AuthContext', () => {
     expect(result.current.isAuthenticated).toBe(false);
   });
 
+  it('carries valid returnTo in emailRedirectTo during signUp', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+
+    vi.mocked(supabase.auth.signUp).mockResolvedValue({
+      data: { session: null, user: { id: 'u-2' } as any },
+      error: null,
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.signUp(
+        'Jane Doe',
+        'jane@test.com',
+        'password123',
+        '/flights?origin=SGN&destination=HAN'
+      );
+    });
+
+    expect(supabase.auth.signUp).toHaveBeenCalledWith({
+      email: 'jane@test.com',
+      password: 'password123',
+      options: {
+        data: { full_name: 'Jane Doe' },
+        emailRedirectTo: expect.stringContaining('returnTo=%2Fflights%3Forigin%3DSGN%26destination%3DHAN'),
+      },
+    });
+  });
+
   it('handles 401 on profile fetch as unauthenticated', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { access_token: 'bad-token', user: { id: 'u-1' } } as any },

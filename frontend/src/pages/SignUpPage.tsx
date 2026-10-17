@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
+import { safeReturnTo } from '../utils/safeReturnTo';
 
 export interface SignUpPageProps {
   readonly onSignUpSuccess?: () => void;
@@ -10,6 +11,7 @@ export interface SignUpPageProps {
 
 export const SignUpPage: React.FC<SignUpPageProps> = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isAuthenticated, signUp, signOut, profileError, refreshProfile } = useAuth();
 
   const [fullName, setFullName] = useState('');
@@ -22,8 +24,15 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
   const [awaitingProfile, setAwaitingProfile] = useState(false);
 
   useEffect(() => {
-    if (awaitingProfile && user) navigate('/my-bookings', { replace: true });
-  }, [awaitingProfile, user, navigate]);
+    if (awaitingProfile && user) {
+      if (user.role === 'ADMIN') {
+        navigate('/admin/flights', { replace: true });
+      } else {
+        const returnTo = searchParams.get('returnTo');
+        navigate(safeReturnTo(returnTo, '/my-bookings'), { replace: true });
+      }
+    }
+  }, [awaitingProfile, user, navigate, searchParams]);
 
   useEffect(() => {
     if (profileError) {
@@ -48,7 +57,10 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
     setErrorMessage('');
     setInfoMessage('');
     try {
-      const res = await signUp(fullName, email, password);
+      const returnTo = searchParams.get('returnTo');
+      const res = returnTo
+        ? await signUp(fullName, email, password, returnTo)
+        : await signUp(fullName, email, password);
       if (res.confirmationRequired) {
         setInfoMessage('Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản của bạn trước khi đăng nhập.');
       } else {
@@ -224,7 +236,10 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
               {/* Footer link */}
               <p className="text-center text-body-sm text-on-surface-variant mt-6">
                 Already have an account?{' '}
-                <Link to="/sign-in" className="font-bold text-primary hover:text-secondary">
+                <Link
+                  to={searchParams.get('returnTo') ? `/sign-in?returnTo=${encodeURIComponent(searchParams.get('returnTo')!)}` : '/sign-in'}
+                  className="font-bold text-primary hover:text-secondary"
+                >
                   Sign In
                 </Link>
               </p>

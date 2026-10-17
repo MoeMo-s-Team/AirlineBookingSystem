@@ -1,36 +1,43 @@
 package com.airline.application.service;
 
-import com.airline.application.dto.ProfileIdentity;
-import com.airline.application.dto.ProcessPaymentCommand;
-import com.airline.application.exception.BookingConflictException;
-import com.airline.domain.entity.*;
-import com.airline.domain.enums.BookingStatus;
-import com.airline.domain.enums.PaymentStatus;
-import com.airline.domain.repository.BookingRepository;
-import com.airline.domain.repository.FareClassRepository;
-import com.airline.domain.repository.FlightRepository;
-import com.airline.domain.repository.PaymentRepository;
-import com.airline.domain.repository.ProfileRepository;
-import com.airline.pattern.observer.BookingSubject;
-import com.airline.presentation.dto.request.PaymentRequest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.airline.application.dto.ProcessPaymentCommand;
+import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.exception.BookingConflictException;
+import com.airline.domain.entity.Booking;
+import com.airline.domain.entity.FareClass;
+import com.airline.domain.entity.Flight;
+import com.airline.domain.entity.Profile;
+import com.airline.domain.entity.Role;
+import com.airline.domain.enums.BookingStatus;
+import com.airline.domain.repository.BookingRepository;
+import com.airline.domain.repository.FareClassRepository;
+import com.airline.domain.repository.FlightRepository;
+import com.airline.domain.repository.ProfileRepository;
+import com.airline.pattern.observer.BookingSubject;
 
 @SpringBootTest
 @org.junit.jupiter.api.condition.EnabledIf("isDatabaseAvailable")
@@ -63,9 +70,6 @@ class BookingPaymentConcurrencyTest {
 
     @Autowired
     private BookingRepository bookingRepository;
-
-    @Autowired
-    private PaymentRepository paymentRepository;
 
     @Autowired
     private ProfileRepository profileRepository;

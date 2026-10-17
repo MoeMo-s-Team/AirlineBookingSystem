@@ -7,11 +7,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record BookingView(
         Long id,
         String bookingCode,
         BookingStatus status,
+        UserSummary user,
         FlightSummary flight,
         FareClassSummary fareClass,
         List<PassengerView> passengers,
@@ -21,6 +23,24 @@ public record BookingView(
         PaymentSummary payment,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
+
+    public BookingView(
+            Long id,
+            String bookingCode,
+            BookingStatus status,
+            FlightSummary flight,
+            FareClassSummary fareClass,
+            List<PassengerView> passengers,
+            List<ServiceView> services,
+            PriceBreakdown priceBreakdown,
+            BigDecimal totalPrice,
+            PaymentSummary payment,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt) {
+        this(id, bookingCode, status, null, flight, fareClass, passengers, services, priceBreakdown, totalPrice, payment, createdAt, updatedAt);
+    }
+
+    public record UserSummary(UUID id, String fullName, String email) {}
 
     public record FlightSummary(Long id, String flightNumber, String origin, String destination,
                                 LocalDateTime departureTime) {}

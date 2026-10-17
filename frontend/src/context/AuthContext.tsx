@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { apiClient, type ApiError } from '../api/apiClient';
+import { safeReturnTo } from '../utils/safeReturnTo';
 
 export interface AuthUser {
   readonly id: string;
@@ -22,7 +23,7 @@ export interface AuthContextType {
   /** Supabase Auth token getter for API calls like notifications */
   readonly getAccessToken?: () => Promise<string | null>;
   readonly signIn: (email: string, password: string) => Promise<void>;
-  readonly signUp: (fullName: string, email: string, password: string) => Promise<{ confirmationRequired: boolean }>;
+  readonly signUp: (fullName: string, email: string, password: string, returnTo?: string) => Promise<{ confirmationRequired: boolean }>;
   readonly signOut: () => Promise<void>;
   readonly refreshProfile: () => Promise<void>;
 }
@@ -174,11 +175,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = useCallback(async (
     fullName: string,
     email: string,
-    password: string
+    password: string,
+    returnTo?: string
   ): Promise<{ confirmationRequired: boolean }> => {
-    const emailRedirectTo =
+    let emailRedirectTo =
       import.meta.env.VITE_SUPABASE_EMAIL_REDIRECT_URL ||
       `${window.location.origin}/auth/callback`;
+
+    if (returnTo) {
+      const safeTarget = safeReturnTo(returnTo, '');
+      if (safeTarget) {
+        const url = new URL(emailRedirectTo);
+        url.searchParams.set('returnTo', safeTarget);
+        emailRedirectTo = url.toString();
+      }
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,

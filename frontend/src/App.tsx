@@ -18,6 +18,7 @@ import { AdminRoute } from './components/auth/AdminRoute';
 import { CustomerRoute } from './components/auth/CustomerRoute';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { BookingFlowProvider } from './context/BookingFlowContext';
 import { NotificationListPage } from './pages/NotificationListPage';
 
 function ScrollToTop() {
@@ -34,8 +35,9 @@ export const App: React.FC = () => {
   return (
     <AuthProvider>
       <NotificationProvider>
-      <ScrollToTop />
-      <Routes>
+        <BookingFlowProvider>
+          <ScrollToTop />
+          <Routes>
         {/* Passenger Experience Routes (Guarded: Admins are redirected to /admin/flights) */}
         <Route
           path="/"
@@ -79,6 +81,14 @@ export const App: React.FC = () => {
         />
         <Route
           path="/confirmation"
+          element={
+            <CustomerRoute>
+              <BookingConfirmationPage />
+            </CustomerRoute>
+          }
+        />
+        <Route
+          path="/confirmation/:bookingId"
           element={
             <CustomerRoute>
               <BookingConfirmationPage />
@@ -159,6 +169,7 @@ export const App: React.FC = () => {
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+        </BookingFlowProvider>
       </NotificationProvider>
     </AuthProvider>
   );
