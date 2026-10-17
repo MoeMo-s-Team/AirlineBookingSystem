@@ -112,4 +112,60 @@ describe('apiClient', () => {
       message: 'Profile not found for user',
     });
   });
+
+  it('sends PATCH request with serialized body and unwraps data', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: () => Promise.resolve({
+        success: true,
+        data: { id: 10, status: 'CANCELLED' },
+      }),
+    });
+
+    const res = await (apiClient as any).patch('/bookings/10/cancel', { reason: 'change of plans' });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:8080/api/bookings/10/cancel',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ reason: 'change of plans' }),
+      })
+    );
+    expect(res).toEqual({ id: 10, status: 'CANCELLED' });
+  });
+
+  it('getEnvelope returns full parsed JSON without unwrapping data', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+
+    const envelopePayload = {
+      success: true,
+      data: [{ id: 1, bookingCode: 'BK123' }],
+      pagination: { total: 1, page: 0, size: 10, totalPages: 1 },
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: () => Promise.resolve(envelopePayload),
+    });
+
+    const res = await (apiClient as any).getEnvelope('/bookings', { page: 0, size: 10 });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:8080/api/bookings?page=0&size=10',
+      expect.objectContaining({
+        method: 'GET',
+      })
+    );
+    expect(res).toEqual(envelopePayload);
+  });
 });

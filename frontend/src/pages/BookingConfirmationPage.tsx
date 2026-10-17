@@ -1,18 +1,65 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
-import { useBookingFlow } from '../hooks/useBookingFlow';
-import { MOCK_BOOKINGS } from '../data/mockData';
+import { bookingApi, type BookingDetail } from '../api/bookingApi';
 
 export interface BookingConfirmationPageProps {
   readonly onPrint?: () => void;
 }
 
 export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = () => {
-  const { confirmedBooking } = useBookingFlow();
-  // Fallback to mock booking if arrived directly
-  const booking = confirmedBooking || MOCK_BOOKINGS[0];
+  const { bookingId: routeBookingId } = useParams<{ bookingId?: string }>();
+  const [searchParams] = useSearchParams();
+  const rawId = routeBookingId ?? searchParams.get('bookingId');
+  const bookingId = rawId ? Number(rawId) : null;
+
+  const [booking, setBooking] = useState<BookingDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!bookingId || Number.isNaN(bookingId)) {
+      setLoading(false);
+      setError('Đơn đặt vé chưa hoàn tất xác nhận hoặc không tìm thấy mã đặt chỗ.');
+      return;
+    }
+
+    setLoading(true);
+    bookingApi
+      .getBooking(bookingId)
+      .then((data) => {
+        if (cancelled) return;
+        if (data.status !== 'CONFIRMED') {
+          setError('Đơn đặt vé chưa hoàn tất xác nhận.');
+        } else {
+          setBooking(data);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setError('Đơn đặt vé chưa hoàn tất xác nhận.');
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bookingId]);
+
+  const handleCopy = () => {
+    if (!booking?.bookingCode) return;
+    navigator.clipboard?.writeText(booking.bookingCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -20,166 +67,180 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
 
       <main className="flex-1 pt-16">
         <section className="max-w-4xl mx-auto px-6 py-12">
-          {/* Success Banner */}
-          <div className="text-center mb-10">
-            <div className="w-16 h-16 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center mx-auto mb-4 shadow-sm animate-bounce">
-              <span className="material-symbols-outlined text-[36px]">check_circle</span>
+          {loading ? (
+            <div className="py-20 text-center" role="status">
+              <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-body-md text-on-surface-variant">Đang tải thông tin đặt chỗ...</p>
             </div>
-            <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-              Booking Confirmed & Ticket Issued
-            </h1>
-            <p className="text-body-lg text-on-surface-variant mt-2 max-w-lg mx-auto">
-              Your flight reservation is locked. An official e-ticket and invoice have been dispatched to your email address.
-            </p>
-          </div>
-
-          {/* PNR Key Callout */}
-          <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-            <div>
-              <span className="text-[11px] font-bold text-outline uppercase tracking-widest block">
-                Booking Reference (PNR)
-              </span>
-              <span className="text-headline-lg font-bold text-primary font-mono tracking-wider">
-                {booking.pnr}
-              </span>
+          ) : error || !booking ? (
+            <div className="bg-surface-container-lowest border border-error/30 rounded-3xl p-8 text-center max-w-xl mx-auto shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-error-container text-error flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-[32px]">warning</span>
+              </div>
+              <h1 className="text-title-lg font-bold text-on-surface mb-2">
+                {error ?? 'Đơn đặt vé chưa hoàn tất xác nhận'}
+              </h1>
+              <p className="text-body-md text-on-surface-variant mb-6">
+                Vui lòng kiểm tra lại trạng thái trong danh sách đặt chỗ hoặc liên hệ hỗ trợ.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  to="/my-bookings"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-semibold text-label-lg transition-colors"
+                >
+                  Xem trong Quản lý đặt chỗ
+                </Link>
+                <Link
+                  to="/"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-outline hover:bg-surface-container text-primary font-semibold text-label-lg transition-colors"
+                >
+                  Tìm chuyến bay mới
+                </Link>
+              </div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard?.writeText(booking.pnr);
-                  alert(`Copied PNR ${booking.pnr} to clipboard!`);
-                }}
-                className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-label-md font-semibold text-primary transition-colors flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                <span>Copy PNR</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary text-label-md font-semibold transition-colors flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[18px]">print</span>
-                <span>Print Ticket</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Electronic Boarding Pass Ticket View */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl overflow-hidden shadow-lg mb-8">
-            {/* Header Ticket Zone */}
-            <div className="bg-primary text-on-primary p-6 sm:p-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[24px]">flight_takeoff</span>
+          ) : (
+            <>
+              {/* Confirmed Banner */}
+              <div className="text-center mb-10">
+                <div className="w-16 h-16 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center mx-auto mb-4 shadow-sm animate-bounce">
+                  <span className="material-symbols-outlined text-[36px]">check_circle</span>
                 </div>
+                <h1 className="text-headline-lg font-bold text-primary tracking-tight">
+                  Booking Confirmed
+                </h1>
+                <p className="text-body-lg text-on-surface-variant mt-2 max-w-lg mx-auto">
+                  Đơn đặt vé của bạn đã được xác nhận thành công trên hệ thống.
+                </p>
+              </div>
+
+              {/* Booking Reference Callout */}
+              <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
                 <div>
-                  <span className="text-2xl font-bold tracking-tight block">SkyWing Airlines</span>
-                  <span className="text-[12px] opacity-80 uppercase tracking-widest font-semibold">
-                    Electronic Boarding Card • {booking.fareClass.tier}
+                  <span className="text-[11px] font-bold text-outline uppercase tracking-widest block">
+                    Mã đặt chỗ (Booking Code)
+                  </span>
+                  <span className="text-headline-lg font-bold text-primary font-mono tracking-wider">
+                    {booking.bookingCode}
                   </span>
                 </div>
-              </div>
-              <div className="text-right">
-                <span className="text-[11px] opacity-80 uppercase tracking-wider block">Flight</span>
-                <span className="text-xl font-mono font-bold">{booking.flight.flightNumber}</span>
-              </div>
-            </div>
 
-            {/* Flight Path Details */}
-            <div className="p-6 sm:p-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center pb-6 border-b border-outline-variant">
-                <div>
-                  <span className="text-4xl font-extrabold text-primary">{booking.flight.departureCode}</span>
-                  <span className="text-body-md font-bold text-on-surface block mt-1">{booking.flight.departureCity}</span>
-                  <span className="text-label-sm text-on-surface-variant block">{booking.departureDate} • {booking.flight.departureTime}</span>
-                  <span className="text-[12px] text-secondary font-semibold mt-0.5 block">{booking.flight.departureAirport}</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-label-md font-semibold text-primary transition-colors flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {copied ? 'check' : 'content_copy'}
+                    </span>
+                    <span>{copied ? 'Đã sao chép' : 'Sao chép mã'}</span>
+                  </button>
                 </div>
+              </div>
 
-                <div className="flex flex-col items-center justify-center text-center">
-                  <span className="text-[12px] font-semibold text-on-surface-variant mb-1">{booking.flight.duration}</span>
-                  <div className="relative w-40 flex items-center my-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                    <div className="flex-1 h-0.5 bg-outline-variant" />
-                    <span className="material-symbols-outlined text-[20px] text-primary rotate-90 mx-1">flight</span>
-                    <div className="flex-1 h-0.5 bg-outline-variant" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+              {/* Authoritative Booking Details Card */}
+              <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl overflow-hidden shadow-sm mb-8 p-6 sm:p-8">
+                {/* Flight Summary */}
+                {booking.flight && (
+                  <div className="pb-6 border-b border-outline-variant">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">flight_takeoff</span>
+                        <span className="text-title-md font-bold text-primary">
+                          Chuyến bay {booking.flight.flightNumber ?? ''}
+                        </span>
+                      </div>
+                      {booking.fareClass?.name && (
+                        <span className="text-label-md font-medium px-3 py-1 bg-surface-container-high rounded-full text-on-surface">
+                          {booking.fareClass.name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-body-md text-on-surface">
+                      <div>
+                        <span className="text-outline text-label-sm block">Khởi hành</span>
+                        <span className="font-bold text-title-md">{booking.flight.originAirport}</span>
+                        {booking.flight.departureTime && (
+                          <span className="block text-body-sm text-on-surface-variant">
+                            {new Date(booking.flight.departureTime).toLocaleString('vi-VN')}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-outline text-label-sm block">Điểm đến</span>
+                        <span className="font-bold text-title-md">{booking.flight.destinationAirport}</span>
+                        {booking.flight.arrivalTime && (
+                          <span className="block text-body-sm text-on-surface-variant">
+                            {new Date(booking.flight.arrivalTime).toLocaleString('vi-VN')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-secondary font-medium">Non-stop • {booking.flight.aircraft}</span>
-                </div>
+                )}
 
-                <div className="md:text-right">
-                  <span className="text-4xl font-extrabold text-primary">{booking.flight.arrivalCode}</span>
-                  <span className="text-body-md font-bold text-on-surface block mt-1">{booking.flight.arrivalCity}</span>
-                  <span className="text-label-sm text-on-surface-variant block">{booking.departureDate} • {booking.flight.arrivalTime}</span>
-                  <span className="text-[12px] text-secondary font-semibold mt-0.5 block">{booking.flight.arrivalAirport}</span>
+                {/* Passengers List */}
+                {booking.passengers && booking.passengers.length > 0 && (
+                  <div className="py-6 border-b border-outline-variant">
+                    <h2 className="text-title-sm font-bold text-primary mb-3">Hành khách</h2>
+                    <ul className="space-y-2">
+                      {booking.passengers.map((p, idx: number) => (
+                        <li key={idx} className="flex justify-between items-center text-body-md">
+                          <span className="font-medium text-on-surface">{p.fullName}</span>
+                          <span className="text-label-sm text-on-surface-variant font-mono">
+                            {p.passportNo ? `Hộ chiếu/CCCD: ${p.passportNo}` : ''}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Ancillary Services */}
+                {booking.services && booking.services.length > 0 && (
+                  <div className="py-6 border-b border-outline-variant">
+                    <h2 className="text-title-sm font-bold text-primary mb-3">Dịch vụ bổ sung</h2>
+                    <ul className="space-y-2">
+                      {booking.services.map((s, idx: number) => (
+                        <li key={idx} className="flex justify-between items-center text-body-md">
+                          <span className="text-on-surface">
+                            {s.serviceName} x{s.quantity}
+                          </span>
+                          <span className="font-semibold text-on-surface">
+                            {((s.unitPrice ?? 0) * (s.quantity ?? 1)).toLocaleString('vi-VN')} ₫
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Total Paid */}
+                <div className="pt-6 flex justify-between items-center">
+                  <span className="text-title-md font-bold text-primary">Tổng tiền thanh toán</span>
+                  <span className="text-headline-sm font-extrabold text-primary">
+                    {(booking.totalPrice ?? booking.priceBreakdown?.totalPrice ?? 0).toLocaleString('vi-VN')} ₫
+                  </span>
                 </div>
               </div>
 
-              {/* Gate, Seat, Terminal Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-b border-outline-variant">
-                <div>
-                  <span className="text-[11px] text-outline uppercase font-semibold block">Passenger</span>
-                  <span className="text-label-md font-bold text-primary">
-                    {booking.passengers[0]?.lastName} {booking.passengers[0]?.firstName}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-outline uppercase font-semibold block">Terminal / Gate</span>
-                  <span className="text-label-md font-bold text-primary">
-                    {booking.flight.departureTerminal} / {booking.gate || 'Gate 14'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-outline uppercase font-semibold block">Seat Number</span>
-                  <span className="text-label-md font-bold text-secondary">
-                    {booking.seatAssignment || '03A (Lie-Flat Suite)'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-outline uppercase font-semibold block">Total Paid</span>
-                  <span className="text-label-md font-bold text-primary">
-                    ${booking.grandTotal} ({booking.paymentStatus})
-                  </span>
-                </div>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  to="/my-bookings"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-semibold shadow-md transition-all text-center"
+                >
+                  Xem trong Quản lý đặt chỗ
+                </Link>
+                <Link
+                  to="/"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-primary font-semibold transition-all text-center"
+                >
+                  Tìm chuyến bay mới
+                </Link>
               </div>
-
-              {/* Barcode Strip */}
-              <div className="pt-6 flex flex-col items-center">
-                <div className="h-16 w-full max-w-md flex items-center justify-between px-3 bg-surface-container-low rounded-xl border border-outline-variant">
-                  {Array.from({ length: 48 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-12 bg-on-surface ${
-                        i % 4 === 0 ? 'w-1.5' : i % 2 === 0 ? 'w-1' : 'w-0.5'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-[11px] font-mono text-outline tracking-widest mt-2 uppercase font-semibold">
-                  E-TICKET: {booking.pnr} - {booking.flight.flightNumber} - SKYAIR-SYSTEM
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/my-bookings"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md transition-all text-center"
-            >
-              View In My Bookings
-            </Link>
-            <Link
-              to="/"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-primary font-label-lg font-semibold transition-all text-center"
-            >
-              Book Another Flight
-            </Link>
-          </div>
+            </>
+          )}
         </section>
       </main>
 

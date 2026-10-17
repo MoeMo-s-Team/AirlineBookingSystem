@@ -119,6 +119,114 @@ describe('SignInPage', () => {
     });
   });
 
+  it('navigates to returnTo URL when valid for CUSTOMER role', async () => {
+    const user = {
+      id: 'cust-id',
+      email: 'customer@airline.com',
+      fullName: 'Returning Customer',
+      role: 'CUSTOMER',
+    } as const;
+    mockSignIn.mockImplementation(async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user,
+        isAuthenticated: true,
+        isAdmin: false,
+        isLoading: false,
+        profileError: null,
+        signIn: mockSignIn,
+        signUp: vi.fn(),
+        signOut: mockSignOut,
+        refreshProfile: vi.fn(),
+      });
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/sign-in?returnTo=%2Fflights%3Forigin%3DSGN%26destination%3DHAN']}>
+        <SignInPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'customer@airline.com' } });
+    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign In to Account/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/flights?origin=SGN&destination=HAN', { replace: true });
+    });
+  });
+
+  it('keeps ADMIN at /admin/flights even if returnTo is present', async () => {
+    const user = {
+      id: 'admin-id',
+      email: 'admin@airline.com',
+      fullName: 'Admin User',
+      role: 'ADMIN',
+    } as const;
+    mockSignIn.mockImplementation(async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user,
+        isAuthenticated: true,
+        isAdmin: true,
+        isLoading: false,
+        profileError: null,
+        signIn: mockSignIn,
+        signUp: vi.fn(),
+        signOut: mockSignOut,
+        refreshProfile: vi.fn(),
+      });
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/sign-in?returnTo=%2Fflights%3Forigin%3DSGN%26destination%3DHAN']}>
+        <SignInPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'admin@airline.com' } });
+    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign In to Account/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/admin/flights', { replace: true });
+    });
+  });
+
+  it('falls back to /my-bookings when returnTo is an external URL', async () => {
+    const user = {
+      id: 'cust-id',
+      email: 'customer@airline.com',
+      fullName: 'Returning Customer',
+      role: 'CUSTOMER',
+    } as const;
+    mockSignIn.mockImplementation(async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user,
+        isAuthenticated: true,
+        isAdmin: false,
+        isLoading: false,
+        profileError: null,
+        signIn: mockSignIn,
+        signUp: vi.fn(),
+        signOut: mockSignOut,
+        refreshProfile: vi.fn(),
+      });
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/sign-in?returnTo=https%3A%2F%2Fevil.com']}>
+        <SignInPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'customer@airline.com' } });
+    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign In to Account/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/my-bookings', { replace: true });
+    });
+  });
+
   it('displays error message when signIn fails', async () => {
     mockSignIn.mockRejectedValue(new Error('Invalid login credentials'));
 

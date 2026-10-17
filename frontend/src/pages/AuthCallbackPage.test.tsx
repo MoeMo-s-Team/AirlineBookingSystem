@@ -93,13 +93,61 @@ describe('AuthCallbackPage', () => {
     });
   });
 
+  it('navigates to returnTo when user is authenticated with CUSTOMER role and returnTo is valid', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'cust-1', email: 'cust@airline.com', fullName: 'Customer', role: 'CUSTOMER' },
+      isAuthenticated: true,
+      isAdmin: false,
+      isLoading: false,
+      profileError: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
+      refreshProfile: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/auth/callback?returnTo=%2Fflights%3Forigin%3DSGN%26destination%3DHAN']}>
+        <AuthCallbackPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/flights?origin=SGN&destination=HAN', { replace: true });
+    });
+  });
+
+  it('navigates to /admin/flights even if returnTo is present for ADMIN role', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'admin-1', email: 'admin@airline.com', fullName: 'Admin', role: 'ADMIN' },
+      isAuthenticated: true,
+      isAdmin: true,
+      isLoading: false,
+      profileError: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
+      refreshProfile: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/auth/callback?returnTo=%2Fflights%3Forigin%3DSGN%26destination%3DHAN']}>
+        <AuthCallbackPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/admin/flights', { replace: true });
+    });
+  });
+
   it('displays profile error when profile loading failed', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: null,
       isAuthenticated: false,
       isAdmin: false,
       isLoading: false,
-      profileError: { status: 403, code: 'PROFILE_ROLE_INVALID', message: 'Tài khoản chưa được kích hoạt vai trò hợp lệ' },
+      profileError: { name: 'ApiError', status: 403, code: 'PROFILE_ROLE_INVALID', message: 'Tài khoản chưa được kích hoạt vai trò hợp lệ' },
       signIn: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),
@@ -123,7 +171,7 @@ describe('AuthCallbackPage', () => {
       isAuthenticated: true,
       isAdmin: false,
       isLoading: false,
-      profileError: { status: 503, code: 'PROFILE_LOOKUP_FAILED', message: 'Service unavailable' },
+      profileError: { name: 'ApiError', status: 503, code: 'PROFILE_LOOKUP_FAILED', message: 'Service unavailable' },
       signIn: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),

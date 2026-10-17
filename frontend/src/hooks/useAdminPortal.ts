@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react';
-import { Flight, Booking, AncillaryService, FareClass } from '../types';
-import { MOCK_FLIGHTS, MOCK_BOOKINGS, MOCK_SERVICES, STANDARD_FARE_CLASSES, MOCK_ADMIN_METRICS } from '../data/mockData';
+import { Flight, AncillaryService, FareClass } from '../types';
+import { MOCK_FLIGHTS, MOCK_SERVICES, STANDARD_FARE_CLASSES, MOCK_ADMIN_METRICS } from '../data/mockData';
 
 export function useAdminPortal() {
   const [flights, setFlights] = useState<Flight[]>([...MOCK_FLIGHTS]);
-  const [bookings, setBookings] = useState<Booking[]>([...MOCK_BOOKINGS]);
   const [services, setServices] = useState<AncillaryService[]>([...MOCK_SERVICES]);
   const [fareClasses, setFareClasses] = useState<FareClass[]>([...STANDARD_FARE_CLASSES]);
   const [metrics] = useState(MOCK_ADMIN_METRICS);
@@ -12,11 +11,6 @@ export function useAdminPortal() {
   // Update flight status
   const updateFlightStatus = useCallback((flightId: string, status: Flight['status']) => {
     setFlights(prev => prev.map(f => (f.id === flightId ? { ...f, status } : f)));
-  }, []);
-
-  // Cancel booking
-  const cancelBooking = useCallback((pnr: string) => {
-    setBookings(prev => prev.map(b => (b.pnr === pnr ? { ...b, status: 'CANCELLED', paymentStatus: 'REFUNDED' } : b)));
   }, []);
 
   // Toggle service availability
@@ -31,12 +25,10 @@ export function useAdminPortal() {
 
   return {
     flights,
-    bookings,
     services,
     fareClasses,
     metrics,
     updateFlightStatus,
-    cancelBooking,
     toggleServiceActive,
     updateFareClassPrice
   };

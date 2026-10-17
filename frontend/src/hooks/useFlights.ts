@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { searchFlights, FlightApiModel } from '../api/flightApi';
+import { fareApi, type FareClassResponse } from '../api/fareApi';
 import { AIRPORTS, STANDARD_FARE_CLASSES } from '../data/mockData';
-import { Flight, FlightFilterOptions, FlightSearchParams } from '../types';
+import { FlightFilterOptions, FlightSearchParams } from '../types';
+import type { BookingFlightSelection, BookingFareOption } from '../types/bookingFlow';
 
 export function useFlights(searchParams: FlightSearchParams) {
-  const [flights, setFlights] = useState<readonly Flight[]>([]);
+  const [flights, setFlights] = useState<readonly BookingFlightSelection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,12 +27,17 @@ export function useFlights(searchParams: FlightSearchParams) {
     setIsLoading(true);
     setError(null);
 
-    searchFlights({
-      origin: searchParams.origin,
-      destination: searchParams.destination,
-      date: searchParams.departureDate
-    }, controller.signal)
-      .then(result => setFlights(result.map(toFlightViewModel)))
+    Promise.all([
+      searchFlights({
+        origin: searchParams.origin,
+        destination: searchParams.destination,
+        date: searchParams.departureDate
+      }, controller.signal),
+      fareApi.getActiveFares().catch(() => [] as FareClassResponse[]),
+    ])
+      .then(([flightsResult, activeFares]) => {
+        setFlights(flightsResult.map(f => toFlightViewModel(f, activeFares)));
+      })
       .catch(cause => {
         if (cause instanceof DOMException && cause.name === 'AbortError') return;
         setFlights([]);
@@ -103,7 +110,7 @@ export function useFlights(searchParams: FlightSearchParams) {
   };
 }
 
-function toFlightViewModel(flight: FlightApiModel): Flight {
+function toFlightViewModel(flight: FlightApiModel, activeFares: FareClassResponse[]): BookingFlightSelection {
   const departureAirport = AIRPORTS.find(airport => airport.code === flight.origin);
   const arrivalAirport = AIRPORTS.find(airport => airport.code === flight.destination);
   const departure = new Date(flight.departureTime);
@@ -111,7 +118,7 @@ function toFlightViewModel(flight: FlightApiModel): Flight {
   const durationMinutes = Math.max(0, Math.round((arrival.getTime() - departure.getTime()) / 60_000));
 
   return {
-    id: String(flight.id),
+    id: flight.id,
     flightNumber: flight.flightNumber,
     airline: 'SkyWing Airlines',
     departureCity: departureAirport?.city ?? flight.origin,
@@ -128,25 +135,50 @@ function toFlightViewModel(flight: FlightApiModel): Flight {
     stops: 0,
     stopDetails: 'Direct Non-stop',
     aircraft: 'Aircraft not specified',
-    basePrice: flight.prices.economy ?? flight.basePrice,
+    basePrice: flight.basePrice,
     seatsAvailable: flight.availableSeats,
     onTimeRate: 'N/A',
     status: departure.getTime() > Date.now() ? 'SCHEDULED' : 'DEPARTED',
-    fareClasses: buildFareClasses(flight.prices)
+    fareClasses: buildFareClasses(flight.basePrice, activeFares)
   };
 }
 
-function buildFareClasses(prices: Readonly<Record<string, number>>) {
-  const templatesByCode = {
-    economy: STANDARD_FARE_CLASSES[0],
-    premium: STANDARD_FARE_CLASSES[2],
-    business: STANDARD_FARE_CLASSES[3]
-  } as const;
+function buildFareClasses(basePrice: number, activeFares: FareClassResponse[]): BookingFareOption[] {
+  const templateLookup: Record<string, typeof STANDARD_FARE_CLASSES[0]> = {
+    ECO: STANDARD_FARE_CLASSES[0],
+    ECONOMY: STANDARD_FARE_CLASSES[0],
+    PRE: STANDARD_FARE_CLASSES[2],
+    PREMIUM: STANDARD_FARE_CLASSES[2],
+    BUS: STANDARD_FARE_CLASSES[3],
+    BUSINESS: STANDARD_FARE_CLASSES[3],
+    FIRST: STANDARD_FARE_CLASSES[3],
+  };
 
-  return Object.entries(templatesByCode).flatMap(([code, template]) => {
-    const price = prices[code];
-    return price == null ? [] : [{ ...template, id: code, price }];
-  });
+  return activeFares
+    .filter(fare => fare.active === true)
+    .map(fare => {
+      const upperCode = fare.code.toUpperCase();
+      const matchedKey = Object.keys(templateLookup).find(k => upperCode.includes(k));
+      const template = matchedKey ? templateLookup[matchedKey] : null;
+
+      return {
+        id: fare.id,
+        code: fare.code,
+        name: fare.name,
+        tier: template?.tier || 'Economy',
+        priceMultiplier: fare.priceMultiplier,
+        price: Math.round(basePrice * fare.priceMultiplier),
+        baggage: template?.baggage || 'Standard baggage allowance',
+        seatPitch: template?.seatPitch || 'Standard pitch',
+        meal: template?.meal || 'Standard meal options',
+        changes: template?.changes || 'Ticket change conditions apply',
+        cancellation: template?.cancellation || 'Cancellation conditions apply',
+        milesMultiplier: template?.milesMultiplier ?? 1,
+        priorityBoarding: template?.priorityBoarding ?? false,
+        loungeAccess: template?.loungeAccess ?? false,
+        popular: template?.popular,
+      };
+    });
 }
 
 function formatTime(date: Date): string {
