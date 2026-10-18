@@ -8,6 +8,9 @@ import com.airline.domain.entity.*;
 import com.airline.domain.enums.BookingStatus;
 import com.airline.domain.repository.*;
 import com.airline.pattern.observer.BookingSubject;
+import com.airline.pattern.strategy.PricingContext;
+import com.airline.pattern.strategy.PricingStrategy;
+import com.airline.pattern.strategy.PricingStrategyFactory;
 import com.airline.presentation.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +42,12 @@ class BookingServiceTest {
     private ProfileRepository profileRepository;
     @Mock
     private BookingSubject bookingSubject;
+    @Mock
+    private PricingStrategyFactory pricingStrategyFactory;
+    @Mock
+    private PricingContext pricingContext;
+    @Mock
+    private PricingStrategy selectedPricingStrategy;
 
     private BookingService bookingService;
     private ProfileIdentity customerPrincipal;
@@ -52,7 +61,9 @@ class BookingServiceTest {
                 fareClassRepository,
                 additionalServiceRepository,
                 profileRepository,
-                bookingSubject
+                bookingSubject,
+                pricingStrategyFactory,
+                pricingContext
         );
         userId = UUID.randomUUID();
         customerPrincipal = ProfileIdentity.builder()
@@ -66,13 +77,16 @@ class BookingServiceTest {
     void createBooking_success_calculatesPricing_andPublishesOnce() {
         Profile user = Profile.builder().id(userId).email("cust@test.com").build();
         Flight flight = Flight.builder().id(1L).flightNumber("VN123").basePrice(new BigDecimal("1000000.00")).build();
-        FareClass fareClass = FareClass.builder().id(2L).name("BUSINESS").priceMultiplier(new BigDecimal("2.00")).active(true).build();
+        FareClass fareClass = FareClass.builder().id(2L).code("BUSINESS").name("BUSINESS").priceMultiplier(new BigDecimal("2.00")).active(true).build();
         AdditionalService service = AdditionalService.builder().id(3L).name("Baggage 20kg").price(new BigDecimal("200000.00")).active(true).build();
 
         when(profileRepository.findById(userId)).thenReturn(Optional.of(user));
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(fareClassRepository.findById(2L)).thenReturn(Optional.of(fareClass));
         when(additionalServiceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(pricingStrategyFactory.getStrategy("BUSINESS")).thenReturn(selectedPricingStrategy);
+        when(pricingContext.executeStrategy(selectedPricingStrategy, flight.getBasePrice(), fareClass.getPriceMultiplier(), 1))
+                .thenReturn(new BigDecimal("2000000.00"));
         when(bookingRepository.existsByBookingCode(any())).thenReturn(false);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
             Booking b = invocation.getArgument(0);
@@ -94,6 +108,9 @@ class BookingServiceTest {
         assertEquals(3L, response.services().getFirst().id());
         assertEquals(0, new BigDecimal("2000000.00").compareTo(response.priceBreakdown().baseFare()));
         assertEquals(0, new BigDecimal("400000.00").compareTo(response.priceBreakdown().servicesTotal()));
+        verify(pricingStrategyFactory).getStrategy("BUSINESS");
+        verify(pricingContext).executeStrategy(
+                selectedPricingStrategy, flight.getBasePrice(), fareClass.getPriceMultiplier(), 1);
 
         ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
         verify(bookingSubject).publishStatusChanged(bookingCaptor.capture(), isNull());

@@ -33,12 +33,12 @@ import com.airline.domain.repository.ProfileRepository;
 import com.airline.domain.repository.ServiceRepository;
 import com.airline.pattern.observer.BookingSubject;
 import com.airline.pattern.state.BookingStateContext;
+import com.airline.pattern.strategy.PricingContext;
+import com.airline.pattern.strategy.PricingStrategy;
+import com.airline.pattern.strategy.PricingStrategyFactory;
 import com.airline.presentation.exception.ResourceNotFoundException;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class BookingService {
 
     private final BookingRepository bookingRepository;
@@ -47,9 +47,29 @@ public class BookingService {
     private final ServiceRepository additionalServiceRepository;
     private final ProfileRepository profileRepository;
     private final BookingSubject bookingSubject;
+    private final PricingStrategyFactory pricingStrategyFactory;
+    private final PricingContext pricingContext;
 
     private static final String CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
+
+    public BookingService(BookingRepository bookingRepository,
+                          FlightRepository flightRepository,
+                          FareClassRepository fareClassRepository,
+                          ServiceRepository additionalServiceRepository,
+                          ProfileRepository profileRepository,
+                          BookingSubject bookingSubject,
+                          PricingStrategyFactory pricingStrategyFactory,
+                          PricingContext pricingContext) {
+        this.bookingRepository = bookingRepository;
+        this.flightRepository = flightRepository;
+        this.fareClassRepository = fareClassRepository;
+        this.additionalServiceRepository = additionalServiceRepository;
+        this.profileRepository = profileRepository;
+        this.bookingSubject = bookingSubject;
+        this.pricingStrategyFactory = pricingStrategyFactory;
+        this.pricingContext = pricingContext;
+    }
 
     @Transactional
     public BookingView createBooking(ProfileIdentity principal, CreateBookingCommand request) {
@@ -81,8 +101,9 @@ public class BookingService {
         // Calculate passenger flight fare: flight.basePrice * fareClass.priceMultiplier * passengerCount
         BigDecimal flightBasePrice = flight.getBasePrice();
         BigDecimal fareMultiplier = fareClass.getPriceMultiplier();
-        BigDecimal perPassengerFare = flightBasePrice.multiply(fareMultiplier);
-        BigDecimal totalPassengerFare = perPassengerFare.multiply(BigDecimal.valueOf(request.passengers().size()));
+        PricingStrategy pricingStrategy = pricingStrategyFactory.getStrategy(fareClass.getCode());
+        BigDecimal totalPassengerFare = pricingContext.executeStrategy(
+                pricingStrategy, flightBasePrice, fareMultiplier, request.passengers().size());
 
         BigDecimal totalServiceFare = BigDecimal.ZERO;
         List<BookingServiceItem> serviceItems = new ArrayList<>();
