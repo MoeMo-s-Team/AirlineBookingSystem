@@ -11,11 +11,11 @@ public class PremiumPricingStrategy implements PricingStrategy {
     public static final BigDecimal MULTIPLIER = new BigDecimal("1.50");
 
     @Override
-    public BigDecimal calculatePrice(BigDecimal basePrice, int passengerCount) {
-        if (basePrice == null || passengerCount <= 0) {
+    public BigDecimal calculatePrice(BigDecimal basePrice, BigDecimal multiplier, int passengerCount) {
+        if (basePrice == null || multiplier == null || passengerCount <= 0) {
             return BigDecimal.ZERO;
         }
-        return basePrice.multiply(MULTIPLIER)
+        return basePrice.multiply(multiplier)
                 .multiply(BigDecimal.valueOf(passengerCount))
                 .setScale(2, RoundingMode.HALF_UP);
     }

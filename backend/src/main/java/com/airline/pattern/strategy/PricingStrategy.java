@@ -9,10 +9,11 @@ public interface PricingStrategy {
      * Công thức: basePrice × multiplier × passengerCount
      *
      * @param basePrice Giá vé cơ bản của chuyến bay
+     * @param multiplier Hệ số nhân giá của hạng vé
      * @param passengerCount Số lượng hành khách
      * @return Tổng giá vé cho các hành khách theo hạng vé này
      */
-    BigDecimal calculatePrice(BigDecimal basePrice, int passengerCount);
+    BigDecimal calculatePrice(BigDecimal basePrice, BigDecimal multiplier, int passengerCount);
 
     /**
      * Lấy hệ số nhân giá của hạng vé này
