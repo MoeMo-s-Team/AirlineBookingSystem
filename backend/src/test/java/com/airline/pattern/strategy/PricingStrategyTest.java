@@ -32,11 +32,11 @@ class PricingStrategyTest {
         BigDecimal basePrice = new BigDecimal("1000000");
 
         // 1 hành khách
-        BigDecimal priceFor1 = economyStrategy.calculatePrice(basePrice, 1);
+        BigDecimal priceFor1 = economyStrategy.calculatePrice(basePrice, new BigDecimal("1.00"), 1);
         assertEquals(new BigDecimal("1000000.00"), priceFor1);
 
         // 3 hành khách
-        BigDecimal priceFor3 = economyStrategy.calculatePrice(basePrice, 3);
+        BigDecimal priceFor3 = economyStrategy.calculatePrice(basePrice, new BigDecimal("1.00"), 3);
         assertEquals(new BigDecimal("3000000.00"), priceFor3);
 
         assertEquals(new BigDecimal("1.00"), economyStrategy.getMultiplier());
@@ -48,11 +48,11 @@ class PricingStrategyTest {
         BigDecimal basePrice = new BigDecimal("1000000");
 
         // 1 hành khách: 1.000.000 * 1.5 = 1.500.000
-        BigDecimal priceFor1 = premiumStrategy.calculatePrice(basePrice, 1);
+        BigDecimal priceFor1 = premiumStrategy.calculatePrice(basePrice, new BigDecimal("1.50"), 1);
         assertEquals(new BigDecimal("1500000.00"), priceFor1);
 
         // 2 hành khách: 1.000.000 * 1.5 * 2 = 3.000.000
-        BigDecimal priceFor2 = premiumStrategy.calculatePrice(basePrice, 2);
+        BigDecimal priceFor2 = premiumStrategy.calculatePrice(basePrice, new BigDecimal("1.50"), 2);
         assertEquals(new BigDecimal("3000000.00"), priceFor2);
 
         assertEquals(new BigDecimal("1.50"), premiumStrategy.getMultiplier());
@@ -64,11 +64,11 @@ class PricingStrategyTest {
         BigDecimal basePrice = new BigDecimal("2000000");
 
         // 1 hành khách: 2.000.000 * 2.5 = 5.000.000
-        BigDecimal priceFor1 = businessStrategy.calculatePrice(basePrice, 1);
+        BigDecimal priceFor1 = businessStrategy.calculatePrice(basePrice, new BigDecimal("2.50"), 1);
         assertEquals(new BigDecimal("5000000.00"), priceFor1);
 
         // 4 hành khách: 2.000.000 * 2.5 * 4 = 20.000.000
-        BigDecimal priceFor4 = businessStrategy.calculatePrice(basePrice, 4);
+        BigDecimal priceFor4 = businessStrategy.calculatePrice(basePrice, new BigDecimal("2.50"), 4);
         assertEquals(new BigDecimal("20000000.00"), priceFor4);
 
         assertEquals(new BigDecimal("2.50"), businessStrategy.getMultiplier());
@@ -79,11 +79,14 @@ class PricingStrategyTest {
     void testPricingContext() {
         BigDecimal basePrice = new BigDecimal("1000000");
 
-        pricingContext.setStrategy(economyStrategy);
-        assertEquals(new BigDecimal("1000000.00"), pricingContext.executeStrategy(basePrice, 1));
+        assertEquals(new BigDecimal("1000000.00"), pricingContext.executeStrategy(
+                economyStrategy, basePrice, new BigDecimal("1.00"), 1));
 
-        pricingContext.setStrategy(businessStrategy);
-        assertEquals(new BigDecimal("2500000.00"), pricingContext.executeStrategy(basePrice, 1));
+        assertEquals(new BigDecimal("2500000.00"), pricingContext.executeStrategy(
+                businessStrategy, basePrice, new BigDecimal("2.50"), 1));
+
+        assertEquals(new BigDecimal("1750000.00"), pricingContext.executeStrategy(
+                economyStrategy, basePrice, new BigDecimal("1.75"), 1));
     }
 
     @Test
@@ -91,7 +94,7 @@ class PricingStrategyTest {
     void testPricingContextWithoutStrategy() {
         PricingContext emptyContext = new PricingContext();
         assertThrows(IllegalStateException.class, () ->
-                emptyContext.executeStrategy(new BigDecimal("1000000"), 1)
+                emptyContext.executeStrategy(null, new BigDecimal("1000000"), BigDecimal.ONE, 1)
         );
     }
 
@@ -110,8 +113,9 @@ class PricingStrategyTest {
     @Test
     @DisplayName("Trường hợp ngoại lệ: Giá gốc null hoặc số khách <= 0 trả về 0")
     void testEdgeCases() {
-        assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(null, 2));
-        assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), 0));
-        assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), -1));
+        assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(null, BigDecimal.ONE, 2));
+        assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), null, 2));
+        assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), BigDecimal.ONE, 0));
+        assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), BigDecimal.ONE, -1));
     }
 }
