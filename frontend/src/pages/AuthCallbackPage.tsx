@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { safeReturnTo } from '../utils/safeReturnTo';
 
 export const AuthCallbackPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isAuthenticated, isLoading, profileError, refreshProfile } = useAuth();
 
   useEffect(() => {
@@ -17,12 +19,13 @@ export const AuthCallbackPage: React.FC = () => {
       if (user.role === 'ADMIN') {
         navigate('/admin/flights', { replace: true });
       } else {
-        navigate('/my-bookings', { replace: true });
+        const returnTo = searchParams.get('returnTo');
+        navigate(safeReturnTo(returnTo, '/my-bookings'), { replace: true });
       }
     } else {
       navigate('/sign-in', { replace: true });
     }
-  }, [isLoading, isAuthenticated, user, profileError, navigate]);
+  }, [isLoading, isAuthenticated, user, profileError, navigate, searchParams]);
 
   if (isLoading || (isAuthenticated && !user && !profileError)) {
     return (

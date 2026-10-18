@@ -1,24 +1,41 @@
 package com.airline.application.service;
 
-import com.airline.application.dto.ProfileIdentity;
-import com.airline.application.dto.BookingView;
-import com.airline.application.dto.CreateBookingCommand;
-import com.airline.application.exception.BookingConflictException;
-import com.airline.domain.entity.*;
-import com.airline.domain.enums.BookingStatus;
-import com.airline.domain.repository.*;
-import com.airline.pattern.observer.BookingSubject;
-import com.airline.pattern.state.BookingStateContext;
-import com.airline.presentation.exception.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.security.SecureRandom;
-import java.util.*;
+import com.airline.application.dto.BookingView;
+import com.airline.application.dto.CreateBookingCommand;
+import com.airline.application.dto.ProfileIdentity;
+import com.airline.domain.entity.AdditionalService;
+import com.airline.domain.entity.Booking;
+import com.airline.domain.entity.BookingServiceItem;
+import com.airline.domain.entity.FareClass;
+import com.airline.domain.entity.Flight;
+import com.airline.domain.entity.Passenger;
+import com.airline.domain.entity.Payment;
+import com.airline.domain.entity.Profile;
+import com.airline.domain.enums.BookingStatus;
+import com.airline.domain.repository.BookingRepository;
+import com.airline.domain.repository.FareClassRepository;
+import com.airline.domain.repository.FlightRepository;
+import com.airline.domain.repository.ProfileRepository;
+import com.airline.domain.repository.ServiceRepository;
+import com.airline.pattern.observer.BookingSubject;
+import com.airline.pattern.state.BookingStateContext;
+import com.airline.presentation.exception.ResourceNotFoundException;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -199,10 +216,17 @@ public class BookingService {
                 .max(Comparator.comparing(Payment::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder())))
                 .orElse(null);
 
+        BookingView.UserSummary userSummary = booking.getUser() == null ? null :
+                new BookingView.UserSummary(
+                        booking.getUser().getId(),
+                        booking.getUser().getFullName(),
+                        booking.getUser().getEmail());
+
         return new BookingView(
                 booking.getId(),
                 booking.getBookingCode(),
                 booking.getStatus(),
+                userSummary,
                 new BookingView.FlightSummary(booking.getFlight().getId(), booking.getFlight().getFlightNumber(),
                         booking.getFlight().getOrigin(), booking.getFlight().getDestination(), booking.getFlight().getDepartureTime()),
                 new BookingView.FareClassSummary(booking.getFareClass().getId(), booking.getFareClass().getCode(), booking.getFareClass().getName()),

@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { serviceApi, ServiceResponse } from '../../api/serviceApi';
-import { AncillaryService } from '../../types';
+import type { AncillaryService } from '../../types';
+import type { BookingSelectedService } from '../../types/bookingFlow';
 import { ServiceCard } from './ServiceCard';
 
 export interface ServiceSelectorProps {
-  readonly selectedServices: readonly AncillaryService[];
-  readonly onToggleService: (service: AncillaryService) => void;
+  readonly selectedServices: readonly (BookingSelectedService | AncillaryService)[];
+  readonly onToggleService: (service: any) => void;
 }
 
 export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
@@ -33,7 +34,8 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
         };
 
         return {
-          id: String(item.id),
+          ...item,
+          id: item.id as any,
           name: item.name,
           category: categoryMap[item.type] || 'priority',
           description: `Dịch vụ ${meta.label.toLowerCase()} tiêu chuẩn cao cấp giúp chuyến bay của bạn thoải mái và trọn vẹn hơn.`,
@@ -136,7 +138,7 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
         <ServiceCard
           key={service.id}
           service={service}
-          isSelected={selectedServices.some(s => s.id === service.id)}
+          isSelected={selectedServices.some(s => String(s.id) === String(service.id))}
           onToggle={onToggleService}
         />
       ))}

@@ -31,19 +31,28 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-            <h3 className="text-body-sm font-semibold text-primary">
-              {TITLES[notification.type] ?? 'Booking update'}
-              {!notification.isRead && <span className="sr-only">, unread</span>}
-            </h3>
+            {notification.bookingId !== null ? (
+              <Link
+                to={`/my-bookings/${notification.bookingId}`}
+                onClick={() => { if (!notification.isRead) onMarkRead(notification.id); }}
+                className="text-body-sm font-semibold text-primary hover:underline focus-visible:underline"
+              >
+                {TITLES[notification.type] ?? 'Booking update'}
+                {!notification.isRead && <span className="sr-only">, unread</span>}
+              </Link>
+            ) : (
+              <h3 className="text-body-sm font-semibold text-primary">
+                {TITLES[notification.type] ?? 'Booking update'}
+                {!notification.isRead && <span className="sr-only">, unread</span>}
+              </h3>
+            )}
             {!notification.isRead && <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />}
           </div>
           <p className="mt-1 text-body-sm text-on-surface break-words">{notification.message}</p>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-label-md">
             <time dateTime={notification.createdAt} className="text-on-surface-variant">{dateLabel}</time>
             {notification.bookingId !== null && (
-              <Link to="/my-bookings" className="font-semibold text-secondary hover:underline focus-visible:underline focus-visible:outline-none">
-                View bookings
-              </Link>
+              <Link to={`/my-bookings/${notification.bookingId}`} onClick={() => { if (!notification.isRead) onMarkRead(notification.id); }} className="font-semibold text-secondary hover:underline">View booking #{notification.bookingId}</Link>
             )}
             {!notification.isRead && (
               <button

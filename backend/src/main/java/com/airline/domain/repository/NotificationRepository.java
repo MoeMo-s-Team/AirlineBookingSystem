@@ -2,6 +2,7 @@ package com.airline.domain.repository;
 
 import com.airline.domain.entity.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -36,4 +37,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     long countByUser_IdAndIsRead(UUID userId, Boolean isRead);
 
     Optional<Notification> findByIdAndUser_Id(Long id, UUID userId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Notification n SET n.isRead = true WHERE n.user.id = :userId AND n.isRead = false")
+    int markAllReadForUser(@Param("userId") UUID userId);
 }

@@ -1,11 +1,12 @@
 import React from 'react';
 import { FareClass } from '../../types';
+import type { BookingFareOption } from '../../types/bookingFlow';
 import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FareTierCardProps {
-  readonly fareClass: FareClass;
+  readonly fareClass: BookingFareOption | FareClass;
   readonly isSelected?: boolean;
-  readonly onSelect: (fareClass: FareClass) => void;
+  readonly onSelect: (fareClass: any) => void;
 }
 
 export const FareTierCard: React.FC<FareTierCardProps> = ({

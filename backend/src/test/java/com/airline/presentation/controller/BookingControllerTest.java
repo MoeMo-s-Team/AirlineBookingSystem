@@ -1,18 +1,19 @@
 package com.airline.presentation.controller;
 
-import com.airline.application.dto.ProfileIdentity;
-import com.airline.application.dto.BookingView;
-import com.airline.application.dto.CreateBookingCommand;
-import com.airline.application.exception.BookingConflictException;
-import com.airline.application.service.BookingService;
-import com.airline.domain.enums.BookingStatus;
-import com.airline.presentation.dto.request.BookingCreateRequest;
-import com.airline.presentation.dto.request.PassengerRequest;
-import com.airline.presentation.dto.response.ApiResponse;
-import com.airline.presentation.dto.response.BookingResponse;
-import com.airline.presentation.exception.ResourceNotFoundException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,13 +22,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.airline.application.dto.BookingView;
+import com.airline.application.dto.CreateBookingCommand;
+import com.airline.application.dto.ProfileIdentity;
+import com.airline.application.service.BookingService;
+import com.airline.domain.enums.BookingStatus;
+import com.airline.presentation.dto.request.BookingCreateRequest;
+import com.airline.presentation.dto.request.PassengerRequest;
+import com.airline.presentation.dto.response.ApiResponse;
+import com.airline.presentation.dto.response.BookingResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class BookingControllerTest {

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { NotificationDropdown } from './NotificationDropdown';
 
@@ -6,7 +7,8 @@ export const NotificationBell: React.FC = () => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { unreadCount } = useNotifications();
+  const { isAuthenticated } = useAuth();
+  const { unreadCount, refresh } = useNotifications();
 
   useEffect(() => {
     if (!open) return;
@@ -35,7 +37,10 @@ export const NotificationBell: React.FC = () => {
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
         aria-expanded={open}
         aria-controls="notification-popover"
-        onClick={() => setOpen(value => !value)}
+        onClick={() => {
+          setOpen(!open);
+          if (!open && isAuthenticated) void refresh();
+        }}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary active:bg-surface-container"
       >
         <span aria-hidden="true" className="material-symbols-outlined text-[22px]">notifications</span>

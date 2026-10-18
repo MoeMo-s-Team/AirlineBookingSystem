@@ -17,6 +17,11 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+// The auth page tests do not mount the app-level NotificationProvider.
+vi.mock('../components/notification/NotificationBell', () => ({
+  NotificationBell: () => null,
+}));
+
 describe('SignUpPage', () => {
   const mockSignUp = vi.fn();
 
@@ -87,6 +92,40 @@ describe('SignUpPage', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/my-bookings', { replace: true });
+    });
+  });
+
+  it('passes returnTo to signUp and navigates to returnTo when confirmation is disabled', async () => {
+    mockSignUp.mockImplementation(async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user: { id: 'new-user', email: 'c@example.com', fullName: 'Nguyen Van C', role: 'CUSTOMER' },
+        isAuthenticated: true,
+        isAdmin: false,
+        isLoading: false,
+        profileError: null,
+        signIn: vi.fn(),
+        signUp: mockSignUp,
+        signOut: vi.fn(),
+        refreshProfile: vi.fn(),
+      });
+      return { confirmationRequired: false };
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/sign-up?returnTo=%2Fflights%3Forigin%3DSGN%26destination%3DHAN']}>
+        <SignUpPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Nguyen Van C' } });
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'c@example.com' } });
+    fireEvent.change(screen.getByLabelText(/Create Secure Password/i), { target: { value: '12345678' } });
+    fireEvent.change(screen.getByLabelText(/Confirm Password/i), { target: { value: '12345678' } });
+    fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
+
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalledWith('Nguyen Van C', 'c@example.com', '12345678', '/flights?origin=SGN&destination=HAN');
+      expect(mockNavigate).toHaveBeenCalledWith('/flights?origin=SGN&destination=HAN', { replace: true });
     });
   });
 });

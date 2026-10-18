@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { FlightCard } from '../components/flight/FlightCard';
 import { FlightDetailsModal } from '../components/flight/FlightDetailsModal';
 import { useFlights } from '../hooks/useFlights';
 import { useBookingFlow } from '../hooks/useBookingFlow';
-import { Flight, FareClass } from '../types';
+import { useAuth } from '../context/AuthContext';
 import { AIRPORTS } from '../data/mockData';
 import { formatCurrency } from '../utils/formatCurrency';
+import type { BookingFlightSelection, BookingFareOption } from '../types/bookingFlow';
 
 export interface FlightResultsPageProps {
   readonly initialOrigin?: string;
@@ -17,8 +18,17 @@ export interface FlightResultsPageProps {
 
 export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [urlSearchParams] = useSearchParams();
-  const { searchParams: defaultSearchParams } = useBookingFlow();
+  const { isAuthenticated } = useAuth();
+  const {
+    searchParams: defaultSearchParams,
+    selectedFlight,
+    setSelectedFlight,
+    selectedFareClass,
+    setSelectedFareClass,
+  } = useBookingFlow();
+
   const activeSearchParams = useMemo(() => ({
     ...defaultSearchParams,
     origin: urlSearchParams.get('origin') ?? defaultSearchParams.origin,
@@ -36,10 +46,8 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
     isLoading,
     error
   } = useFlights(activeSearchParams);
-  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
-  const [selectedFareClass, setSelectedFareClass] = useState<FareClass | null>(null);
 
-  const [modalFlight, setModalFlight] = useState<Flight | null>(null);
+  const [modalFlight, setModalFlight] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const originAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.origin);
   const destinationAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.destination);
@@ -50,7 +58,12 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
     day: 'numeric'
   }).format(new Date(`${activeSearchParams.departureDate}T00:00:00`));
 
-  const handleSelectFare = (flight: Flight, fareClass: FareClass) => {
+  const handleSelectFare = (flight: BookingFlightSelection, fareClass: BookingFareOption) => {
+    if (!isAuthenticated) {
+      const returnTo = location.pathname + location.search;
+      navigate(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`);
+      return;
+    }
     setSelectedFlight(flight);
     setSelectedFareClass(fareClass);
   };

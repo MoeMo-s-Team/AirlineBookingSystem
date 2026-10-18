@@ -1,6 +1,5 @@
 package com.airline.pattern.state;
 
-import com.airline.application.exception.BookingConflictException;
 import com.airline.domain.enums.BookingStatus;
 
 public class PendingState implements BookingState {

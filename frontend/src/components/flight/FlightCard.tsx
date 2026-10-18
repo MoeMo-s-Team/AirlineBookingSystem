@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Flight, FareClass } from '../../types';
+import type { BookingFlightSelection, BookingFareOption } from '../../types/bookingFlow';
 import { FareTierCard } from './FareTierCard';
 import { FareClassSelector } from '../fare/FareClassSelector';
 import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FlightCardProps {
-  readonly flight: Flight;
-  readonly selectedFareClass?: FareClass | null;
-  readonly onSelectFare: (flight: Flight, fareClass: FareClass) => void;
-  readonly onViewDetails: (flight: Flight) => void;
+  readonly flight: BookingFlightSelection | Flight;
+  readonly selectedFareClass?: BookingFareOption | FareClass | null;
+  readonly onSelectFare: (flight: any, fareClass: any) => void;
+  readonly onViewDetails: (flight: any) => void;
 }
 
 export const FlightCard: React.FC<FlightCardProps> = ({

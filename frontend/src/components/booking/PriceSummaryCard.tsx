@@ -1,12 +1,13 @@
 import React from 'react';
-import { Flight, FareClass, AncillaryService } from '../../types';
+import type { Flight, FareClass, AncillaryService } from '../../types';
+import type { BookingFlightSelection, BookingFareOption, BookingSelectedService } from '../../types/bookingFlow';
 import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface PriceSummaryCardProps {
-  readonly flight: Flight | null;
-  readonly fareClass: FareClass | null;
+  readonly flight: BookingFlightSelection | Flight | null;
+  readonly fareClass: BookingFareOption | FareClass | null;
   readonly passengerCount?: number;
-  readonly selectedServices?: readonly AncillaryService[];
+  readonly selectedServices?: readonly (BookingSelectedService | AncillaryService)[];
   readonly ctaLabel?: string;
   readonly onCtaClick?: () => void;
   readonly isCtaDisabled?: boolean;
@@ -23,9 +24,8 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
 }) => {
   const flightPrice = fareClass ? fareClass.price : (flight?.basePrice ?? 0);
   const baseTotal = flightPrice * passengerCount;
-  const taxesAndFees = Math.round(baseTotal * 0.12);
-  const servicesTotal = selectedServices.reduce((sum, s) => sum + s.price, 0);
-  const grandTotal = baseTotal + taxesAndFees + servicesTotal;
+  const servicesTotal = selectedServices.reduce((sum, s) => sum + (s.price || 0), 0);
+  const grandTotal = baseTotal + servicesTotal;
 
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm sticky top-24">
@@ -50,11 +50,6 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
         <div className="flex items-center justify-between text-on-surface">
           <span>Flight Fare ({passengerCount}x Adult)</span>
           <span className="font-semibold text-primary">{formatCurrency(baseTotal)}</span>
-        </div>
-
-        <div className="flex items-center justify-between text-on-surface">
-          <span>Aviation Taxes & Security Fees</span>
-          <span className="font-semibold text-primary">{formatCurrency(taxesAndFees)}</span>
         </div>
 
         {selectedServices.length > 0 && (
@@ -82,9 +77,6 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
             {formatCurrency(grandTotal)}
           </span>
         </div>
-        <span className="text-[11px] text-secondary font-semibold bg-surface-container px-2 py-1 rounded">
-          All Taxes Included
-        </span>
       </div>
 
       {/* CTA Button */}

@@ -62,7 +62,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
           </div>
         )}
         {isAuthenticated && status === 'unavailable' && (
-          <p className="px-5 py-8 text-body-sm text-on-surface-variant">Notifications will be available after Supabase sign-in is connected.</p>
+          <p className="px-5 py-8 text-body-sm text-on-surface-variant">Your session is unavailable. Sign in again to view notifications.</p>
         )}
         {isAuthenticated && status === 'error' && (
           <div className="px-5 py-6 text-body-sm text-error" role="alert">
@@ -77,7 +77,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
             <p className="mt-1 text-body-sm text-on-surface-variant">Booking updates will appear here.</p>
           </div>
         )}
-        {isAuthenticated && status === 'ready' && preview.map(item => (
+        {isAuthenticated && (status === 'ready' || status === 'loading') && preview.map(item => (
           <NotificationItem key={item.id} notification={item} onMarkRead={id => { void handleMarkRead(id); }} saving={savingId === item.id} />
         ))}
         {isAuthenticated && actionError && <p role="alert" className="px-4 py-3 text-body-sm text-error">{actionError}</p>}
