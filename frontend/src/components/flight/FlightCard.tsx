@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Flight, FareClass } from '../../types';
 import type { BookingFlightSelection, BookingFareOption } from '../../types/bookingFlow';
 import { FareTierCard } from './FareTierCard';
+import { FareClassSelector } from '../fare/FareClassSelector';
 import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FlightCardProps {
@@ -145,18 +146,11 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(17rem,1fr))] gap-5">
-            {flight.fareClasses.map(fc => (
-              <FareTierCard
-                key={fc.id}
-                fareClass={fc}
-                isSelected={selectedFareClass?.id === fc.id}
-                onSelect={selected => {
-                  onSelectFare(flight, selected);
-                }}
-              />
-            ))}
-          </div>
+          <FareClassSelector
+            basePrice={flight.basePrice}
+            selectedFareId={selectedFareClass?.id}
+            onSelectFare={selected => onSelectFare(flight, selected)}
+          />
         </div>
       )}
     </div>

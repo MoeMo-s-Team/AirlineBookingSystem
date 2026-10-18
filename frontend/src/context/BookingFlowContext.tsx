@@ -56,9 +56,9 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const toggleService = useCallback((service: BookingSelectedService) => {
     setSelectedServices(prev => {
-      const exists = prev.some(s => s.id === service.id);
+      const exists = prev.some(s => String(s.id) === String(service.id));
       if (exists) {
-        return prev.filter(s => s.id !== service.id);
+        return prev.filter(s => String(s.id) !== String(service.id));
       }
       return [...prev, service];
     });

@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
-import { ServiceCard } from '../components/service/ServiceCard';
+import { ServiceSelector } from '../components/service/ServiceSelector';
 import { PriceSummaryCard } from '../components/booking/PriceSummaryCard';
 import { useBookingFlow } from '../hooks/useBookingFlow';
-import { serviceApi, type ServiceResponse } from '../api/serviceApi';
 
 export interface AdditionalServicesPageProps {
   readonly onProceed?: () => void;
@@ -20,33 +19,6 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
     selectedServices,
     toggleService
   } = useBookingFlow();
-
-  const [services, setServices] = useState<ServiceResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    setIsLoading(true);
-    setError(null);
-
-    serviceApi.getActiveServices()
-      .then(res => {
-        if (!mounted) return;
-        setServices(res.filter(s => s.active === true));
-      })
-      .catch(err => {
-        if (!mounted) return;
-        setError(err instanceof Error ? err.message : 'Unable to load services.');
-      })
-      .finally(() => {
-        if (mounted) setIsLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const handleContinue = () => {
     navigate('/checkout');
@@ -107,31 +79,10 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
                 </p>
               </div>
 
-              {isLoading && (
-                <div className="p-8 text-center text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[32px] animate-spin text-primary">progress_activity</span>
-                  <p className="mt-2 text-label-md">Loading services...</p>
-                </div>
-              )}
-
-              {error && (
-                <div className="rounded-xl border border-error/30 bg-error-container/30 p-4 text-on-error-container">
-                  <p className="font-semibold">{error}</p>
-                </div>
-              )}
-
-              {!isLoading && !error && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {services.map(service => (
-                    <ServiceCard
-                      key={service.id}
-                      service={service}
-                      isSelected={selectedServices.some(s => s.id === service.id)}
-                      onToggle={toggleService}
-                    />
-                  ))}
-                </div>
-              )}
+              <ServiceSelector
+                selectedServices={selectedServices}
+                onToggleService={toggleService}
+              />
             </div>
 
             {/* Price Summary Column */}
