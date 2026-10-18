@@ -3,10 +3,8 @@ package com.airline.application.service;
 import com.airline.domain.entity.Booking;
 import com.airline.domain.entity.Notification;
 import com.airline.domain.repository.NotificationRepository;
-import com.airline.presentation.dto.response.NotificationPageResponse;
-import com.airline.presentation.dto.response.NotificationReadResponse;
-import com.airline.presentation.dto.response.NotificationResponse;
-import com.airline.presentation.exception.ResourceNotFoundException;
+import com.airline.application.dto.NotificationPageView;
+import com.airline.application.exception.NotificationNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +18,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
-    public NotificationPageResponse list(UUID userId, Boolean isRead, int limit, int offset) {
+    public NotificationPageView list(UUID userId, Boolean isRead, int limit, int offset) {
         if (limit < 1 || limit > 100) {
             throw new IllegalArgumentException("limit phải từ 1 đến 100");
         }
@@ -35,10 +33,9 @@ public class NotificationService {
                 ? notificationRepository.countByUser_Id(userId)
                 : notificationRepository.countByUser_IdAndIsRead(userId, isRead);
 
-        return new NotificationPageResponse(
-                true,
+        return new NotificationPageView(
                 notifications.stream().map(this::toResponse).toList(),
-                new NotificationPageResponse.Pagination(total, limit, offset));
+                total, limit, offset);
     }
 
     @Transactional(readOnly = true)
@@ -47,12 +44,16 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationReadResponse markRead(UUID userId, Long id) {
+    public void markRead(UUID userId, Long id) {
         Notification notification = notificationRepository.findByIdAndUser_Id(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông báo"));
+                .orElseThrow(NotificationNotFoundException::new);
         notification.setIsRead(true);
         notificationRepository.save(notification);
-        return new NotificationReadResponse(notification.getId(), true);
+    }
+
+    @Transactional
+    public int markAllRead(UUID userId) {
+        return notificationRepository.markAllReadForUser(userId);
     }
 
     /** Called by the in-app observer from the booking status transition. */
@@ -68,8 +69,8 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    private NotificationResponse toResponse(Notification notification) {
-        return new NotificationResponse(
+    private NotificationPageView.Item toResponse(Notification notification) {
+        return new NotificationPageView.Item(
                 notification.getId(),
                 notification.getType(),
                 notification.getMessage(),

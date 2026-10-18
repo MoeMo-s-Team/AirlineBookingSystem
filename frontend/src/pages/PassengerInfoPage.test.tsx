@@ -59,6 +59,7 @@ describe('PassengerInfoPage', () => {
         price: 1000000,
       } as any,
       passengers: [mockPassenger as any],
+      setPassengers: vi.fn(),
       updatePassenger: mockUpdatePassenger,
       selectedServices: [],
       searchParams: { passengers: 1 } as any,
