@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { FlightSearchForm } from '../components/flight/FlightSearchForm';
 import { useBookingFlow } from '../hooks/useBookingFlow';
+import { validateFlightSearch } from '../utils/flightSearch';
+import type { FlightSearchParams } from '../types';
 
 export interface SearchFlightPageProps {
   readonly onSearchSubmitted?: () => void;
@@ -12,15 +14,19 @@ export interface SearchFlightPageProps {
 export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
   const navigate = useNavigate();
   const { searchParams, setSearchParams } = useBookingFlow();
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  const handleSearch = () => {
+  const handleSearch = (params: FlightSearchParams = searchParams) => {
+    const error = validateFlightSearch(params);
+    setSearchError(error);
+    if (error) return;
     sessionStorage.removeItem('booking-create-outcome-unknown');
     const query = new URLSearchParams({
-      origin: searchParams.origin,
-      destination: searchParams.destination,
-      date: searchParams.departureDate,
-      passengers: String(searchParams.passengers),
-      cabinClass: searchParams.cabinClass
+      origin: params.origin,
+      destination: params.destination,
+      date: params.departureDate,
+      passengers: String(params.passengers),
+      cabinClass: params.cabinClass
     });
     navigate(`/flights?${query.toString()}`);
   };
@@ -31,27 +37,21 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
       code: 'HAN',
       airport: 'Noi Bai International Airport',
       image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&auto=format&fit=crop&q=80',
-      price: 140,
-      aircraft: 'Airbus A350-900',
-      tag: 'Most Popular'
+      tag: 'North'
     },
     {
       city: 'Da Nang',
       code: 'DAD',
       airport: 'Da Nang International Airport',
       image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&auto=format&fit=crop&q=80',
-      price: 110,
-      aircraft: 'Airbus A321neo LR',
-      tag: 'Coastal Escape'
+      tag: 'Central'
     },
     {
       city: 'Phu Quoc',
       code: 'PQC',
       airport: 'Phu Quoc International Airport',
       image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=600&auto=format&fit=crop&q=80',
-      price: 95,
-      aircraft: 'Boeing 787-10',
-      tag: 'Tropical Island'
+      tag: 'Island'
     }
   ] as const;
 
@@ -96,8 +96,9 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
         <section className="relative max-w-6xl w-full mx-auto px-6 -mt-20 z-20">
           <FlightSearchForm
             searchParams={searchParams}
-            onChange={setSearchParams}
-            onSearch={handleSearch}
+            onChange={params => { setSearchParams(params); setSearchError(null); }}
+            onSearch={() => handleSearch()}
+            error={searchError}
           />
         </section>
 
@@ -109,7 +110,7 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
                 Top Flight Routes
               </span>
               <h2 className="text-headline-lg font-bold text-primary tracking-tight mt-1">
-                Featured Departures from Ho Chi Minh City
+                Explore Destinations from Ho Chi Minh City
               </h2>
             </div>
             <button
@@ -127,19 +128,13 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
               <div
                 key={dest.code}
                 onClick={() => {
-                  setSearchParams({
+                  const params = {
                     ...searchParams,
                     origin: 'SGN', // Reset to departure city
                     destination: dest.code
-                  });
-                  const query = new URLSearchParams({
-                    origin: 'SGN',
-                    destination: dest.code,
-                    date: searchParams.departureDate,
-                    passengers: String(searchParams.passengers),
-                    cabinClass: searchParams.cabinClass
-                  });
-                  navigate(`/flights?${query.toString()}`);
+                  };
+                  setSearchParams(params);
+                  handleSearch(params);
                 }}
                 className="group cursor-pointer bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
               >
@@ -161,12 +156,11 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
 
                 <div className="p-4 flex items-center justify-between bg-surface-container-lowest">
                   <div>
-                    <span className="text-[11px] text-on-surface-variant block">Direct flight with {dest.aircraft}</span>
-                    <span className="text-label-sm font-semibold text-secondary">Daily Non-stop</span>
+                    <span className="text-[11px] text-on-surface-variant block">Ho Chi Minh City → {dest.city}</span>
+                    <span className="text-label-sm font-semibold text-secondary">Choose a date to see flights</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-on-surface-variant block uppercase font-medium">From</span>
-                    <span className="text-headline-sm font-bold text-primary">${dest.price}</span>
+                    <span className="text-label-sm font-bold text-primary">Search →</span>
                   </div>
                 </div>
               </div>

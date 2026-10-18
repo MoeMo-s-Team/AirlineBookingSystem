@@ -49,4 +49,24 @@ describe('SearchFlightPage', () => {
     expect(sessionStorage.getItem('booking-create-outcome-unknown')).toBeNull();
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/flights?'));
   });
+
+  it('rejects an origin equal to destination without navigating', () => {
+    render(
+      <MemoryRouter><BookingFlowProvider><SearchFlightPage /></BookingFlowProvider></MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText('Destination airport'), { target: { value: 'SGN' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search SkyWing Flights/i }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Sân bay đi và sân bay đến phải khác nhau.');
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('rejects a past departure date without navigating', () => {
+    render(
+      <MemoryRouter><BookingFlowProvider><SearchFlightPage /></BookingFlowProvider></MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText('Departure Date'), { target: { value: '2020-01-01' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search SkyWing Flights/i }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Ngày bay không được ở trong quá khứ.');
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
 });

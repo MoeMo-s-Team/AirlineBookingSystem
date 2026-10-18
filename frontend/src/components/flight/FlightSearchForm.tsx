@@ -1,17 +1,20 @@
 import React from 'react';
 import { FlightSearchParams } from '../../types';
 import { AIRPORTS } from '../../data/mockData';
+import { localToday } from '../../utils/flightSearch';
 
 export interface FlightSearchFormProps {
   readonly searchParams: FlightSearchParams;
   readonly onChange: (params: FlightSearchParams) => void;
   readonly onSearch: () => void;
+  readonly error?: string | null;
 }
 
 export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
   searchParams,
   onChange,
-  onSearch
+  onSearch,
+  error
 }) => {
   const handleSwapAirports = () => {
     onChange({
@@ -37,6 +40,7 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
             </span>
           </div>
           <select
+            aria-label="Origin airport"
             value={searchParams.origin}
             onChange={e => onChange({ ...searchParams, origin: e.target.value })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
@@ -76,6 +80,7 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
             </span>
           </div>
           <select
+            aria-label="Destination airport"
             value={searchParams.destination}
             onChange={e => onChange({ ...searchParams, destination: e.target.value })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
@@ -99,6 +104,8 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
           </div>
           <input
             type="date"
+            aria-label="Departure Date"
+            min={localToday()}
             value={searchParams.departureDate}
             onChange={e => onChange({ ...searchParams, departureDate: e.target.value })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
@@ -161,6 +168,8 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
           </div>
         </div>
       </div>
+
+      {error && <p role="alert" className="mt-4 text-body-sm font-semibold text-error">{error}</p>}
 
       {/* CTA Button */}
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-outline-variant">

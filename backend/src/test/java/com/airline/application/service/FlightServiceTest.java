@@ -4,6 +4,8 @@ import com.airline.domain.entity.FareClass;
 import com.airline.domain.entity.Flight;
 import com.airline.domain.repository.FareClassRepository;
 import com.airline.domain.repository.FlightRepository;
+import com.airline.domain.repository.BookingRepository;
+import com.airline.application.exception.BookingConflictException;
 import com.airline.presentation.dto.request.FlightRequest;
 import com.airline.presentation.dto.request.FlightUpdateRequest;
 import com.airline.presentation.dto.response.FlightResponse;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.springframework.data.domain.Sort;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -37,11 +40,35 @@ class FlightServiceTest {
     @Mock
     private FareClassRepository fareClassRepository;
 
+    @Mock
+    private BookingRepository bookingRepository;
+
     private FlightService flightService;
 
     @BeforeEach
     void setUp() {
-        flightService = new FlightService(flightRepository, fareClassRepository);
+        flightService = new FlightService(flightRepository, fareClassRepository, bookingRepository);
+    }
+
+    @Test
+    void listFlightsReturnsAdminSchedule() {
+        when(flightRepository.findAll(Sort.by(Sort.Direction.ASC, "departureTime")))
+                .thenReturn(List.of(sampleFlight()));
+        when(fareClassRepository.findByActiveTrue()).thenReturn(sampleFares());
+
+        assertThat(flightService.listFlights()).extracting(FlightResponse::getFlightNumber)
+                .containsExactly("VN1234");
+    }
+
+    @Test
+    void deleteFlightRejectsExistingBookings() {
+        when(flightRepository.findById(1L)).thenReturn(Optional.of(sampleFlight()));
+        when(bookingRepository.existsByFlightId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> flightService.deleteFlight(1L))
+                .isInstanceOf(BookingConflictException.class)
+                .hasMessage("Không thể xóa chuyến bay đã có đặt vé");
+        verify(flightRepository, never()).delete(any());
     }
 
     @Test
