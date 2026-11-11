@@ -51,12 +51,15 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const originAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.origin);
   const destinationAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.destination);
-  const departureDateLabel = new Intl.DateTimeFormat('en-US', {
+  const departureDate = new Date(`${activeSearchParams.departureDate}T00:00:00`);
+  const departureDateLabel = Number.isNaN(departureDate.getTime())
+    ? 'Invalid departure date'
+    : new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
     day: 'numeric'
-  }).format(new Date(`${activeSearchParams.departureDate}T00:00:00`));
+  }).format(departureDate);
 
   const handleSelectFare = (flight: BookingFlightSelection, fareClass: BookingFareOption) => {
     if (!isAuthenticated) {

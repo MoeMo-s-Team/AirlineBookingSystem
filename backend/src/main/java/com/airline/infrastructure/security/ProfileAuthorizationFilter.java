@@ -41,7 +41,7 @@ public class ProfileAuthorizationFilter extends OncePerRequestFilter {
         }
 
         if ("GET".equalsIgnoreCase(method)) {
-            if (path.equals("/api/fares/all") || path.equals("/api/services/all")) {
+            if (path.equals("/api/flights/all") || path.equals("/api/fares/all") || path.equals("/api/services/all")) {
                 return false;
             }
             if (path.startsWith("/api/flights") || path.startsWith("/api/fares") || path.startsWith("/api/services")) {

@@ -54,4 +54,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     }
 
     boolean existsByBookingCode(String bookingCode);
+
+    boolean existsByFlightId(Long flightId);
 }

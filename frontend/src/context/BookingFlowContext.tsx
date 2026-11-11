@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { FlightSearchParams } from '../types';
+import { localToday } from '../utils/flightSearch';
 import type {
   BookingFlightSelection,
   BookingFareOption,
@@ -42,7 +43,7 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
     tripType: 'one-way',
     origin: 'SGN',
     destination: 'HAN',
-    departureDate: '2026-10-15',
+    departureDate: localToday(),
     passengers: 1,
     cabinClass: 'Economy',
   });

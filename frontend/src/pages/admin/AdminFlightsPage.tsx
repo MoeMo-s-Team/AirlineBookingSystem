@@ -1,199 +1,242 @@
-import React, { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminSidebar } from '../../components/layout/AdminSidebar';
-import { AdminHeader } from '../../components/layout/AdminHeader';
-import { MetricCard } from '../../components/common/MetricCard';
-import { useAdminPortal } from '../../hooks/useAdminPortal';
-import { Flight } from '../../types';
+import { FlightAdminForm } from '../../components/flight/FlightAdminForm';
+import { flightAdminApi, type FlightAdminInput } from '../../api/flightAdminApi';
+import type { FlightApiModel } from '../../api/flightApi';
+import { formatCurrency } from '../../utils/formatCurrency';
+import styles from './AdminFlightsPage.module.css';
 
-export interface AdminFlightsPageProps {
-  readonly onFlightSelect?: (flight: Flight) => void;
-}
+type FlightFilter = 'all' | 'upcoming' | 'past';
+const pageSize = 12;
 
-export const AdminFlightsPage: React.FC<AdminFlightsPageProps> = () => {
-  const { flights, metrics, updateFlightStatus } = useAdminPortal();
+const messageOf = (error: unknown) =>
+  error instanceof Error ? error.message : 'Không thể kết nối với máy chủ.';
+
+const formatTime = (value: string) =>
+  new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+
+export function AdminFlightsPage() {
+  const [flights, setFlights] = useState<FlightApiModel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [filter, setFilter] = useState<FlightFilter>('all');
+  const [page, setPage] = useState(1);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState<FlightApiModel | null | undefined>(undefined);
+  const [deleting, setDeleting] = useState<FlightApiModel | null>(null);
+  const [deletingBusy, setDeletingBusy] = useState(false);
 
-  const filteredFlights = flights.filter(f => {
-    if (statusFilter !== 'ALL' && f.status !== statusFilter) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      return (
-        f.flightNumber.toLowerCase().includes(q) ||
-        f.departureCode.toLowerCase().includes(q) ||
-        f.arrivalCode.toLowerCase().includes(q) ||
-        f.aircraft.toLowerCase().includes(q)
-      );
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      setFlights(await flightAdminApi.list());
+    } catch (error) {
+      setLoadError(messageOf(error));
+    } finally {
+      setLoading(false);
     }
-    return true;
-  });
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (editing === undefined && !deleting && !menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (deleting && !deletingBusy) setDeleting(null);
+      else if (editing !== undefined && !saving) setEditing(undefined);
+      else setMenuOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [editing, deleting, deletingBusy, saving, menuOpen]);
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const now = Date.now();
+    return flights.filter(flight => {
+      const departure = new Date(flight.departureTime).getTime();
+      const matchesStatus = filter === 'all' || (filter === 'upcoming' ? departure >= now : departure < now);
+      const matchesQuery = !query || [flight.flightNumber, flight.origin, flight.destination]
+        .some(value => value.toLowerCase().includes(query));
+      return matchesStatus && matchesQuery;
+    }).sort((a, b) => a.departureTime.localeCompare(b.departureTime));
+  }, [flights, search, filter]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const save = async (input: FlightAdminInput) => {
+    setSaving(true);
+    setActionError(null);
+    try {
+      if (editing) {
+        const original: FlightAdminInput = {
+          flightNumber: editing.flightNumber,
+          origin: editing.origin,
+          destination: editing.destination,
+          departureTime: editing.departureTime.slice(0, 16),
+          arrivalTime: editing.arrivalTime.slice(0, 16),
+          basePrice: editing.basePrice,
+          availableSeats: editing.availableSeats,
+        };
+        const changed = Object.fromEntries(
+          (Object.keys(input) as (keyof FlightAdminInput)[])
+            .filter(key => input[key] !== original[key])
+            .map(key => [key, input[key]])
+        ) as Partial<FlightAdminInput>;
+        if (Object.keys(changed).length > 0) {
+          const updated = await flightAdminApi.update(editing.id, changed);
+          setFlights(current => current.map(flight => flight.id === updated.id ? updated : flight));
+        }
+        setNotice('Đã cập nhật chuyến bay.');
+      } else {
+        const created = await flightAdminApi.create(input);
+        setFlights(current => [...current, created].sort((a, b) => a.departureTime.localeCompare(b.departureTime)));
+        setNotice('Đã tạo chuyến bay.');
+      }
+      setEditing(undefined);
+    } catch (error) {
+      setActionError(messageOf(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!deleting) return;
+    const flight = deleting;
+    setDeletingBusy(true);
+    setActionError(null);
+    setNotice(null);
+    try {
+      await flightAdminApi.remove(flight.id);
+      setFlights(current => current.filter(item => item.id !== flight.id));
+      setNotice(`Đã xóa ${flight.flightNumber}.`);
+      setDeleting(null);
+    } catch (error) {
+      setActionError(messageOf(error));
+    } finally {
+      setDeletingBusy(false);
+    }
+  };
+
+  const upcoming = flights.filter(flight => new Date(flight.departureTime).getTime() >= Date.now()).length;
+  const seats = flights.reduce((sum, flight) => sum + flight.availableSeats, 0);
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <AdminSidebar />
-
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        <AdminHeader
-          title="Flight Operations & Schedules"
-          subtitle="Real-time aircraft dispatch, turnaround tracking, and status controls"
-          searchValue={search}
-          onSearch={setSearch}
-        />
-
-        <main className="flex-1 p-8 space-y-8">
-          {/* KPI Cards Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <MetricCard
-              title="Active Flights"
-              value={metrics.activeFlights}
-              changeText={metrics.flightsChange}
-              icon="flight_takeoff"
-              trend="positive"
-            />
-            <MetricCard
-              title="Bookings Today"
-              value={metrics.totalBookingsToday.toLocaleString()}
-              changeText={metrics.bookingsChange}
-              icon="confirmation_number"
-              trend="positive"
-            />
-            <MetricCard
-              title="Daily Revenue"
-              value={`$${metrics.revenueToday.toLocaleString()}`}
-              changeText={metrics.revenueChange}
-              icon="payments"
-              trend="positive"
-            />
-            <MetricCard
-              title="On-Time Index"
-              value={`${metrics.onTimePercentage}%`}
-              changeText="Target: ≥99.0%"
-              icon="verified"
-              trend="positive"
-            />
+    <div className={styles.page}>
+      <div className={`${styles.sidebarShell} ${menuOpen ? styles.sidebarOpen : ''}`}><AdminSidebar /></div>
+      {menuOpen && <button type="button" className={styles.sidebarVeil} aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
+      <div className={styles.content}>
+        <header className={styles.topbar}>
+          <button type="button" className={styles.mobileMenu} aria-label="Open navigation" aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(open => !open)}><span className="material-symbols-outlined" aria-hidden="true">menu</span></button>
+          <div>
+            <p className={styles.eyebrow}>Operations / Flights</p>
+            <h1 className={styles.title}>Flight schedules</h1>
+            <p className={styles.subtitle}>Manage routes, departure times, fares and available seats.</p>
           </div>
-
-          {/* Table Container */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-sm overflow-hidden">
-            {/* Table Toolbar */}
-            <div className="p-6 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-label-md font-bold text-primary uppercase tracking-wider">
-                  Flights Table
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-primary text-label-sm font-semibold">
-                  {filteredFlights.length} Flights
-                </span>
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex items-center gap-2">
-                <span className="text-label-sm text-outline font-semibold">Status:</span>
-                <select
-                  value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant text-label-sm text-on-surface focus:outline-none"
-                >
-                  <option value="ALL">All Statuses</option>
-                  <option value="SCHEDULED">Scheduled</option>
-                  <option value="BOARDING">Boarding</option>
-                  <option value="DEPARTED">Departed</option>
-                  <option value="DELAYED">Delayed</option>
-                </select>
+          <div className={styles.headerActions}>
+            <button type="button" className={styles.secondaryButton} onClick={() => void load()} disabled={loading}>
+              <span className={`material-symbols-outlined ${styles.icon}`} aria-hidden="true">refresh</span>Refresh
+            </button>
+            <button type="button" className={styles.primaryButton} onClick={() => { setEditing(null); setActionError(null); setNotice(null); }}>
+              <span className={`material-symbols-outlined ${styles.icon}`} aria-hidden="true">add</span>Add flight
+            </button>
+          </div>
+        </header>
+        <main className={styles.main}>
+          <section className={styles.summary} aria-label="Flight summary">
+            {[
+              ['Total flights', flights.length],
+              ['Upcoming flights', upcoming],
+              ['Available seats', seats],
+            ].map(([label, value]) => (
+              <div key={label} className={styles.stat}><span className={styles.statLabel}>{label}</span>
+                <span className={styles.statValue}>{Number(value).toLocaleString('vi-VN')}</span></div>
+            ))}
+          </section>
+          {editing === undefined && actionError && <p role="alert" className={`${styles.feedback} ${styles.error}`}>{actionError}</p>}
+          {notice && <p role="status" className={styles.feedback}>{notice}</p>}
+          <section className={styles.panel} aria-labelledby="schedule-title">
+            <div className={styles.panelHead}>
+              <div><h2 id="schedule-title" className={styles.panelTitle}>Schedule</h2>
+                <p className={styles.panelHint}>{filtered.length.toLocaleString('vi-VN')} of {flights.length.toLocaleString('vi-VN')} flights</p></div>
+            </div>
+            <div className={styles.toolbar}>
+              <label className={styles.searchBox}>
+                <span className="sr-only">Search flights by number or airport</span>
+                <span className={`material-symbols-outlined ${styles.searchIcon}`} aria-hidden="true">search</span>
+                <input className={styles.searchInput} type="search" value={search} placeholder="Flight number or airport code"
+                  onChange={event => { setSearch(event.target.value); setPage(1); }} />
+              </label>
+              <div className={styles.segments} role="group" aria-label="Filter flights by departure">
+                {([['all', 'All'], ['upcoming', 'Upcoming'], ['past', 'Past']] as const).map(([value, label]) => (
+                  <button key={value} type="button" className={`${styles.segment} ${filter === value ? styles.segmentActive : ''}`}
+                    aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(1); }}>{label}</button>
+                ))}
               </div>
             </div>
-
-            {/* Flights Data Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container-low border-b border-outline-variant text-label-sm text-outline uppercase tracking-wider font-semibold">
-                    <th className="py-3.5 px-6">Flight & Aircraft</th>
-                    <th className="py-3.5 px-6">Route</th>
-                    <th className="py-3.5 px-6">Departure / Arrival</th>
-                    <th className="py-3.5 px-6">Base Fare</th>
-                    <th className="py-3.5 px-6">Seats Left</th>
-                    <th className="py-3.5 px-6">Status</th>
-                    <th className="py-3.5 px-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant text-body-sm text-on-surface">
-                  {filteredFlights.map(flight => (
-                    <tr key={flight.id} className="hover:bg-surface-container-low/50 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary font-bold">
-                            <span className="material-symbols-outlined text-[20px]">flight</span>
-                          </div>
-                          <div>
-                            <span className="font-bold text-primary text-label-md block">
-                              {flight.flightNumber}
-                            </span>
-                            <span className="text-[12px] text-on-surface-variant block">
-                              {flight.aircraft}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-6">
-                        <span className="font-semibold text-primary block">
-                          {flight.departureCode} → {flight.arrivalCode}
-                        </span>
-                        <span className="text-[12px] text-on-surface-variant block">
-                          {flight.duration} • {flight.stops === 0 ? 'Non-stop' : `${flight.stops} stop`}
-                        </span>
-                      </td>
-
-                      <td className="py-4 px-6">
-                        <span className="font-medium block">
-                          {flight.departureTime} - {flight.arrivalTime}
-                        </span>
-                        <span className="text-[12px] text-secondary font-medium block">
-                          {flight.departureTerminal} → {flight.arrivalTerminal}
-                        </span>
-                      </td>
-
-                      <td className="py-4 px-6 font-bold text-primary">
-                        ${flight.basePrice}
-                      </td>
-
-                      <td className="py-4 px-6">
-                        <span className="px-2 py-0.5 rounded bg-surface-container text-primary font-semibold text-label-sm">
-                          {flight.seatsAvailable} left
-                        </span>
-                      </td>
-
-                      <td className="py-4 px-6">
-                        <select
-                          value={flight.status}
-                          onChange={e => updateFlightStatus(flight.id, e.target.value as any)}
-                          className="px-2 py-1 rounded bg-surface-container-low border border-outline-variant text-label-sm font-semibold text-primary cursor-pointer"
-                        >
-                          <option value="SCHEDULED">SCHEDULED</option>
-                          <option value="BOARDING">BOARDING</option>
-                          <option value="DEPARTED">DEPARTED</option>
-                          <option value="DELAYED">DELAYED</option>
-                        </select>
-                      </td>
-
-                      <td className="py-4 px-6 text-right">
-                        <button
-                          type="button"
-                          onClick={() => alert(`Opening dispatcher manifest for ${flight.flightNumber}`)}
-                          className="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-label-sm font-semibold text-primary transition-colors"
-                        >
-                          Manifest
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            {loadError && <p role="alert" className={`${styles.feedback} ${styles.error}`}>Failed to load flights: {loadError}</p>}
+            {loading ? <p role="status" className={styles.feedback}>Loading flights…</p>
+              : !loadError && filtered.length === 0
+                ? <div className={styles.empty}><strong>{flights.length === 0 ? 'No flights yet' : 'No matching flights'}</strong>
+                  <span>{flights.length === 0 ? 'Add the first flight to build your schedule.' : 'Try another flight number, airport or departure filter.'}</span></div>
+                : !loadError && <>
+                  <div className={styles.tableWrap}><table className={styles.table}>
+                    <thead><tr><th>Flight</th><th>Route</th><th>Departure</th><th>Arrival</th><th>Base fare</th><th>Seats</th><th>Actions</th></tr></thead>
+                    <tbody>{visible.map(flight => (
+                      <tr key={flight.id}>
+                        <td data-label="Flight"><span className={styles.flightCode}>{flight.flightNumber}</span></td>
+                        <td data-label="Route"><span className={styles.route}>{flight.origin} → {flight.destination}</span></td>
+                        <td data-label="Departure"><span className={styles.time}>{formatTime(flight.departureTime)}</span></td>
+                        <td data-label="Arrival"><span className={styles.time}>{formatTime(flight.arrivalTime)}</span></td>
+                        <td data-label="Base fare"><span className={styles.money}>{formatCurrency(flight.basePrice)}</span></td>
+                        <td data-label="Seats"><span className={styles.number}>{flight.availableSeats}</span></td>
+                        <td data-label="Actions"><div className={styles.rowActions}>
+                          <button type="button" className={styles.textButton}
+                            onClick={() => { setEditing(flight); setActionError(null); setNotice(null); }}>Edit</button>
+                          <button type="button" className={`${styles.textButton} ${styles.dangerButton}`}
+                            onClick={() => { setDeleting(flight); setActionError(null); setNotice(null); }} aria-label={`Delete ${flight.flightNumber}`}>Delete</button>
+                        </div></td>
+                      </tr>
+                    ))}</tbody>
+                  </table></div>
+                  <div className={styles.pager}>
+                    <span>Showing <strong>{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)}</strong> of <strong>{filtered.length}</strong></span>
+                    <div className={styles.pagerActions}>
+                      <button type="button" className={styles.secondaryButton} disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</button>
+                      <span>Page {currentPage} of {pageCount}</span>
+                      <button type="button" className={styles.secondaryButton} disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>Next</button>
+                    </div>
+                  </div>
+                </>}
+          </section>
         </main>
       </div>
+      {editing !== undefined && <>
+        <button type="button" className={styles.backdrop} aria-label="Close flight form" onClick={() => { if (!saving) setEditing(undefined); }} />
+        <div className={styles.drawer} role="dialog" aria-modal="true" aria-label={editing ? `Edit ${editing.flightNumber}` : 'Add a flight'}>
+          <FlightAdminForm key={editing?.id ?? 'new'} flight={editing} saving={saving} error={actionError}
+            onSave={input => void save(input)} onCancel={() => { if (!saving) { setEditing(undefined); setActionError(null); } }} />
+        </div>
+      </>}
+      {deleting && <>
+        <button type="button" className={styles.backdrop} aria-label="Cancel delete" onClick={() => { if (!deletingBusy) setDeleting(null); }} />
+        <div className={styles.confirm} role="alertdialog" aria-modal="true" aria-label={`Delete ${deleting.flightNumber}`}>
+          <h2>Delete {deleting.flightNumber}?</h2>
+          <p>This removes the flight from the schedule. Please confirm before continuing.</p>
+          {actionError && <p role="alert" className={styles.error}>{actionError}</p>}
+          <div className={styles.confirmActions}>
+            <button type="button" className={styles.secondaryButton} disabled={deletingBusy} onClick={() => setDeleting(null)}>Cancel</button>
+            <button type="button" className={styles.deleteButton} disabled={deletingBusy} onClick={() => void remove()}>{deletingBusy ? 'Deleting…' : 'Delete flight'}</button>
+          </div>
+        </div>
+      </>}
     </div>
   );
-};
+}

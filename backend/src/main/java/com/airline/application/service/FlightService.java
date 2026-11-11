@@ -1,14 +1,17 @@
 package com.airline.application.service;
 
+import com.airline.application.exception.BookingConflictException;
 import com.airline.domain.entity.FareClass;
 import com.airline.domain.entity.Flight;
 import com.airline.domain.repository.FareClassRepository;
 import com.airline.domain.repository.FlightRepository;
+import com.airline.domain.repository.BookingRepository;
 import com.airline.presentation.dto.request.FlightRequest;
 import com.airline.presentation.dto.request.FlightUpdateRequest;
 import com.airline.presentation.dto.response.FlightResponse;
 import com.airline.presentation.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,16 @@ public class FlightService {
 
     private final FlightRepository flightRepository;
     private final FareClassRepository fareClassRepository;
+    private final BookingRepository bookingRepository;
+
+    @Transactional(readOnly = true)
+    public List<FlightResponse> listFlights() {
+        List<FareClass> activeFares = fareClassRepository.findByActiveTrue();
+        return flightRepository.findAll(Sort.by(Sort.Direction.ASC, "departureTime"))
+                .stream()
+                .map(flight -> toResponse(flight, activeFares))
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public List<FlightResponse> searchFlights(String origin, String destination, LocalDate date) {
@@ -116,6 +129,9 @@ public class FlightService {
 
     public void deleteFlight(Long id) {
         Flight flight = findFlight(id);
+        if (bookingRepository.existsByFlightId(id)) {
+            throw new BookingConflictException("Không thể xóa chuyến bay đã có đặt vé");
+        }
         flightRepository.delete(flight);
     }
 

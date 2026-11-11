@@ -43,6 +43,13 @@ public class FlightController {
         return ResponseEntity.ok(ApiResponse.success(flightService.searchFlights(origin, destination, date)));
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Liệt kê tất cả chuyến bay (Admin)")
+    public ResponseEntity<ApiResponse<List<FlightResponse>>> listFlights() {
+        return ResponseEntity.ok(ApiResponse.success(flightService.listFlights()));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Xem chi tiết chuyến bay (Public)")
     public ResponseEntity<ApiResponse<FlightResponse>> getFlightById(@PathVariable Long id) {

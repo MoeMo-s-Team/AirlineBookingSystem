@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/services/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/services/**").hasRole("ADMIN")
                 // Flights CRUD admin
+                .requestMatchers(HttpMethod.GET, "/api/flights/all").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/flights/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/flights/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/flights/**").hasRole("ADMIN")

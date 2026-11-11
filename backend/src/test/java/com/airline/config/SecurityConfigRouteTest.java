@@ -187,6 +187,28 @@ class SecurityConfigRouteTest {
     }
 
     @Test
+    void flightAdminList_requiresAdminRole() throws Exception {
+        mockMvc.perform(get("/api/flights/all")).andExpect(status().isUnauthorized());
+
+        UUID customerId = UUID.randomUUID();
+        when(profileService.requireIdentity(customerId)).thenReturn(
+                ProfileIdentity.builder().id(customerId).email("c@airline.com")
+                        .fullName("Customer").role("CUSTOMER").build());
+        mockMvc.perform(get("/api/flights/all")
+                        .header("Authorization", "Bearer " + createToken(customerId)))
+                .andExpect(status().isForbidden());
+
+        UUID adminId = UUID.randomUUID();
+        when(profileService.requireIdentity(adminId)).thenReturn(
+                ProfileIdentity.builder().id(adminId).email("a@airline.com")
+                        .fullName("Admin").role("ADMIN").build());
+        mockMvc.perform(get("/api/flights/all")
+                        .header("Authorization", "Bearer " + createToken(adminId)))
+                .andExpect(status().isOk());
+        verify(flightService).listFlights();
+    }
+
+    @Test
     void dynamicRoleChange_sameTokenAcrossRequests_shouldReflectNewRoleImmediately() throws Exception {
         UUID userId = UUID.randomUUID();
         String token = createToken(userId);
