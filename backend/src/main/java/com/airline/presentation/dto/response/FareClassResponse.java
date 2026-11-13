@@ -17,6 +17,13 @@ public class FareClassResponse {
     private Long id;
     private String code;
     private String name;
+
+    private String baggage;
+
+    private String seatPitch;
+
+    private String meal;
+
     private BigDecimal priceMultiplier;
     private Boolean active;
 
@@ -28,6 +35,9 @@ public class FareClassResponse {
                 .id(entity.getId())
                 .code(entity.getCode())
                 .name(entity.getName())
+                .baggage(entity.getBaggage())
+                .seatPitch(entity.getSeatPitch())
+                .meal(entity.getMeal())
                 .priceMultiplier(entity.getPriceMultiplier())
                 .active(entity.getActive())
                 .build();

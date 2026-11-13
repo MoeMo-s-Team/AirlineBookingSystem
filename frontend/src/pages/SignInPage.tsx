@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../i18n/index';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -10,6 +11,7 @@ export interface SignInPageProps {
 }
 
 export const SignInPage: React.FC<SignInPageProps> = () => {
+  useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isAuthenticated, signIn, signOut, profileError, refreshProfile } = useAuth();
@@ -66,26 +68,21 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary mx-auto mb-3 shadow-sm">
               <span className="material-symbols-outlined text-[24px]">flight_takeoff</span>
             </div>
-            <h1 className="text-headline-md font-bold text-primary tracking-tight">
-              Sign In to SkyWing
-            </h1>
-            <p className="text-body-sm text-on-surface-variant mt-1">
-              Access your saved flights, miles balance, and rapid 1-click booking.
-            </p>
+            <h1 className="text-headline-md font-bold text-primary tracking-tight">{localize("Sign In to SkyWing ")}</h1>
+            <p className="text-body-sm text-on-surface-variant mt-1">{localize("Access your saved flights, miles balance, and rapid 1-click booking. ")}</p>
           </div>
 
           {/* Already logged in notice */}
           {isAuthenticated && user ? (
             <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-primary text-on-primary font-bold text-lg flex items-center justify-center mx-auto">
-                {(user.fullName || user.email).charAt(0).toUpperCase()}
+                {localize((user.fullName || user.email).charAt(0).toUpperCase())}
               </div>
               <div>
-                <span className="text-label-md font-bold text-primary block">
-                  Signed in as {user.fullName}
+                <span className="text-label-md font-bold text-primary block">{localize("Signed in as ")}{localize(user.fullName)}
                 </span>
-                <span className="text-[12px] text-on-surface-variant block">
-                  {user.email}
+                <span className="text-body-sm text-on-surface-variant block">
+                  {localize(user.email)}
                 </span>
               </div>
               <div className="flex items-center justify-center gap-3 pt-2">
@@ -94,25 +91,19 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
                     type="button"
                     onClick={() => navigate('/admin/flights')}
                     className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary text-label-md font-bold transition-colors"
-                  >
-                    Go to Ops Console (/admin/flights)
-                  </button>
+                  >{localize("Go to Ops Console (/admin/flights) ")}</button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => navigate('/my-bookings')}
                     className="px-4 py-2 rounded-lg bg-primary text-on-primary text-label-md font-bold hover:bg-primary-container transition-colors"
-                  >
-                    Go to My Bookings
-                  </button>
+                  >{localize("Go to My Bookings ")}</button>
                 )}
                 <button
                   type="button"
                   onClick={signOut}
                   className="px-4 py-2 rounded-lg border border-error/40 text-error text-label-md font-semibold hover:bg-error-container/20 transition-colors"
-                >
-                  Sign Out
-                </button>
+                >{localize("Sign Out ")}</button>
               </div>
             </div>
           ) : (
@@ -121,11 +112,9 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
               {errorMessage && (
                 <div className="mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-body-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">error</span>
-                  <span>{errorMessage}</span>
+                  <span>{localize(errorMessage)}</span>
                   {profileError?.status && profileError.status >= 500 && (
-                    <button type="button" onClick={() => void refreshProfile()} className="ml-auto underline">
-                      Retry
-                    </button>
+                    <button type="button" onClick={() => void refreshProfile()} className="ml-auto underline">{localize("Retry ")}</button>
                   )}
                 </div>
               )}
@@ -133,13 +122,11 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-                    Email Address *
-                  </label>
+                  <label htmlFor="email" className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">{localize("Email Address * ")}</label>
                   <input
                     id="email"
                     type="email"
-                    placeholder="e.g. name@email.com"
+                    placeholder={localize("e.g. name@email.com")}
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
@@ -149,17 +136,13 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label htmlFor="password" className="text-label-sm font-semibold text-outline uppercase tracking-wider">
-                      Password *
-                    </label>
-                    <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Password reset link simulated.'); }} className="text-label-sm text-secondary hover:underline">
-                      Forgot password?
-                    </a>
+                    <label htmlFor="password" className="text-label-sm font-semibold text-outline uppercase tracking-wider">{localize("Password * ")}</label>
+                    <a href="#forgot" onClick={(e) => { e.preventDefault(); alert(localize('Password reset link simulated.')); }} className="text-label-sm text-secondary hover:underline">{localize("Forgot password? ")}</a>
                   </div>
                   <input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={localize("Enter your password")}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
@@ -169,9 +152,7 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
 
                 <div className="flex items-center gap-2 pt-1">
                   <input type="checkbox" id="remember" defaultChecked className="rounded accent-primary" />
-                  <label htmlFor="remember" className="text-body-sm text-on-surface-variant cursor-pointer">
-                    Remember me on this trusted terminal
-                  </label>
+                  <label htmlFor="remember" className="text-body-sm text-on-surface-variant cursor-pointer">{localize("Remember me on this trusted terminal ")}</label>
                 </div>
 
                 <button
@@ -182,23 +163,20 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
                   {isSubmitting ? (
                     <>
                       <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                      <span>Verifying Credentials...</span>
+                      <span>{localize("Verifying Credentials...")}</span>
                     </>
                   ) : (
-                    <span>Sign In to Account</span>
+                    <span>{localize("Sign In to Account")}</span>
                   )}
                 </button>
               </form>
 
               {/* Footer link */}
-              <p className="text-center text-body-sm text-on-surface-variant mt-6">
-                Not a member yet?{' '}
+              <p className="text-center text-body-sm text-on-surface-variant mt-6">{localize("Not a member yet?")}{localize(' ')}
                 <Link
                   to={searchParams.get('returnTo') ? `/sign-up?returnTo=${encodeURIComponent(searchParams.get('returnTo')!)}` : '/sign-up'}
                   className="font-bold text-primary hover:text-secondary"
-                >
-                  Join SkyWing Club
-                </Link>
+                >{localize("Join SkyWing Club ")}</Link>
               </p>
             </>
           )}

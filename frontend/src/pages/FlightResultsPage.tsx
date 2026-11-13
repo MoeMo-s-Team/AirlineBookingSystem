@@ -1,3 +1,4 @@
+import { getLocale, localize, useLanguage } from '../i18n/index';
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -17,6 +18,7 @@ export interface FlightResultsPageProps {
 }
 
 export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
+  useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [urlSearchParams] = useSearchParams();
@@ -54,7 +56,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
   const departureDate = new Date(`${activeSearchParams.departureDate}T00:00:00`);
   const departureDateLabel = Number.isNaN(departureDate.getTime())
     ? 'Invalid departure date'
-    : new Intl.DateTimeFormat('en-US', {
+    : new Intl.DateTimeFormat(getLocale(), {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
@@ -92,16 +94,16 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-headline-md font-bold text-primary">
-                    {originAirport?.city ?? activeSearchParams.origin} ({activeSearchParams.origin}) →{' '}
-                    {destinationAirport?.city ?? activeSearchParams.destination} ({activeSearchParams.destination})
+                    {localize(originAirport?.city ?? activeSearchParams.origin)} ({localize(activeSearchParams.origin)}) →{localize(' ')}
+                    {localize(destinationAirport?.city ?? activeSearchParams.destination)} ({localize(activeSearchParams.destination)})
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-label-sm text-on-surface-variant mt-0.5">
-                  <span>{departureDateLabel}</span>
+                  <span>{localize(departureDateLabel)}</span>
                   <span>•</span>
-                  <span>{activeSearchParams.passengers} Passenger{activeSearchParams.passengers > 1 ? 's' : ''}</span>
+                  <span>{localize(`${activeSearchParams.passengers} ${activeSearchParams.passengers === 1 ? 'passenger' : 'passengers'}`)}</span>
                   <span>•</span>
-                  <span>Economy / Premium / Business</span>
+                  <span>{localize("Economy / Premium / Business")}</span>
                 </div>
               </div>
             </div>
@@ -112,7 +114,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
               className="px-4 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-label-md font-semibold text-primary transition-colors flex items-center gap-1.5 self-start sm:self-center"
             >
               <span className="material-symbols-outlined text-[18px]">edit</span>
-              <span>Modify Search</span>
+              <span>{localize("Modify Search")}</span>
             </button>
           </div>
         </section>
@@ -123,7 +125,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
             {/* Left Filter Sidebar */}
             <aside className="lg:col-span-3 bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-outline-variant">
-                <h3 className="font-headline-sm font-bold text-primary">Filters</h3>
+                <h3 className="font-headline-sm font-bold text-primary">{localize("Filters")}</h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -132,21 +134,17 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                     updateFilter('sortBy', 'recommended');
                   }}
                   className="text-label-sm text-secondary hover:underline font-semibold"
-                >
-                  Reset
-                </button>
+                >{localize("Reset ")}</button>
               </div>
 
               {/* Max Price Slider */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-label-sm font-semibold text-outline uppercase tracking-wider">
-                    Max Price
-                  </label>
+                  <label className="text-label-sm font-semibold text-outline uppercase tracking-wider">{localize("Max Price ")}</label>
                   <span className="text-label-md font-bold text-primary">
-                    {filters.maxPrice === Number.MAX_SAFE_INTEGER
+                    {localize(filters.maxPrice === Number.MAX_SAFE_INTEGER
                       ? formatCurrency(maxAvailablePrice)
-                      : formatCurrency(filters.maxPrice)}
+                      : formatCurrency(filters.maxPrice))}
                   </span>
                 </div>
                 <input
@@ -158,17 +156,15 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                   onChange={e => updateFilter('maxPrice', Number(e.target.value))}
                   className="w-full accent-primary cursor-pointer"
                 />
-                <div className="flex justify-between text-[11px] text-on-surface-variant mt-1">
-                  <span>{formatCurrency(0)}</span>
-                  <span>{formatCurrency(maxAvailablePrice)}</span>
+                <div className="flex justify-between text-body-sm text-on-surface-variant mt-1">
+                  <span>{localize(formatCurrency(0))}</span>
+                  <span>{localize(formatCurrency(maxAvailablePrice))}</span>
                 </div>
               </div>
 
               {/* Flight Stops */}
               <div>
-                <label className="text-label-sm font-semibold text-outline uppercase tracking-wider block mb-2">
-                  Stops
-                </label>
+                <label className="text-label-sm font-semibold text-outline uppercase tracking-wider block mb-2">{localize("Stops ")}</label>
                 <div className="space-y-2">
                   {[
                     { id: 'all', label: 'All Flights' },
@@ -183,7 +179,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                         onChange={() => updateFilter('stops', option.id as any)}
                         className="accent-primary"
                       />
-                      <span>{option.label}</span>
+                      <span>{localize(option.label)}</span>
                     </label>
                   ))}
                 </div>
@@ -191,21 +187,19 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
 
               {/* Cabin Experience Checklist */}
               <div className="pt-4 border-t border-outline-variant">
-                <label className="text-label-sm font-semibold text-outline uppercase tracking-wider block mb-2">
-                  Cabin Inclusions
-                </label>
+                <label className="text-label-sm font-semibold text-outline uppercase tracking-wider block mb-2">{localize("Cabin Inclusions ")}</label>
                 <div className="space-y-2 text-body-sm text-on-surface">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" defaultChecked className="rounded accent-primary" />
-                    <span>Free Wi-Fi Fleet</span>
+                    <span>{localize("Free Wi-Fi Fleet")}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" defaultChecked className="rounded accent-primary" />
-                    <span>In-seat USB-C Power</span>
+                    <span>{localize("In-seat USB-C Power")}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" defaultChecked className="rounded accent-primary" />
-                    <span>Hot Meals Included</span>
+                    <span>{localize("Hot Meals Included")}</span>
                   </label>
                 </div>
               </div>
@@ -217,12 +211,12 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
               <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <span className="text-label-md font-semibold text-on-surface-variant pl-2">
                   {isLoading ? 'Loading available flights…' : (
-                    <>Found <strong className="text-primary">{filteredFlights.length} flights</strong> matching criteria</>
+                    <>{localize("Found ")}<strong className="text-primary">{localize(filteredFlights.length)}{localize(" flights")}</strong>{localize("matching criteria")}</>
                   )}
                 </span>
 
                 <div className="flex items-center gap-1">
-                  <span className="text-label-sm text-outline uppercase font-semibold mr-2 hidden md:inline">Sort:</span>
+                  <span className="text-label-sm text-outline uppercase font-semibold mr-2 hidden md:inline">{localize("Sort:")}</span>
                   {(['recommended', 'cheapest', 'fastest', 'earliest'] as const).map(sortKey => (
                     <button
                       key={sortKey}
@@ -234,7 +228,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                           : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
                       }`}
                     >
-                      {sortKey}
+                      {localize(sortKey)}
                     </button>
                   ))}
                 </div>
@@ -244,21 +238,22 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
               <div className="space-y-4">
                 {error && (
                   <div className="rounded-xl border border-error/30 bg-error-container/30 p-6 text-on-error-container">
-                    <p className="font-semibold">Unable to load flights</p>
-                    <p className="mt-1 text-body-sm">{error}</p>
+                    <p className="font-semibold">{localize("Unable to load flights")}</p>
+                    <p className="mt-1 text-body-sm">{localize(error)}</p>
                   </div>
                 )}
                 {!isLoading && !error && filteredFlights.length === 0 && (
                   <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-8 text-center">
                     <span className="material-symbols-outlined text-[36px] text-secondary">travel_explore</span>
-                    <p className="mt-2 font-semibold text-primary">No flights found for this route and date.</p>
-                    <p className="mt-1 text-body-sm text-on-surface-variant">Try another departure date or route.</p>
+                    <p className="mt-2 font-semibold text-primary">{localize("No flights found for this route and date.")}</p>
+                    <p className="mt-1 text-body-sm text-on-surface-variant">{localize("Try another departure date or route.")}</p>
                   </div>
                 )}
                 {filteredFlights.map(flight => (
                   <FlightCard
                     key={flight.id}
                     flight={flight}
+                    passengerCount={activeSearchParams.passengers}
                     selectedFareClass={selectedFlight?.id === flight.id ? selectedFareClass : null}
                     onSelectFare={handleSelectFare}
                     onViewDetails={f => {
@@ -281,11 +276,10 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                   <span className="material-symbols-outlined text-[22px]">check_circle</span>
                 </div>
                 <div>
-                  <span className="text-label-sm font-bold uppercase tracking-wider text-secondary">
-                    Flight Selected: {selectedFlight.flightNumber} ({selectedFlight.departureCode} → {selectedFlight.arrivalCode})
+                  <span className="text-label-sm font-bold uppercase tracking-wider text-secondary">{localize("Flight Selected: ")}{localize(selectedFlight.flightNumber)} ({localize(selectedFlight.departureCode)} → {localize(selectedFlight.arrivalCode)})
                   </span>
                   <div className="text-headline-sm font-bold text-primary">
-                    {selectedFareClass.name} • {formatCurrency(selectedFareClass.price)} <span className="text-body-sm font-normal text-on-surface-variant">total per person</span>
+                    {localize(selectedFareClass.name)} • {localize(formatCurrency(selectedFareClass.price))} <span className="text-body-sm font-normal text-on-surface-variant">{localize("total per person")}</span>
                   </div>
                 </div>
               </div>
@@ -296,7 +290,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                   onClick={handleProceed}
                   className="w-full sm:w-auto px-8 py-3 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Continue to Passenger Details</span>
+                  <span>{localize("Continue to Passenger Details")}</span>
                   <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                 </button>
               </div>

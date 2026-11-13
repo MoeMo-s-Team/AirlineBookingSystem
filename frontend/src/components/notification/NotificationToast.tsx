@@ -1,8 +1,10 @@
+import { localize, useLanguage } from '../../i18n/index';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../../context/NotificationContext';
 
 export function NotificationToast() {
+  useLanguage();
   const { toast, dismissToast } = useNotifications();
 
   useEffect(() => {
@@ -17,19 +19,17 @@ export function NotificationToast() {
     <div role="status" aria-live="polite" className="fixed bottom-4 left-4 right-4 z-[60] rounded-xl border border-outline-variant bg-surface-container-lowest p-4 shadow-xl sm:left-auto sm:w-96">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-label-md font-bold text-primary">New booking update</p>
-          <p className="mt-1 break-words text-body-sm text-on-surface">{toast.message}</p>
+          <p className="text-label-md font-bold text-primary">{localize("New booking update")}</p>
+          <p className="mt-1 break-words text-body-sm text-on-surface">{localize(toast.message)}</p>
         </div>
-        <button type="button" onClick={dismissToast} aria-label="Dismiss notification" className="text-on-surface-variant hover:text-primary">×</button>
+        <button type="button" onClick={dismissToast} aria-label={localize("Dismiss notification")} className="text-on-surface-variant hover:text-primary">{localize("×")}</button>
       </div>
       {toast.bookingId !== null && (
         <Link
           to={`/my-bookings/${toast.bookingId}`}
           onClick={dismissToast}
           className="mt-3 inline-block text-label-md font-semibold text-secondary hover:underline"
-        >
-          View booking
-        </Link>
+        >{localize("View booking ")}</Link>
       )}
     </div>
   );

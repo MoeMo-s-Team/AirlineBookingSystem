@@ -56,4 +56,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean existsByBookingCode(String bookingCode);
 
     boolean existsByFlightId(Long flightId);
+
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b WHERE b.fareClass.id = :fareClassId")
+    boolean existsByFareClassId(@Param("fareClassId") Long fareClassId);
+
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b JOIN b.services s WHERE s.service.id = :serviceId")
+    boolean existsByServiceId(@Param("serviceId") Long serviceId);
 }

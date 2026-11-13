@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import { useState, type FormEvent } from 'react';
 import type { FlightApiModel } from '../../api/flightApi';
 import type { FlightAdminInput } from '../../api/flightAdminApi';
@@ -37,6 +38,7 @@ const groups = [
 ] as const;
 
 export function FlightAdminForm({ flight, saving, error, onSave, onCancel }: Props) {
+  useLanguage();
   const [input, setInput] = useState<FlightAdminInput>({
     flightNumber: flight?.flightNumber ?? '',
     origin: flight?.origin ?? '',
@@ -74,27 +76,27 @@ export function FlightAdminForm({ flight, saving, error, onSave, onCancel }: Pro
   };
 
   return (
-    <form onSubmit={submit} aria-label={flight ? 'Edit flight' : 'Create flight'}
+    <form onSubmit={submit} aria-label={localize(flight ? 'Edit flight' : 'Create flight')}
       className={styles.form}>
       <div className={styles.head}>
         <div>
-          <p className={styles.eyebrow}>Flight management</p>
-          <h2 className={styles.title}>{flight ? `Edit ${flight.flightNumber}` : 'Add a flight'}</h2>
-          <p className={styles.intro}>Update the schedule, fare and seat inventory shown to passengers.</p>
+          <p className={styles.eyebrow}>{localize("Flight management")}</p>
+          <h2 className={styles.title}>{localize(flight ? `Edit ${flight.flightNumber}` : 'Add a flight')}</h2>
+          <p className={styles.intro}>{localize("Update the schedule, fare and seat inventory shown to passengers.")}</p>
         </div>
-        <button type="button" onClick={onCancel} className={styles.close} aria-label="Close flight form">
+        <button type="button" onClick={onCancel} className={styles.close} aria-label={localize("Close flight form")}>
           <span className="material-symbols-outlined" aria-hidden="true">close</span>
         </button>
       </div>
       <div className={styles.body}>
         {groups.map(group => (
           <section key={group.title} className={styles.group}>
-            <h3 className={styles.groupTitle}>{group.title}</h3>
+            <h3 className={styles.groupTitle}>{localize(group.title)}</h3>
             <div className={styles.grid}>
               {group.fields.map(([name, label, type]) => (
                 <label key={name} className={`${styles.field} ${name === 'flightNumber' ? styles.wide : ''}`}>
-                  {label}
-                  <input required type={type} aria-label={label} maxLength={type === 'text' ? name === 'flightNumber' ? 20 : 3 : undefined}
+                  {localize(label)}
+                  <input required type={type} aria-label={localize(label)} maxLength={type === 'text' ? name === 'flightNumber' ? 20 : 3 : undefined}
                     min={type === 'number' ? name === 'availableSeats' ? 1 : 0.01 : undefined}
                     step={type === 'number' ? name === 'availableSeats' ? 1 : 0.01 : undefined}
                     value={input[name]}
@@ -104,18 +106,18 @@ export function FlightAdminForm({ flight, saving, error, onSave, onCancel }: Pro
                       setValidationError(null);
                     }}
                     className={styles.input} />
-                  {name === 'departureTime' && <span className={styles.helper}>Local departure time</span>}
+                  {name === 'departureTime' && <span className={styles.helper}>{localize("Local departure time")}</span>}
                 </label>
               ))}
             </div>
           </section>
         ))}
-        {(validationError || error) && <p role="alert" className={styles.error}>{validationError || error}</p>}
+        {(validationError || error) && <p role="alert" className={styles.error}>{localize(validationError || error)}</p>}
       </div>
       <div className={styles.footer}>
-        <button type="button" onClick={onCancel} className={styles.cancel}>Cancel</button>
+        <button type="button" onClick={onCancel} className={styles.cancel}>{localize("Cancel")}</button>
         <button type="submit" disabled={saving} className={styles.submit}>
-          {saving ? 'Saving…' : flight ? 'Save changes' : 'Create flight'}
+          {localize(saving ? 'Saving…' : flight ? 'Save changes' : 'Create flight')}
         </button>
       </div>
     </form>

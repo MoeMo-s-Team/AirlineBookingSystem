@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../i18n/index';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -21,6 +22,7 @@ export type CheckoutState =
   | 'confirmed';
 
 export const CheckoutPaymentPage: React.FC = () => {
+  useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryBookingId = searchParams.get('bookingId');
@@ -88,8 +90,8 @@ export const CheckoutPaymentPage: React.FC = () => {
 
     try {
       const payload: CreateBookingRequest = {
-        flightId: selectedFlight.id,
-        fareClassId: selectedFareClass.id,
+        flightId: Number(selectedFlight.id),
+        fareClassId: Number(selectedFareClass.id),
         passengers: passengers.map(p => ({
           fullName: p.fullName,
           dateOfBirth: p.dateOfBirth,
@@ -97,8 +99,8 @@ export const CheckoutPaymentPage: React.FC = () => {
           phone: p.phone,
         })),
         services: selectedServices.map(s => ({
-          serviceId: s.id,
-          quantity: 1,
+          serviceId: Number(s.id),
+          quantity: (s as any).quantity || 1,
         })),
       };
 
@@ -211,29 +213,29 @@ export const CheckoutPaymentPage: React.FC = () => {
               className="text-label-md font-semibold text-primary hover:text-secondary flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              <span>Back to Services</span>
+              <span>{localize("Back to Services")}</span>
             </Link>
 
             {/* Stepper Navigation */}
             <div className="flex items-center gap-2 sm:gap-6 text-label-md">
               <div className="flex items-center gap-1.5 text-secondary">
                 <span className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center text-xs font-bold">✓</span>
-                <span className="hidden sm:inline font-semibold">1. Flight</span>
+                <span className="hidden sm:inline font-semibold">{localize("1. Flight")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-secondary">
                 <span className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center text-xs font-bold">✓</span>
-                <span className="hidden sm:inline font-semibold">2. Passenger</span>
+                <span className="hidden sm:inline font-semibold">{localize("2. Passenger")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-secondary">
                 <span className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center text-xs font-bold">✓</span>
-                <span className="hidden sm:inline font-semibold">3. Services</span>
+                <span className="hidden sm:inline font-semibold">{localize("3. Services")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-primary font-bold">
                 <span className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs">4</span>
-                <span>4. Payment</span>
+                <span>{localize("4. Payment")}</span>
               </div>
             </div>
           </div>
@@ -245,19 +247,15 @@ export const CheckoutPaymentPage: React.FC = () => {
             {/* Payment Interaction Column */}
             <div className="lg:col-span-8 space-y-6">
               <div>
-                <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-                  Checkout & Payment
-                </h1>
-                <p className="text-body-md text-on-surface-variant mt-1">
-                  Xác nhận đơn đặt vé và xử lý thanh toán qua cổng thử nghiệm Mock Gateway.
-                </p>
+                <h1 className="text-headline-lg font-bold text-primary tracking-tight">{localize("Checkout & Payment ")}</h1>
+                <p className="text-body-md text-on-surface-variant mt-1">{localize("Xác nhận đơn đặt vé và xử lý thanh toán qua cổng thử nghiệm Mock Gateway. ")}</p>
               </div>
 
               {errorMessage && (
                 <div className="rounded-xl border border-error/30 bg-error-container/30 p-4 text-on-error-container flex items-start gap-2">
                   <span className="material-symbols-outlined text-error">error</span>
                   <div>
-                    <p className="font-semibold">{errorMessage}</p>
+                    <p className="font-semibold">{localize(errorMessage)}</p>
                   </div>
                 </div>
               )}
@@ -267,17 +265,14 @@ export const CheckoutPaymentPage: React.FC = () => {
                 <div className="rounded-2xl border border-error bg-error-container/20 p-6 text-on-surface space-y-3">
                   <div className="flex items-center gap-2 text-error font-bold text-headline-sm">
                     <span className="material-symbols-outlined text-[28px]">cancel</span>
-                    <span>Thanh toán thất bại (PAYMENT_FAILED)</span>
+                    <span>{localize("Thanh toán thất bại (PAYMENT_FAILED)")}</span>
                   </div>
-                  <p className="text-body-md text-on-surface-variant">
-                    Giao dịch thanh toán không thành công. Đơn đặt vé này đã chuyển sang trạng thái thất bại.
-                    Vui lòng bắt đầu một hành trình đặt vé mới.
-                  </p>
+                  <p className="text-body-md text-on-surface-variant">{localize("Giao dịch thanh toán không thành công. Đơn đặt vé này đã chuyển sang trạng thái thất bại. Vui lòng bắt đầu một hành trình đặt vé mới. ")}</p>
                   <Link
                     to="/"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold hover:bg-primary-container transition-colors"
                   >
-                    <span>Tìm chuyến bay mới</span>
+                    <span>{localize("Tìm chuyến bay mới")}</span>
                     <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                   </Link>
                 </div>
@@ -286,12 +281,8 @@ export const CheckoutPaymentPage: React.FC = () => {
               {/* Draft Mode: Confirm & Create Booking */}
               {!isPersistedMode && checkoutState !== 'payment-failed' && (
                 <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-headline-sm font-bold text-primary">
-                    Xác nhận thông tin đặt vé
-                  </h3>
-                  <p className="text-body-md text-on-surface-variant">
-                    Nhấn nút bên dưới để tạo đơn đặt vé chính thức trên hệ thống. Sau khi tạo thành công, mã đặt chỗ sẽ được cấp phát và bạn có thể tiến hành thanh toán.
-                  </p>
+                  <h3 className="text-headline-sm font-bold text-primary">{localize("Xác nhận thông tin đặt vé ")}</h3>
+                  <p className="text-body-md text-on-surface-variant">{localize("Nhấn nút bên dưới để tạo đơn đặt vé chính thức trên hệ thống. Sau khi tạo thành công, mã đặt chỗ sẽ được cấp phát và bạn có thể tiến hành thanh toán. ")}</p>
                   <button
                     type="button"
                     onClick={handleCreateBooking}
@@ -301,10 +292,10 @@ export const CheckoutPaymentPage: React.FC = () => {
                     {checkoutState === 'creating' ? (
                       <>
                         <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                        <span>Đang tạo đơn đặt vé...</span>
+                        <span>{localize("Đang tạo đơn đặt vé...")}</span>
                       </>
                     ) : (
-                      <span>Confirm & Create Booking</span>
+                      <span>{localize("Confirm & Create Booking")}</span>
                     )}
                   </button>
                 </div>
@@ -315,36 +306,30 @@ export const CheckoutPaymentPage: React.FC = () => {
                 <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-6">
                   <div className="flex items-center justify-between pb-4 border-b border-outline-variant">
                     <div>
-                      <span className="text-label-sm font-bold uppercase tracking-wider text-secondary">
-                        Mã đơn đặt vé
-                      </span>
-                      <h3 className="text-headline-md font-bold text-primary font-mono">
-                        {persistedBooking?.bookingCode || `ID: ${queryBookingId}`}
+                      <span className="text-label-sm font-bold uppercase tracking-wider text-secondary">{localize("Mã đơn đặt vé ")}</span>
+                      <h3 className="text-headline-md font-bold text-primary font-sans">
+                        {localize(persistedBooking?.bookingCode || `ID: ${queryBookingId}`)}
                       </h3>
                     </div>
                     <span className="px-3 py-1 rounded-full text-label-sm font-bold bg-amber-100 text-amber-800">
-                      {checkoutState === 'status-unknown'
+                      {localize(checkoutState === 'status-unknown'
                         ? 'UNKNOWN'
-                        : persistedBooking?.status || 'Đang xác minh'}
+                        : persistedBooking?.status || 'Đang xác minh')}
                     </span>
                   </div>
 
                   {activeAmount != null && (
                     <div className="p-4 rounded-xl bg-surface-container-low flex items-center justify-between">
-                      <span className="text-label-md font-semibold text-on-surface-variant">
-                        Tổng tiền cần thanh toán (xác nhận từ hệ thống):
-                      </span>
+                      <span className="text-label-md font-semibold text-on-surface-variant">{localize("Tổng tiền cần thanh toán (xác nhận từ hệ thống): ")}</span>
                       <span className="text-headline-md font-bold text-primary">
-                        {formatCurrency(activeAmount)}
+                        {localize(formatCurrency(activeAmount))}
                       </span>
                     </div>
                   )}
 
                   {checkoutState === 'status-unknown' && (
                     <div className="space-y-3">
-                      <p className="text-body-sm text-on-surface-variant">
-                        Chưa xác minh được trạng thái. Thanh toán đang tạm dừng; hãy kiểm tra lại trước khi tiếp tục.
-                      </p>
+                      <p className="text-body-sm text-on-surface-variant">{localize("Chưa xác minh được trạng thái. Thanh toán đang tạm dừng; hãy kiểm tra lại trước khi tiếp tục. ")}</p>
                       <div className="flex flex-wrap gap-3">
                         {hasValidBookingId && bookingId !== null && (
                           <button
@@ -353,35 +338,25 @@ export const CheckoutPaymentPage: React.FC = () => {
                             disabled={isLoadingPersisted}
                             className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold disabled:opacity-50"
                           >
-                            {isLoadingPersisted ? 'Đang kiểm tra...' : 'Kiểm tra trạng thái lại'}
+                            {localize(isLoadingPersisted ? 'Đang kiểm tra...' : 'Kiểm tra trạng thái lại')}
                           </button>
                         )}
-                        <Link to="/my-bookings" className="px-5 py-2.5 rounded-xl border border-outline text-primary font-label-md font-bold">
-                          Xem đơn đặt vé
-                        </Link>
+                        <Link to="/my-bookings" className="px-5 py-2.5 rounded-xl border border-outline text-primary font-label-md font-bold">{localize("Xem đơn đặt vé ")}</Link>
                       </div>
                     </div>
                   )}
 
                   {checkoutState === 'cancelled' && (
                     <div className="space-y-3">
-                      <p className="text-body-sm text-on-surface-variant">
-                        Đơn đặt vé đã bị hủy và không thể thanh toán.
-                      </p>
-                      <Link to="/my-bookings" className="inline-flex px-5 py-2.5 rounded-xl border border-outline text-primary font-label-md font-bold">
-                        Xem đơn đặt vé
-                      </Link>
+                      <p className="text-body-sm text-on-surface-variant">{localize("Đơn đặt vé đã bị hủy và không thể thanh toán. ")}</p>
+                      <Link to="/my-bookings" className="inline-flex px-5 py-2.5 rounded-xl border border-outline text-primary font-label-md font-bold">{localize("Xem đơn đặt vé ")}</Link>
                     </div>
                   )}
 
                   {(checkoutState === 'persisted-pending' || checkoutState === 'paying') && persistedBooking?.status === 'PENDING' && (
                     <div className="space-y-3">
-                      <h4 className="text-label-lg font-bold text-primary">
-                        Cổng thanh toán thử nghiệm (Mock Gateway)
-                      </h4>
-                      <p className="text-body-sm text-on-surface-variant">
-                        Đây là cổng thanh toán mô phỏng phục vụ thử nghiệm tính năng. Không yêu cầu nhập thẻ tín dụng hay chuyển khoản thực tế.
-                      </p>
+                      <h4 className="text-label-lg font-bold text-primary">{localize("Cổng thanh toán thử nghiệm (Mock Gateway) ")}</h4>
+                      <p className="text-body-sm text-on-surface-variant">{localize("Đây là cổng thanh toán mô phỏng phục vụ thử nghiệm tính năng. Không yêu cầu nhập thẻ tín dụng hay chuyển khoản thực tế. ")}</p>
                       <button
                         type="button"
                         onClick={handleProcessPayment}
@@ -391,10 +366,10 @@ export const CheckoutPaymentPage: React.FC = () => {
                         {checkoutState === 'paying' ? (
                           <>
                             <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                            <span>Đang xử lý thanh toán...</span>
+                            <span>{localize("Đang xử lý thanh toán...")}</span>
                           </>
                         ) : (
-                          <span>Pay with Mock Gateway</span>
+                          <span>{localize("Pay with Mock Gateway")}</span>
                         )}
                       </button>
                     </div>

@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { FareClass } from '../../types';
 import type { BookingFareOption } from '../../types/bookingFlow';
@@ -14,6 +15,7 @@ export const FareTierCard: React.FC<FareTierCardProps> = ({
   isSelected = false,
   onSelect
 }) => {
+  useLanguage();
   const benefits = [
     { icon: 'luggage', label: fareClass.baggage },
     { icon: 'airline_seat_recline_normal', label: fareClass.seatPitch },
@@ -33,25 +35,23 @@ export const FareTierCard: React.FC<FareTierCardProps> = ({
       <div>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <span className="text-[11px] font-bold text-secondary uppercase tracking-wider">
-              {fareClass.tier}
+            <span className="text-body-sm font-bold text-secondary uppercase tracking-wider">
+              {localize(fareClass.tier)}
             </span>
             <h4 className="mt-0.5 text-headline-sm font-bold text-primary">
-              {fareClass.name}
+              {localize(fareClass.name)}
             </h4>
           </div>
           {fareClass.popular && (
-            <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-on-secondary shadow-sm">
-              Best Value
-            </span>
+            <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-body-sm font-bold uppercase tracking-wider text-on-secondary shadow-sm">{localize("Best Value ")}</span>
           )}
         </div>
 
         <div className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-1 tabular-nums">
           <span className="text-headline-lg font-bold leading-none text-primary">
-            {formatCurrency(fareClass.price)}
+            {localize(formatCurrency(fareClass.price))}
           </span>
-          <span className="whitespace-nowrap text-[11px] text-on-surface-variant">/ passenger</span>
+          <span className="whitespace-nowrap text-body-sm text-on-surface-variant">{localize("/ passenger")}</span>
         </div>
 
         {/* Feature List */}
@@ -61,7 +61,7 @@ export const FareTierCard: React.FC<FareTierCardProps> = ({
               <span className="material-symbols-outlined mt-0.5 text-[16px] leading-none text-secondary">
                 {benefit.icon}
               </span>
-              <span>{benefit.label}</span>
+              <span>{localize(benefit.label)}</span>
             </li>
           ))}
         </ul>
@@ -82,10 +82,10 @@ export const FareTierCard: React.FC<FareTierCardProps> = ({
           {isSelected ? (
             <>
               <span className="material-symbols-outlined text-[18px]">check</span>
-              <span>Selected Tier</span>
+              <span>{localize("Selected Tier")}</span>
             </>
           ) : (
-            <span>Select {fareClass.tier}</span>
+            <span>{localize("Select ")}{localize(fareClass.tier)}</span>
           )}
         </button>
       </div>

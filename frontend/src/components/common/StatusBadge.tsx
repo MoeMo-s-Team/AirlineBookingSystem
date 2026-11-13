@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 
 export interface StatusBadgeProps {
@@ -5,6 +6,7 @@ export interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+  useLanguage();
   const getBadgeStyle = () => {
     switch (status) {
       case 'SCHEDULED':
@@ -53,7 +55,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide border ${getBadgeStyle()}`}>
       <span className="material-symbols-outlined text-[14px]">{getStatusIcon()}</span>
-      <span>{status}</span>
+      <span>{localize(status)}</span>
     </span>
   );
 };

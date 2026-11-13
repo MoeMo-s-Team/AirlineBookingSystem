@@ -206,7 +206,7 @@ describe('CheckoutPaymentPage', () => {
     const payBtn = screen.getByRole('button', { name: /Pay with Mock Gateway/i });
     fireEvent.click(payBtn);
 
-    const processingButton = await screen.findByRole('button', { name: /Đang xử lý thanh toán/i });
+    const processingButton = await screen.findByRole('button', { name: /Processing payment/i });
     expect(processingButton).toBeDisabled();
     finishPayment(paymentResult);
 
@@ -284,7 +284,7 @@ describe('CheckoutPaymentPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/đã bị hủy và không thể thanh toán/i)).toBeInTheDocument();
+      expect(screen.getByText(/cancelled and cannot be paid/i)).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Pay with Mock Gateway/i })).not.toBeInTheDocument();
     });
     expect(paymentApi.processPayment).not.toHaveBeenCalled();
@@ -317,7 +317,7 @@ describe('CheckoutPaymentPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Pay with Mock Gateway/i }));
 
-    const retryButton = await screen.findByRole('button', { name: /Kiểm tra trạng thái lại/i });
+    const retryButton = await screen.findByRole('button', { name: /Check status again/i });
     expect(screen.queryByRole('button', { name: /Pay with Mock Gateway/i })).not.toBeInTheDocument();
     expect(paymentApi.processPayment).toHaveBeenCalledTimes(1);
 
@@ -355,7 +355,7 @@ describe('CheckoutPaymentPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Pay with Mock Gateway/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Thanh toán thất bại \(PAYMENT_FAILED\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/Payment failed \(PAYMENT_FAILED\)/i)).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Pay with Mock Gateway/i })).not.toBeInTheDocument();
     });
   });

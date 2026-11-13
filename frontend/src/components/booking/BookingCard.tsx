@@ -1,3 +1,4 @@
+import { getLocale, localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { StatusBadge } from '../common/StatusBadge';
 import type { BookingSummary } from '../../api/bookingApi';
@@ -13,6 +14,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   onManage,
   onCancel,
 }) => {
+  useLanguage();
   const code = booking.bookingCode || booking.pnr;
   const isPending = booking.status === 'PENDING';
   const flight = booking.flight;
@@ -37,7 +39,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     try {
       const d = new Date(ts);
       if (isNaN(d.getTime())) return ts;
-      return d.toLocaleDateString('vi-VN');
+      return d.toLocaleDateString(getLocale());
     } catch {
       return ts;
     }
@@ -52,9 +54,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
   const formattedPrice =
     typeof booking.totalPrice === 'number'
-      ? `${booking.totalPrice.toLocaleString('vi-VN')} ₫`
+      ? `${booking.totalPrice.toLocaleString(getLocale())} ₫`
       : typeof booking.grandTotal === 'number'
-      ? `${booking.grandTotal.toLocaleString('vi-VN')} ₫`
+      ? `${booking.grandTotal.toLocaleString(getLocale())} ₫`
       : '0 ₫';
 
   return (
@@ -63,20 +65,17 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-outline-variant gap-3">
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/60">
-            <span className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest block">
-              Mã đặt chỗ (Code)
-            </span>
-            <span className="text-headline-sm font-bold text-primary tracking-wider font-mono">
-              {code}
+            <span className="text-body-sm text-on-surface-variant uppercase font-bold tracking-widest block">{localize("Mã đặt chỗ (Code) ")}</span>
+            <span className="text-headline-sm font-bold text-primary tracking-wider font-sans">
+              {localize(code)}
             </span>
           </div>
           <div>
-            <span className="text-body-sm text-on-surface-variant block">
-              Ngày đặt: {formatDate(booking.createdAt || booking.bookingDate)}
+            <span className="text-body-sm text-on-surface-variant block">{localize("Ngày đặt: ")}{localize(formatDate(booking.createdAt || booking.bookingDate))}
             </span>
             {fare?.name && (
               <span className="text-label-sm font-semibold text-secondary">
-                {fare.name}
+                {localize(fare.name)}
               </span>
             )}
           </div>
@@ -85,7 +84,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         <div className="flex items-center gap-3">
           <StatusBadge status={booking.status} />
           <span className="text-headline-sm font-bold text-primary">
-            {formattedPrice}
+            {localize(formattedPrice)}
           </span>
         </div>
       </div>
@@ -94,15 +93,14 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       <div className="py-5 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         {/* Origin */}
         <div>
-          <span className="text-label-sm text-outline font-semibold uppercase tracking-wider block">
-            Khởi hành {flight?.departureTime ? `• ${formatDate(flight.departureTime)}` : ''}
+          <span className="text-label-sm text-outline font-semibold uppercase tracking-wider block">{localize("Khởi hành ")}{localize(flight?.departureTime ? `• ${formatDate(flight.departureTime)}` : '')}
           </span>
           <span className="text-headline-md font-bold text-primary block mt-1">
-            {origin}
+            {localize(origin)}
           </span>
           {flight?.departureTime && (
             <span className="text-body-sm font-bold text-on-surface">
-              {formatTime(flight.departureTime)}
+              {localize(formatTime(flight.departureTime))}
             </span>
           )}
         </div>
@@ -110,8 +108,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         {/* Flight Midpoint Route Graphic */}
         <div className="flex flex-col items-center justify-center text-center">
           {flightNumber && (
-            <span className="text-[11px] font-semibold text-primary px-2.5 py-0.5 rounded-full bg-surface-container mb-1">
-              Chuyến bay {flightNumber}
+            <span className="text-body-sm font-semibold text-primary px-2.5 py-0.5 rounded-full bg-surface-container mb-1">{localize("Chuyến bay ")}{localize(flightNumber)}
             </span>
           )}
           <div className="relative w-36 sm:w-48 flex items-center my-1">
@@ -127,15 +124,14 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
         {/* Destination */}
         <div className="md:text-right">
-          <span className="text-label-sm text-outline font-semibold uppercase tracking-wider block">
-            Điểm đến {flight?.arrivalTime ? `• ${formatDate(flight.arrivalTime)}` : ''}
+          <span className="text-label-sm text-outline font-semibold uppercase tracking-wider block">{localize("Điểm đến ")}{localize(flight?.arrivalTime ? `• ${formatDate(flight.arrivalTime)}` : '')}
           </span>
           <span className="text-headline-md font-bold text-primary block mt-1">
-            {destination}
+            {localize(destination)}
           </span>
           {flight?.arrivalTime && (
             <span className="text-body-sm font-bold text-on-surface">
-              {formatTime(flight.arrivalTime)}
+              {localize(formatTime(flight.arrivalTime))}
             </span>
           )}
         </div>
@@ -148,7 +144,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             <>
               <span className="material-symbols-outlined text-[18px] text-secondary">person</span>
               <span className="text-label-md font-semibold text-primary">
-                {passengerNames}
+                {localize(passengerNames)}
               </span>
             </>
           )}
@@ -160,9 +156,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
               type="button"
               onClick={() => onCancel(booking.id ?? code)}
               className="px-3 py-1.5 rounded-lg text-label-md font-semibold text-error hover:bg-error-container/20 transition-colors"
-            >
-              Hủy đặt chỗ
-            </button>
+            >{localize("Hủy đặt chỗ ")}</button>
           )}
 
           <button
@@ -171,7 +165,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-on-primary text-label-md font-semibold transition-all flex items-center gap-1.5 shadow-sm"
           >
             <span className="material-symbols-outlined text-[16px]">visibility</span>
-            <span>Xem chi tiết (Dossier)</span>
+            <span>{localize("Xem chi tiết (Dossier)")}</span>
           </button>
         </div>
       </div>

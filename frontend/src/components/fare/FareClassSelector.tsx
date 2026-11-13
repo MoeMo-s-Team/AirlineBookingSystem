@@ -1,46 +1,28 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React, { useEffect, useState, useCallback } from 'react';
 import { fareApi, FareClassResponse } from '../../api/fareApi';
-import { FareClass } from '../../types';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { getFareBenefits } from '../../config/fareBenefits';
 
 export interface FareClassSelectorProps {
+  readonly fares?: readonly FareClassResponse[];
   readonly basePrice: number;
   readonly passengerCount?: number;
-  readonly selectedFareId?: string | null;
-  readonly onSelectFare: (fareClass: FareClass) => void;
+  readonly selectedFareId?: string | number | null;
+  readonly onSelectFare: (fareClass: any) => void;
 }
 
-const DEFAULT_BENEFITS: Record<string, { baggage: string; seatPitch: string; meal: string; changes: string; milesMultiplier: number }> = {
-  ECONOMY: {
-    baggage: '7kg cabin baggage, 20kg checked',
-    seatPitch: 'Standard 30-31" legroom',
-    meal: 'Complimentary snack & water',
-    changes: 'Change fee applies ($25 + fare diff)',
-    milesMultiplier: 1.0,
-  },
-  PREMIUM: {
-    baggage: '10kg cabin baggage, 30kg checked',
-    seatPitch: 'Extra 34-36" pitch with leg-rest',
-    meal: 'Hot meal selection & beverages',
-    changes: 'Free 1st change up to 24h before',
-    milesMultiplier: 1.5,
-  },
-  BUSINESS: {
-    baggage: '2x 10kg cabin, 40kg priority baggage',
-    seatPitch: 'Full flat-bed seat with direct aisle access',
-    meal: 'Chef-curated gourmet dining & fine wines',
-    changes: 'Free unlimited booking changes',
-    milesMultiplier: 2.5,
-  },
-};
 
 export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
   basePrice,
   passengerCount = 1,
   selectedFareId,
   onSelectFare,
+  fares: providedFares,
 }) => {
-  const [fares, setFares] = useState<FareClassResponse[]>([]);
+  useLanguage();
+  const [fetchedFares, setFares] = useState<FareClassResponse[]>([]);
+  const fares = (providedFares ?? fetchedFares).filter(fare => fare.active);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,10 +46,10 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
   }, []);
 
   useEffect(() => {
-    fetchFares();
-  }, [fetchFares]);
+    if (providedFares === undefined) fetchFares();
+  }, [fetchFares, providedFares]);
 
-  if (isLoading) {
+  if (providedFares === undefined && isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {[1, 2, 3].map(i => (
@@ -87,21 +69,19 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
     );
   }
 
-  if (error) {
+  if (providedFares === undefined && error) {
     return (
       <div className="p-6 rounded-2xl bg-error-container/20 border border-error/30 text-center my-4">
         <div className="w-12 h-12 rounded-full bg-error/10 text-error flex items-center justify-center mx-auto mb-3">
           <span className="material-symbols-outlined text-[28px]">error</span>
         </div>
-        <h4 className="text-headline-sm font-bold text-error mb-1">Không thể tải hạng vé</h4>
-        <p className="text-body-sm text-on-surface-variant max-w-md mx-auto mb-4">{error}</p>
+        <h4 className="text-headline-sm font-bold text-error mb-1">{localize("Không thể tải hạng vé")}</h4>
+        <p className="text-body-sm text-on-surface-variant max-w-md mx-auto mb-4">{localize(error)}</p>
         <button
           type="button"
           onClick={fetchFares}
           className="px-4 py-2 rounded-lg bg-primary text-on-primary font-semibold text-label-md hover:bg-primary-container transition-all"
-        >
-          Thử lại
-        </button>
+        >{localize("Thử lại ")}</button>
       </div>
     );
   }
@@ -110,9 +90,7 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
     return (
       <div className="p-6 rounded-2xl bg-surface-container-low border border-outline-variant text-center my-4">
         <span className="material-symbols-outlined text-[32px] text-outline mb-2">info</span>
-        <p className="text-body-sm text-on-surface-variant">
-          Hiện tại chuyến bay này chưa có hạng vé khả dụng.
-        </p>
+        <p className="text-body-sm text-on-surface-variant">{localize("Hiện tại chuyến bay này chưa có hạng vé khả dụng. ")}</p>
       </div>
     );
   }
@@ -121,29 +99,38 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
       {fares.map(fare => {
         const code = fare.code.toUpperCase();
-        const benefit = DEFAULT_BENEFITS[code] || DEFAULT_BENEFITS.ECONOMY;
-        
+        const benefit = getFareBenefits(fare.code, fare.priceMultiplier);
+
         // Tính giá vé theo Strategy Pattern (BR-002)
         const calculatedPrice = fareApi.calculatePrice(basePrice, fare.priceMultiplier, 1);
         const totalPriceAllPassengers = fareApi.calculatePrice(basePrice, fare.priceMultiplier, passengerCount);
 
-        const tierName = code === 'BUSINESS' ? 'Business' : code === 'PREMIUM' ? 'Premium Economy' : 'Economy';
-        const isSelected = selectedFareId === String(fare.id) || selectedFareId === code || selectedFareId === fare.name;
+        const tierName = code.includes('FIRST')
+          ? 'First Class'
+          : code.includes('BUSINESS') || code.includes('BIZ')
+          ? 'Business'
+          : code.includes('PREM')
+          ? 'Premium Economy'
+          : 'Economy';
+        const isSelected = String(selectedFareId) === String(fare.id) || selectedFareId === code || selectedFareId === fare.name;
 
-        const fareClassObject: FareClass = {
-          id: String(fare.id),
+        const fareClassObject = {
+          ...fare,
+          id: fare.id,
           tier: tierName as any,
           name: fare.name,
+          code: fare.code,
+          priceMultiplier: fare.priceMultiplier,
           price: calculatedPrice,
-          baggage: benefit.baggage,
-          seatPitch: benefit.seatPitch,
-          meal: benefit.meal,
+          baggage: fare.baggage || benefit.baggage,
+          seatPitch: fare.seatPitch || benefit.seatPitch,
+          meal: fare.meal || benefit.meal,
           changes: benefit.changes,
-          cancellation: code === 'BUSINESS' ? 'Free refund up to 2h before departure' : 'Non-refundable',
+          cancellation: benefit.cancellation,
           milesMultiplier: benefit.milesMultiplier,
-          priorityBoarding: code !== 'ECONOMY',
-          loungeAccess: code === 'BUSINESS',
-          popular: code === 'PREMIUM',
+          priorityBoarding: benefit.priorityBoarding,
+          loungeAccess: benefit.loungeAccess,
+          popular: benefit.popular,
         };
 
         return (
@@ -158,21 +145,18 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
             <div>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-bold text-secondary uppercase tracking-wider block">
-                    {tierName}
+                  <span className="text-body-sm font-bold text-secondary uppercase tracking-wider block">
+                    {localize(tierName)}
                   </span>
                   <h4 className="mt-0.5 text-headline-sm font-bold text-primary">
-                    {fare.name}
+                    {localize(fare.name)}
                   </h4>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="px-2 py-0.5 rounded bg-surface-container text-primary font-bold text-[11px]">
-                    x{fare.priceMultiplier}
+                  <span className="px-2 py-0.5 rounded bg-surface-container text-primary font-bold text-body-sm">{localize("x")}{localize(fare.priceMultiplier)}
                   </span>
                   {fareClassObject.popular && (
-                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-secondary shadow-sm">
-                      Best Value
-                    </span>
+                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-body-sm font-bold uppercase tracking-wider text-on-secondary shadow-sm">{localize("Best Value ")}</span>
                   )}
                 </div>
               </div>
@@ -180,14 +164,13 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
               {/* Price display with Strategy Pattern */}
               <div className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-1 tabular-nums">
                 <span className="text-headline-lg font-bold leading-none text-primary">
-                  {formatCurrency(calculatedPrice)}
+                  {localize(formatCurrency(calculatedPrice))}
                 </span>
-                <span className="text-[11px] text-on-surface-variant">/ hành khách</span>
+                <span className="text-body-sm text-on-surface-variant">{localize("/ hành khách")}</span>
               </div>
 
               {passengerCount > 1 && (
-                <span className="text-[11px] text-secondary font-medium block mt-1">
-                  Tổng {passengerCount} khách: {formatCurrency(totalPriceAllPassengers)}
+                <span className="text-body-sm text-secondary font-medium block mt-1">{localize("Tổng ")}{localize(passengerCount)}{localize(" khách: ")}{localize(formatCurrency(totalPriceAllPassengers))}
                 </span>
               )}
 
@@ -195,19 +178,19 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
               <ul className="mt-5 space-y-2.5 border-t border-outline-variant/60 pt-4 text-body-sm leading-5 text-on-surface">
                 <li className="grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-3">
                   <span className="material-symbols-outlined text-[16px] text-secondary">luggage</span>
-                  <span>{fareClassObject.baggage}</span>
+                  <span>{localize(fareClassObject.baggage)}</span>
                 </li>
                 <li className="grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-3">
                   <span className="material-symbols-outlined text-[16px] text-secondary">airline_seat_recline_normal</span>
-                  <span>{fareClassObject.seatPitch}</span>
+                  <span>{localize(fareClassObject.seatPitch)}</span>
                 </li>
                 <li className="grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-3">
                   <span className="material-symbols-outlined text-[16px] text-secondary">restaurant</span>
-                  <span>{fareClassObject.meal}</span>
+                  <span>{localize(fareClassObject.meal)}</span>
                 </li>
                 <li className="grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-3">
                   <span className="material-symbols-outlined text-[16px] text-secondary">sync</span>
-                  <span>{fareClassObject.changes}</span>
+                  <span>{localize(fareClassObject.changes)}</span>
                 </li>
               </ul>
             </div>
@@ -226,10 +209,10 @@ export const FareClassSelector: React.FC<FareClassSelectorProps> = ({
                 {isSelected ? (
                   <>
                     <span className="material-symbols-outlined text-[18px]">check</span>
-                    <span>Đã chọn hạng này</span>
+                    <span>{localize("Đã chọn hạng này")}</span>
                   </>
                 ) : (
-                  <span>Chọn hạng {fare.name}</span>
+                  <span>{localize("Chọn hạng ")}{localize(fare.name)}</span>
                 )}
               </button>
             </div>

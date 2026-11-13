@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React, { useState, useMemo } from 'react';
 import type { BookingPassengerDraft } from '../../types/bookingFlow';
 
@@ -30,6 +31,7 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
   onChange,
   forceShowErrors = false
 }) => {
+  useLanguage();
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const shouldShowError = (field: string, error?: string) => (touched[field] || forceShowErrors) && error;
@@ -83,45 +85,39 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
             isValid ? 'bg-primary text-on-primary' : 'bg-error text-on-error'
           }`}>
-            {passengerIndex + 1}
+            {localize(passengerIndex + 1)}
           </div>
-          <h3 className="font-headline-sm font-bold text-primary">
-            Passenger {passengerIndex + 1} (Adult)
-          </h3>
+          <h3 className="font-headline-sm font-bold text-primary">{localize("Passenger ")}{localize(passengerIndex + 1)}{localize("(Adult) ")}</h3>
         </div>
         <span className={`text-label-sm font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${
           isValid
             ? 'text-secondary bg-surface-container'
             : 'text-error bg-error-container'
         }`}>
-          {isValid ? 'Ready' : 'Incomplete'}
+          {localize(isValid ? 'Ready' : 'Incomplete')}
         </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Full Name */}
         <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Full Name (as in Passport / ID) *
-          </label>
+          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">{localize("Full Name (as in Passport / ID) * ")}</label>
           <input
             type="text"
-            placeholder="e.g. NGUYEN VAN A"
+            placeholder={localize("e.g. NGUYEN VAN A")}
             value={passenger?.fullName || ''}
             onChange={e => onChange(passengerIndex, { fullName: e.target.value.toUpperCase() })}
             onBlur={() => handleBlur('fullName')}
             className={getInputClass(!!shouldShowError('fullName', errors.fullName))}
           />
           {shouldShowError('fullName', errors.fullName) && (
-            <p className="text-error text-label-sm mt-1">{errors.fullName}</p>
+            <p className="text-error text-label-sm mt-1">{localize(errors.fullName)}</p>
           )}
         </div>
 
         {/* Date of Birth */}
         <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Date of Birth *
-          </label>
+          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">{localize("Date of Birth * ")}</label>
           <input
             type="date"
             value={passenger?.dateOfBirth || ''}
@@ -131,43 +127,39 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
             className={getInputClass(!!shouldShowError('dateOfBirth', errors.dateOfBirth))}
           />
           {shouldShowError('dateOfBirth', errors.dateOfBirth) && (
-            <p className="text-error text-label-sm mt-1">{errors.dateOfBirth}</p>
+            <p className="text-error text-label-sm mt-1">{localize(errors.dateOfBirth)}</p>
           )}
         </div>
 
         {/* Passport Number */}
         <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Passport / National ID Number *
-          </label>
+          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">{localize("Passport / National ID Number * ")}</label>
           <input
             type="text"
-            placeholder="e.g. C1234567"
+            placeholder={localize("e.g. C1234567")}
             value={passenger?.passportNo || ''}
             onChange={e => onChange(passengerIndex, { passportNo: e.target.value.toUpperCase() })}
             onBlur={() => handleBlur('passportNo')}
             className={`${getInputClass(!!shouldShowError('passportNo', errors.passportNo))} uppercase`}
           />
           {shouldShowError('passportNo', errors.passportNo) && (
-            <p className="text-error text-label-sm mt-1">{errors.passportNo}</p>
+            <p className="text-error text-label-sm mt-1">{localize(errors.passportNo)}</p>
           )}
         </div>
 
         {/* Phone Number */}
         <div>
-          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">
-            Phone Number *
-          </label>
+          <label className="block text-label-sm font-semibold text-outline uppercase tracking-wider mb-1">{localize("Phone Number * ")}</label>
           <input
             type="tel"
-            placeholder="e.g. 0901234567"
+            placeholder={localize("e.g. 0901234567")}
             value={passenger?.phone || ''}
             onChange={e => onChange(passengerIndex, { phone: e.target.value })}
             onBlur={() => handleBlur('phone')}
             className={getInputClass(!!shouldShowError('phone', errors.phone))}
           />
           {shouldShowError('phone', errors.phone) && (
-            <p className="text-error text-label-sm mt-1">{errors.phone}</p>
+            <p className="text-error text-label-sm mt-1">{localize(errors.phone)}</p>
           )}
         </div>
       </div>

@@ -146,7 +146,7 @@ describe('MyBookingsPage', () => {
     });
 
     // PENDING card has cancel button, CONFIRMED does not
-    const cancelButtons = screen.getAllByRole('button', { name: /^hủy đặt chỗ$/i });
+    const cancelButtons = screen.getAllByRole('button', { name: /^Cancel booking$/i });
     expect(cancelButtons).toHaveLength(1);
 
     fireEvent.click(cancelButtons[0]);
@@ -188,7 +188,7 @@ describe('MyBookingsPage', () => {
       expect(screen.getByText('SW-PENDING-101')).toBeInTheDocument();
     });
 
-    const cancelBtn = screen.getByRole('button', { name: /^hủy đặt chỗ$/i });
+    const cancelBtn = screen.getByRole('button', { name: /^Cancel booking$/i });
     fireEvent.click(cancelBtn);
 
     await waitFor(() => {

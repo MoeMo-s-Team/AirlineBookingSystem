@@ -40,7 +40,7 @@ describe('NotificationBookingDetailPage', () => {
   it('does not request a booking when the route ID is invalid', () => {
     render(<MemoryRouter initialEntries={['/my-bookings/invalid']}><Routes><Route path="/my-bookings/:bookingId" element={<NotificationBookingDetailPage />} /></Routes></MemoryRouter>);
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Mã đơn đặt vé không hợp lệ.');
+    expect(screen.getByRole('alert')).toHaveTextContent("Invalid booking ID.");
     expect(getNotificationBookingDetail).not.toHaveBeenCalled();
   });
 });

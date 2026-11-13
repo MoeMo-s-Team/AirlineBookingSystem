@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../i18n/index';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -12,6 +13,7 @@ export interface MyBookingsPageProps {
 }
 
 export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
+  useLanguage();
   const { user, isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const isUnknownOutcome =
@@ -137,29 +139,20 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] font-bold text-secondary uppercase tracking-widest">
-                  Passenger Self-Service
-                </span>
+                <span className="text-body-sm font-bold text-secondary uppercase tracking-widest">{localize("Passenger Self-Service ")}</span>
                 {isAuthenticated && user && (
-                  <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container text-primary">
-                    Hội Viên {user.fullName || (user as any).name}
+                  <span className="text-body-sm font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container text-primary">{localize("Hội Viên ")}{localize(user.fullName || (user as any).name)}
                   </span>
                 )}
               </div>
-              <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-                My Bookings & Journeys
-              </h1>
-              <p className="text-body-md text-on-surface-variant mt-1">
-                Quản lý các chuyến bay đã đặt, tra cứu thông tin mã đặt chỗ và theo dõi trạng thái.
-              </p>
+              <h1 className="text-headline-lg font-bold text-primary tracking-tight">{localize("My Bookings & Journeys ")}</h1>
+              <p className="text-body-md text-on-surface-variant mt-1">{localize("Quản lý các chuyến bay đã đặt, tra cứu thông tin mã đặt chỗ và theo dõi trạng thái. ")}</p>
             </div>
 
             <Link
               to="/"
               className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-label-lg font-bold shadow-md transition-all self-start sm:self-center"
-            >
-              Đặt chuyến bay mới
-            </Link>
+            >{localize("Đặt chuyến bay mới ")}</Link>
           </div>
         </section>
 
@@ -171,12 +164,8 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
                 warning
               </span>
               <div>
-                <span className="text-label-lg font-bold block">
-                  Đơn đặt vé chưa rõ kết quả tạo (Manual Verification Required)
-                </span>
-                <span className="text-body-sm block mt-0.5">
-                  Đơn đặt vé vừa tạo đang được hệ thống xử lý hoặc kết nối bị gián đoạn. Vui lòng kiểm tra lại danh sách đặt chỗ bên dưới và không tạo lại đơn mới ngay để tránh thanh toán trùng lặp.
-                </span>
+                <span className="text-label-lg font-bold block">{localize("Đơn đặt vé chưa rõ kết quả tạo (Manual Verification Required) ")}</span>
+                <span className="text-body-sm block mt-0.5">{localize("Đơn đặt vé vừa tạo đang được hệ thống xử lý hoặc kết nối bị gián đoạn. Vui lòng kiểm tra lại danh sách đặt chỗ bên dưới và không tạo lại đơn mới ngay để tránh thanh toán trùng lặp. ")}</span>
               </div>
             </div>
           </section>
@@ -198,7 +187,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
                       : 'text-on-surface-variant hover:text-primary'
                   }`}
                 >
-                  {tab === 'ALL' ? 'Tất cả' : tab}
+                  {localize(tab === 'ALL' ? 'Tất cả' : tab)}
                 </button>
               ))}
             </div>
@@ -210,7 +199,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
               </span>
               <input
                 type="text"
-                placeholder="Tìm theo mã đặt chỗ, chuyến bay..."
+                placeholder={localize("Tìm theo mã đặt chỗ, chuyến bay...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
@@ -222,12 +211,12 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
           {isLoading ? (
             <div className="py-16 text-center">
               <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-body-md text-on-surface-variant">Đang tải danh sách đặt chỗ...</p>
+              <p className="text-body-md text-on-surface-variant">{localize("Đang tải danh sách đặt chỗ...")}</p>
             </div>
           ) : error ? (
             <div className="rounded-xl border border-error/30 bg-error-container/20 p-6 text-center">
-              <p className="text-title-sm font-bold text-error mb-1">Không thể tải danh sách đặt chỗ</p>
-              <p className="text-body-sm text-on-surface-variant">{error}</p>
+              <p className="text-title-sm font-bold text-error mb-1">{localize("Không thể tải danh sách đặt chỗ")}</p>
+              <p className="text-body-sm text-on-surface-variant">{localize(error)}</p>
             </div>
           ) : filteredBookings.length > 0 ? (
             <div className="space-y-4">
@@ -245,18 +234,12 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = () => {
               <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-3 text-outline">
                 <span className="material-symbols-outlined text-[28px]">flight_takeoff</span>
               </div>
-              <h3 className="text-headline-sm font-bold text-primary mb-1">
-                Không tìm thấy đặt chỗ nào
-              </h3>
-              <p className="text-body-sm text-on-surface-variant max-w-sm mx-auto mb-6">
-                Bạn chưa có đơn đặt vé nào phù hợp với bộ lọc tìm kiếm hiện tại.
-              </p>
+              <h3 className="text-headline-sm font-bold text-primary mb-1">{localize("Không tìm thấy đặt chỗ nào ")}</h3>
+              <p className="text-body-sm text-on-surface-variant max-w-sm mx-auto mb-6">{localize("Bạn chưa có đơn đặt vé nào phù hợp với bộ lọc tìm kiếm hiện tại. ")}</p>
               <Link
                 to="/"
                 className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold"
-              >
-                Tìm chuyến bay ngay
-              </Link>
+              >{localize("Tìm chuyến bay ngay ")}</Link>
             </div>
           )}
         </section>

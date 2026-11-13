@@ -21,6 +21,7 @@ export interface BookingFlowContextType {
   selectedServices: BookingSelectedService[];
   setSelectedServices?: React.Dispatch<React.SetStateAction<BookingSelectedService[]>>;
   toggleService: (service: BookingSelectedService) => void;
+  updateServiceQuantity: (serviceId: number, quantity: number) => void;
   paymentMethod: 'card' | 'bank' | 'wallet';
   setPaymentMethod: React.Dispatch<React.SetStateAction<'card' | 'bank' | 'wallet'>>;
   priceSummary: {
@@ -61,7 +62,21 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (exists) {
         return prev.filter(s => String(s.id) !== String(service.id));
       }
-      return [...prev, service];
+      return [...prev, { ...service, quantity: service.quantity || 1 }];
+    });
+  }, []);
+
+  const updateServiceQuantity = useCallback((serviceId: number, quantity: number) => {
+    setSelectedServices(prev => {
+      if (quantity <= 0) {
+        return prev.filter(s => Number(s.id) !== Number(serviceId));
+      }
+      return prev.map(s => {
+        if (Number(s.id) === Number(serviceId)) {
+          return { ...s, quantity };
+        }
+        return s;
+      });
     });
   }, []);
 
@@ -88,7 +103,7 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const count = passengers.length > 0 ? passengers.length : (searchParams.passengers || 1);
     const baseTotal = flightPrice * count;
     const taxesAndFees = 0;
-    const servicesTotal = selectedServices.reduce((sum, s) => sum + (s.price || 0), 0);
+    const servicesTotal = selectedServices.reduce((sum, s) => sum + (s.price || 0) * (s.quantity || 1), 0);
     const discount = 0;
     const grandTotal = baseTotal + servicesTotal;
 
@@ -130,6 +145,7 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
       selectedServices,
       setSelectedServices,
       toggleService,
+      updateServiceQuantity,
       paymentMethod,
       setPaymentMethod,
       priceSummary,
@@ -145,6 +161,7 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updatePassenger,
       selectedServices,
       toggleService,
+      updateServiceQuantity,
       paymentMethod,
       priceSummary,
       confirmedBooking,

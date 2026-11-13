@@ -1,13 +1,14 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React, { useState } from 'react';
 import { Flight, FareClass } from '../../types';
 import type { BookingFlightSelection, BookingFareOption } from '../../types/bookingFlow';
-import { FareTierCard } from './FareTierCard';
 import { FareClassSelector } from '../fare/FareClassSelector';
 import { formatCurrency } from '../../utils/formatCurrency';
 
 export interface FlightCardProps {
   readonly flight: BookingFlightSelection | Flight;
   readonly selectedFareClass?: BookingFareOption | FareClass | null;
+  readonly passengerCount?: number;
   readonly onSelectFare: (flight: any, fareClass: any) => void;
   readonly onViewDetails: (flight: any) => void;
 }
@@ -15,9 +16,11 @@ export interface FlightCardProps {
 export const FlightCard: React.FC<FlightCardProps> = ({
   flight,
   selectedFareClass,
+  passengerCount = 1,
   onSelectFare,
   onViewDetails
 }) => {
+  useLanguage();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -33,18 +36,17 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-primary text-headline-sm">
-                  {flight.airline}
+                  {localize(flight.airline)}
                 </span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-surface-container text-primary">
-                  {flight.flightNumber}
+                <span className="text-body-sm font-semibold px-2 py-0.5 rounded bg-surface-container text-primary">
+                  {localize(flight.flightNumber)}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-label-sm text-on-surface-variant mt-0.5">
-                <span>{flight.aircraft}</span>
+                <span>{localize(flight.aircraft)}</span>
                 <span>•</span>
                 <span className="text-secondary font-medium">
-                  {flight.onTimeRate} On-Time
-                </span>
+                  {localize(flight.onTimeRate)}{localize("On-Time ")}</span>
               </div>
             </div>
           </div>
@@ -54,20 +56,20 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             {/* Departure */}
             <div className="text-left">
               <span className="text-headline-md font-bold text-primary block">
-                {flight.departureTime}
+                {localize(flight.departureTime)}
               </span>
               <span className="text-label-md font-bold text-on-surface">
-                {flight.departureCode}
+                {localize(flight.departureCode)}
               </span>
-              <span className="text-[11px] text-on-surface-variant block">
-                {flight.departureTerminal}
+              <span className="text-body-sm text-on-surface-variant block">
+                {localize(flight.departureTerminal)}
               </span>
             </div>
 
             {/* Flight Path Graphic */}
             <div className="flex flex-col items-center min-w-[120px] sm:min-w-[160px]">
-              <span className="text-[11px] font-semibold text-on-surface-variant mb-1">
-                {flight.duration}
+              <span className="text-body-sm font-semibold text-on-surface-variant mb-1">
+                {localize(flight.duration)}
               </span>
               <div className="relative w-full flex items-center">
                 <div className="w-2 h-2 rounded-full border-2 border-primary bg-surface-container-lowest" />
@@ -78,21 +80,21 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                 </div>
                 <div className="w-2 h-2 rounded-full bg-primary" />
               </div>
-              <span className="text-[11px] font-medium text-secondary mt-1">
-                {flight.stops === 0 ? 'Non-stop' : `${flight.stops} stop`}
+              <span className="text-body-sm font-medium text-secondary mt-1">
+                {localize(flight.stops === 0 ? 'Non-stop' : `${flight.stops} stop`)}
               </span>
             </div>
 
             {/* Arrival */}
             <div className="text-right">
               <span className="text-headline-md font-bold text-primary block">
-                {flight.arrivalTime}
+                {localize(flight.arrivalTime)}
               </span>
               <span className="text-label-md font-bold text-on-surface">
-                {flight.arrivalCode}
+                {localize(flight.arrivalCode)}
               </span>
-              <span className="text-[11px] text-on-surface-variant block">
-                {flight.arrivalTerminal}
+              <span className="text-body-sm text-on-surface-variant block">
+                {localize(flight.arrivalTerminal)}
               </span>
             </div>
           </div>
@@ -100,15 +102,11 @@ export const FlightCard: React.FC<FlightCardProps> = ({
           {/* Price & Primary CTA */}
           <div className="flex items-center lg:flex-col lg:items-end justify-between border-t lg:border-t-0 pt-4 lg:pt-0 border-outline-variant">
             <div className="text-left lg:text-right">
-              <span className="text-[11px] text-on-surface-variant uppercase tracking-wider block">
-                Starting from
-              </span>
+              <span className="text-body-sm text-on-surface-variant uppercase tracking-wider block">{localize("Starting from ")}</span>
               <span className="text-headline-lg font-bold text-primary leading-none">
-                {formatCurrency(flight.basePrice)}
+                {localize(formatCurrency(flight.basePrice))}
               </span>
-              <span className="text-[10px] text-on-surface-variant block mt-0.5">
-                includes taxes & fees
-              </span>
+              <span className="text-body-sm text-on-surface-variant block mt-0.5">{localize("includes taxes & fees ")}</span>
             </div>
 
             <div className="flex items-center gap-2 mt-3">
@@ -116,15 +114,13 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                 type="button"
                 onClick={() => onViewDetails(flight)}
                 className="px-3 py-2 rounded-lg text-label-md font-semibold text-primary hover:bg-surface-container transition-colors"
-              >
-                Flight Details
-              </button>
+              >{localize("Flight Details ")}</button>
               <button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
                 className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary text-label-md font-semibold transition-all flex items-center gap-1 shadow-sm"
               >
-                <span>{expanded ? 'Hide Fares' : 'View Fares'}</span>
+                <span>{localize(expanded ? 'Hide Fares' : 'View Fares')}</span>
                 <span className={`material-symbols-outlined text-[16px] transition-transform ${expanded ? 'rotate-180' : ''}`}>
                   expand_more
                 </span>
@@ -138,16 +134,16 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       {expanded && (
         <div className="bg-surface-container-low/60 border-t border-outline-variant p-6">
           <div className="mb-5 flex flex-col gap-1 border-b border-outline-variant/60 pb-4 sm:flex-row sm:items-end sm:justify-between">
-            <h3 className="text-label-lg font-bold text-primary uppercase tracking-wider">
-              Select Fare Tier for Flight {flight.flightNumber}
+            <h3 className="text-label-lg font-bold text-primary uppercase tracking-wider">{localize("Select Fare Tier for Flight ")}{localize(flight.flightNumber)}
             </h3>
             <span className="text-label-sm text-on-surface-variant">
-              {flight.seatsAvailable} seats remaining at this rate
-            </span>
+              {localize(flight.seatsAvailable)}{localize(" seats remaining at this rate ")}</span>
           </div>
 
           <FareClassSelector
+            fares={(flight as BookingFlightSelection).fareClasses.map(fare => ({ ...fare, active: true }))}
             basePrice={flight.basePrice}
+            passengerCount={passengerCount}
             selectedFareId={selectedFareClass?.id}
             onSelectFare={selected => onSelectFare(flight, selected)}
           />

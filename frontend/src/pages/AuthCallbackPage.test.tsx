@@ -41,7 +41,7 @@ describe('AuthCallbackPage', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Đang xác thực tài khoản/i)).toBeInTheDocument();
+    expect(screen.getByText(/Verifying your account/i)).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
@@ -185,7 +185,7 @@ describe('AuthCallbackPage', () => {
     );
 
     expect(screen.getByText(/Service unavailable/i)).toBeInTheDocument();
-    screen.getByRole('button', { name: /Thử lại/i }).click();
+    screen.getByRole('button', { name: /Try again/i }).click();
     expect(refreshProfile).toHaveBeenCalledOnce();
     expect(mockNavigate).not.toHaveBeenCalled();
   });

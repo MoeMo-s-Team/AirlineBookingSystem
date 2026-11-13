@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../i18n/index';
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -11,13 +12,15 @@ export interface AdditionalServicesPageProps {
 }
 
 export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () => {
+  useLanguage();
   const navigate = useNavigate();
   const {
     selectedFlight,
     selectedFareClass,
     passengers,
     selectedServices,
-    toggleService
+    toggleService,
+    updateServiceQuantity
   } = useBookingFlow();
 
   const handleContinue = () => {
@@ -37,29 +40,29 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
               className="text-label-md font-semibold text-primary hover:text-secondary flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              <span>Back to Passenger Details</span>
+              <span>{localize("Back to Passenger Details")}</span>
             </Link>
 
             {/* Stepper Navigation */}
             <div className="flex items-center gap-2 sm:gap-6 text-label-md">
               <div className="flex items-center gap-1.5 text-secondary">
                 <span className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center text-xs font-bold">✓</span>
-                <span className="hidden sm:inline font-semibold">1. Flight</span>
+                <span className="hidden sm:inline font-semibold">{localize("1. Flight")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-secondary">
                 <span className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center text-xs font-bold">✓</span>
-                <span className="hidden sm:inline font-semibold">2. Passenger</span>
+                <span className="hidden sm:inline font-semibold">{localize("2. Passenger")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-primary font-bold">
                 <span className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs">3</span>
-                <span>3. Services</span>
+                <span>{localize("3. Services")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-outline">
                 <span className="w-6 h-6 rounded-full bg-surface-container text-outline flex items-center justify-center text-xs">4</span>
-                <span className="hidden sm:inline">4. Payment</span>
+                <span className="hidden sm:inline">{localize("4. Payment")}</span>
               </div>
             </div>
           </div>
@@ -71,17 +74,14 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
             {/* Services List Column */}
             <div className="lg:col-span-8 space-y-6">
               <div>
-                <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-                  Enhance Your Flight Experience
-                </h1>
-                <p className="text-body-md text-on-surface-variant mt-1">
-                  Select ancillary options to travel with maximum comfort, extra luggage, and premium lounge hospitality.
-                </p>
+                <h1 className="text-headline-lg font-bold text-primary tracking-tight">{localize("Enhance Your Flight Experience ")}</h1>
+                <p className="text-body-md text-on-surface-variant mt-1">{localize("Select ancillary options to travel with maximum comfort, extra luggage, and premium lounge hospitality. ")}</p>
               </div>
 
               <ServiceSelector
                 selectedServices={selectedServices}
                 onToggleService={toggleService}
+                onUpdateQuantity={updateServiceQuantity}
               />
             </div>
 
@@ -92,7 +92,7 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
                 fareClass={selectedFareClass}
                 passengerCount={passengers.length}
                 selectedServices={selectedServices}
-                ctaLabel="Proceed to Secure Payment"
+                ctaLabel={localize("Proceed to Secure Payment")}
                 onCtaClick={handleContinue}
               />
             </div>

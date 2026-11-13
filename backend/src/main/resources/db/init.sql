@@ -72,6 +72,9 @@ CREATE TABLE fare_classes (
     id               BIGSERIAL PRIMARY KEY,
     code             VARCHAR(20) NOT NULL UNIQUE,
     name             VARCHAR(100) NOT NULL,
+    baggage          VARCHAR(255),
+    seat_pitch       VARCHAR(255),
+    meal             VARCHAR(255),
     price_multiplier DECIMAL(5,2) NOT NULL CHECK (price_multiplier > 0),
     active           BOOLEAN NOT NULL DEFAULT TRUE
 );
@@ -164,10 +167,10 @@ CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read);
 INSERT INTO roles (name) VALUES ('CUSTOMER'), ('ADMIN');
 
 -- Fare classes
-INSERT INTO fare_classes (code, name, price_multiplier) VALUES
-    ('ECONOMY',  'Economy',         1.00),
-    ('PREMIUM',  'Premium Economy', 1.50),
-    ('BUSINESS', 'Business',        2.50);
+INSERT INTO fare_classes (code, name, price_multiplier, baggage, seat_pitch, meal) VALUES
+    ('ECONOMY', 'Economy', 1.00, '7kg cabin baggage, 20kg checked', 'Standard 30-31 inch legroom', 'Complimentary snack & water'),
+    ('PREMIUM', 'Premium Economy', 1.50, '10kg cabin baggage, 30kg checked', 'Extra 34-36 inch pitch with leg-rest', 'Hot meal selection & beverages'),
+    ('BUSINESS', 'Business', 2.50, '2x 10kg cabin, 40kg priority baggage', 'Full flat-bed seat with direct aisle access', 'Chef-curated gourmet dining & fine wines');
 
 -- Additional services (prices in VND)
 INSERT INTO additional_services (name, type, price) VALUES

@@ -1,9 +1,11 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { NotificationDropdown } from './NotificationDropdown';
 
 export const NotificationBell: React.FC = () => {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -34,7 +36,7 @@ export const NotificationBell: React.FC = () => {
       <button
         ref={buttonRef}
         type="button"
-        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+        aria-label={localize(unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications')}
         aria-expanded={open}
         aria-controls="notification-popover"
         onClick={() => {
@@ -45,8 +47,8 @@ export const NotificationBell: React.FC = () => {
       >
         <span aria-hidden="true" className="material-symbols-outlined text-[22px]">notifications</span>
         {unreadCount > 0 && (
-          <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-secondary px-0.5 text-center text-[10px] font-bold leading-4 text-on-secondary ring-2 ring-surface-container-lowest">
-            {unreadCount > 99 ? '99+' : unreadCount}
+          <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-secondary px-0.5 text-center text-body-sm font-bold leading-4 text-on-secondary ring-2 ring-surface-container-lowest">
+            {localize(unreadCount > 99 ? '99+' : unreadCount)}
           </span>
         )}
       </button>

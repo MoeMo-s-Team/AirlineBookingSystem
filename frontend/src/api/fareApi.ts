@@ -6,6 +6,9 @@
 import { apiClient } from './apiClient';
 
 export interface FareClassResponse {
+  baggage?: string | null;
+  seatPitch?: string | null;
+  meal?: string | null;
   id: number;
   code: string;
   name: string;
@@ -14,19 +17,37 @@ export interface FareClassResponse {
 }
 
 export interface FareClassRequest {
+  baggage?: string;
+  seatPitch?: string;
+  meal?: string;
   code: string;
   name: string;
   priceMultiplier: number;
   active?: boolean;
 }
 
+let activeFaresCache: Promise<FareClassResponse[]> | null = null;
+
 export const fareApi = {
   /**
    * Lấy danh sách tất cả các hạng vé đang mở bán (active = true)
-   * Sử dụng cho màn hình đặt vé của khách hàng
+   * Có bộ nhớ đệm (cache & request deduplication) giúp chỉ bắn đúng 1 request về backend
    */
-  getActiveFares: async (): Promise<FareClassResponse[]> => {
-    return apiClient.get<FareClassResponse[]>('/fares');
+  getActiveFares: async (forceRefresh = false): Promise<FareClassResponse[]> => {
+    if (!activeFaresCache || forceRefresh) {
+      activeFaresCache = apiClient.get<FareClassResponse[]>('/fares').catch(err => {
+        activeFaresCache = null;
+        throw err;
+      });
+    }
+    return activeFaresCache;
+  },
+
+  /**
+   * Xóa cache hạng vé (gọi khi Admin thay đổi dữ liệu)
+   */
+  invalidateCache: () => {
+    activeFaresCache = null;
   },
 
   /**
@@ -48,6 +69,7 @@ export const fareApi = {
    * Thêm mới một hạng vé (Admin)
    */
   createFare: async (data: FareClassRequest): Promise<FareClassResponse> => {
+    activeFaresCache = null;
     return apiClient.post<FareClassResponse>('/fares', data);
   },
 
@@ -55,6 +77,7 @@ export const fareApi = {
    * Cập nhật thông tin hoặc giá nhân của hạng vé (Admin)
    */
   updateFare: async (id: number, data: FareClassRequest): Promise<FareClassResponse> => {
+    activeFaresCache = null;
     return apiClient.put<FareClassResponse>(`/fares/${id}`, data);
   },
 
@@ -62,6 +85,7 @@ export const fareApi = {
    * Xóa hạng vé theo ID (Admin)
    */
   deleteFare: async (id: number): Promise<void> => {
+    activeFaresCache = null;
     return apiClient.delete<void>(`/fares/${id}`);
   },
 

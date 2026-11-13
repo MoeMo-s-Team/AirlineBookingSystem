@@ -1,5 +1,7 @@
+import { getLocale, localize, useLanguage } from '../../i18n/index';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminSidebar } from '../../components/layout/AdminSidebar';
+import { LanguageToggle } from '../../components/layout/LanguageToggle';
 import { FlightAdminForm } from '../../components/flight/FlightAdminForm';
 import { flightAdminApi, type FlightAdminInput } from '../../api/flightAdminApi';
 import type { FlightApiModel } from '../../api/flightApi';
@@ -13,9 +15,10 @@ const messageOf = (error: unknown) =>
   error instanceof Error ? error.message : 'Không thể kết nối với máy chủ.';
 
 const formatTime = (value: string) =>
-  new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+  new Intl.DateTimeFormat(getLocale(), { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
 
 export function AdminFlightsPage() {
+  useLanguage();
   const [flights, setFlights] = useState<FlightApiModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -130,88 +133,87 @@ export function AdminFlightsPage() {
   return (
     <div className={styles.page}>
       <div className={`${styles.sidebarShell} ${menuOpen ? styles.sidebarOpen : ''}`}><AdminSidebar /></div>
-      {menuOpen && <button type="button" className={styles.sidebarVeil} aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && <button type="button" className={styles.sidebarVeil} aria-label={localize("Close navigation")} onClick={() => setMenuOpen(false)} />}
       <div className={styles.content}>
         <header className={styles.topbar}>
-          <button type="button" className={styles.mobileMenu} aria-label="Open navigation" aria-expanded={menuOpen}
+          <button type="button" className={styles.mobileMenu} aria-label={localize("Open navigation")} aria-expanded={menuOpen}
             onClick={() => setMenuOpen(open => !open)}><span className="material-symbols-outlined" aria-hidden="true">menu</span></button>
           <div>
-            <p className={styles.eyebrow}>Operations / Flights</p>
-            <h1 className={styles.title}>Flight schedules</h1>
-            <p className={styles.subtitle}>Manage routes, departure times, fares and available seats.</p>
+            <p className={styles.eyebrow}>{localize("Operations / Flights")}</p>
+            <h1 className={styles.title}>{localize("Flight schedules")}</h1>
+            <p className={styles.subtitle}>{localize("Manage routes, departure times, fares and available seats.")}</p>
           </div>
           <div className={styles.headerActions}>
+            <LanguageToggle />
             <button type="button" className={styles.secondaryButton} onClick={() => void load()} disabled={loading}>
-              <span className={`material-symbols-outlined ${styles.icon}`} aria-hidden="true">refresh</span>Refresh
-            </button>
+              <span className={`material-symbols-outlined ${styles.icon}`} aria-hidden="true">refresh</span>{localize("Refresh ")}</button>
             <button type="button" className={styles.primaryButton} onClick={() => { setEditing(null); setActionError(null); setNotice(null); }}>
-              <span className={`material-symbols-outlined ${styles.icon}`} aria-hidden="true">add</span>Add flight
-            </button>
+              <span className={`material-symbols-outlined ${styles.icon}`} aria-hidden="true">add</span>{localize("Add flight ")}</button>
           </div>
         </header>
         <main className={styles.main}>
-          <section className={styles.summary} aria-label="Flight summary">
+          <section className={styles.summary} aria-label={localize("Flight summary")}>
             {[
               ['Total flights', flights.length],
               ['Upcoming flights', upcoming],
               ['Available seats', seats],
             ].map(([label, value]) => (
-              <div key={label} className={styles.stat}><span className={styles.statLabel}>{label}</span>
-                <span className={styles.statValue}>{Number(value).toLocaleString('vi-VN')}</span></div>
+              <div key={label} className={styles.stat}><span className={styles.statLabel}>{localize(label)}</span>
+                <span className={styles.statValue}>{localize(Number(value).toLocaleString(getLocale()))}</span></div>
             ))}
           </section>
-          {editing === undefined && actionError && <p role="alert" className={`${styles.feedback} ${styles.error}`}>{actionError}</p>}
-          {notice && <p role="status" className={styles.feedback}>{notice}</p>}
+          {editing === undefined && actionError && <p role="alert" className={`${styles.feedback} ${styles.error}`}>{localize(actionError)}</p>}
+          {notice && <p role="status" className={styles.feedback}>{localize(notice)}</p>}
           <section className={styles.panel} aria-labelledby="schedule-title">
             <div className={styles.panelHead}>
-              <div><h2 id="schedule-title" className={styles.panelTitle}>Schedule</h2>
-                <p className={styles.panelHint}>{filtered.length.toLocaleString('vi-VN')} of {flights.length.toLocaleString('vi-VN')} flights</p></div>
+              <div><h2 id="schedule-title" className={styles.panelTitle}>{localize("Schedule")}</h2>
+                <p className={styles.panelHint}>{localize(filtered.length.toLocaleString(getLocale()))}{localize(" of ")}{localize(flights.length.toLocaleString(getLocale()))}{localize(" flights")}</p></div>
             </div>
             <div className={styles.toolbar}>
               <label className={styles.searchBox}>
-                <span className="sr-only">Search flights by number or airport</span>
+                <span className="sr-only">{localize("Search flights by number or airport")}</span>
                 <span className={`material-symbols-outlined ${styles.searchIcon}`} aria-hidden="true">search</span>
-                <input className={styles.searchInput} type="search" value={search} placeholder="Flight number or airport code"
+                <input className={styles.searchInput} type="search" value={search} placeholder={localize("Flight number or airport code")}
                   onChange={event => { setSearch(event.target.value); setPage(1); }} />
               </label>
-              <div className={styles.segments} role="group" aria-label="Filter flights by departure">
+              <div className={styles.segments} role="group" aria-label={localize("Filter flights by departure")}>
                 {([['all', 'All'], ['upcoming', 'Upcoming'], ['past', 'Past']] as const).map(([value, label]) => (
                   <button key={value} type="button" className={`${styles.segment} ${filter === value ? styles.segmentActive : ''}`}
-                    aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(1); }}>{label}</button>
+                    aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(1); }}>{localize(label)}</button>
                 ))}
               </div>
             </div>
-            {loadError && <p role="alert" className={`${styles.feedback} ${styles.error}`}>Failed to load flights: {loadError}</p>}
-            {loading ? <p role="status" className={styles.feedback}>Loading flights…</p>
+            {loadError && <p role="alert" className={`${styles.feedback} ${styles.error}`}>{localize("Failed to load flights: ")}{localize(loadError)}</p>}
+            {loading ? <p role="status" className={styles.feedback}>{localize("Loading flights…")}</p>
               : !loadError && filtered.length === 0
-                ? <div className={styles.empty}><strong>{flights.length === 0 ? 'No flights yet' : 'No matching flights'}</strong>
-                  <span>{flights.length === 0 ? 'Add the first flight to build your schedule.' : 'Try another flight number, airport or departure filter.'}</span></div>
+                ? <div className={styles.empty}><strong>{localize(flights.length === 0 ? 'No flights yet' : 'No matching flights')}</strong>
+                  <span>{localize(flights.length === 0 ? 'Add the first flight to build your schedule.' : 'Try another flight number, airport or departure filter.')}</span></div>
                 : !loadError && <>
                   <div className={styles.tableWrap}><table className={styles.table}>
-                    <thead><tr><th>Flight</th><th>Route</th><th>Departure</th><th>Arrival</th><th>Base fare</th><th>Seats</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>{localize("Flight")}</th><th>{localize("Route")}</th><th>{localize("Departure")}</th><th>{localize("Arrival")}</th><th>{localize("Base fare")}</th><th>{localize("Seats")}</th><th>{localize("Actions")}</th></tr></thead>
                     <tbody>{visible.map(flight => (
                       <tr key={flight.id}>
-                        <td data-label="Flight"><span className={styles.flightCode}>{flight.flightNumber}</span></td>
-                        <td data-label="Route"><span className={styles.route}>{flight.origin} → {flight.destination}</span></td>
-                        <td data-label="Departure"><span className={styles.time}>{formatTime(flight.departureTime)}</span></td>
-                        <td data-label="Arrival"><span className={styles.time}>{formatTime(flight.arrivalTime)}</span></td>
-                        <td data-label="Base fare"><span className={styles.money}>{formatCurrency(flight.basePrice)}</span></td>
-                        <td data-label="Seats"><span className={styles.number}>{flight.availableSeats}</span></td>
+                        <td data-label="Flight"><span className={styles.flightCode}>{localize(flight.flightNumber)}</span></td>
+                        <td data-label="Route"><span className={styles.route}>{localize(flight.origin)} → {localize(flight.destination)}</span></td>
+                        <td data-label="Departure"><span className={styles.time}>{localize(formatTime(flight.departureTime))}</span></td>
+                        <td data-label="Arrival"><span className={styles.time}>{localize(formatTime(flight.arrivalTime))}</span></td>
+                        <td data-label="Base fare"><span className={styles.money}>{localize(formatCurrency(flight.basePrice))}</span></td>
+                        <td data-label="Seats"><span className={styles.number}>{localize(flight.availableSeats)}</span></td>
                         <td data-label="Actions"><div className={styles.rowActions}>
                           <button type="button" className={styles.textButton}
-                            onClick={() => { setEditing(flight); setActionError(null); setNotice(null); }}>Edit</button>
+                            onClick={() => { setEditing(flight); setActionError(null); setNotice(null); }}>{localize("Edit")}</button>
                           <button type="button" className={`${styles.textButton} ${styles.dangerButton}`}
-                            onClick={() => { setDeleting(flight); setActionError(null); setNotice(null); }} aria-label={`Delete ${flight.flightNumber}`}>Delete</button>
+                            onClick={() => { setDeleting(flight); setActionError(null); setNotice(null); }} aria-label={localize(`Delete ${flight.flightNumber}`)}>{localize("Delete")}</button>
                         </div></td>
                       </tr>
                     ))}</tbody>
                   </table></div>
                   <div className={styles.pager}>
-                    <span>Showing <strong>{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)}</strong> of <strong>{filtered.length}</strong></span>
+                    <span>{localize("Showing ")}<strong>{localize((currentPage - 1) * pageSize + 1)}–{localize(Math.min(currentPage * pageSize, filtered.length))}</strong>{localize(" of ")}<strong>{localize(filtered.length)}</strong></span>
                     <div className={styles.pagerActions}>
-                      <button type="button" className={styles.secondaryButton} disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</button>
-                      <span>Page {currentPage} of {pageCount}</span>
-                      <button type="button" className={styles.secondaryButton} disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>Next</button>
+                      <button type="button" className={styles.secondaryButton} disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>{localize("Previous")}</button>
+                      <span>{localize("Page ")}{localize(currentPage)}{localize(" of ")}{localize(pageCount)}</span>
+                      <button type="button" className={styles.secondaryButton} disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>{localize("Next")}</button>
                     </div>
                   </div>
                 </>}
@@ -219,21 +221,21 @@ export function AdminFlightsPage() {
         </main>
       </div>
       {editing !== undefined && <>
-        <button type="button" className={styles.backdrop} aria-label="Close flight form" onClick={() => { if (!saving) setEditing(undefined); }} />
-        <div className={styles.drawer} role="dialog" aria-modal="true" aria-label={editing ? `Edit ${editing.flightNumber}` : 'Add a flight'}>
+        <button type="button" className={styles.backdrop} aria-label={localize("Close flight form")} onClick={() => { if (!saving) setEditing(undefined); }} />
+        <div className={styles.drawer} role="dialog" aria-modal="true" aria-label={localize(editing ? `Edit ${editing.flightNumber}` : 'Add a flight')}>
           <FlightAdminForm key={editing?.id ?? 'new'} flight={editing} saving={saving} error={actionError}
             onSave={input => void save(input)} onCancel={() => { if (!saving) { setEditing(undefined); setActionError(null); } }} />
         </div>
       </>}
       {deleting && <>
-        <button type="button" className={styles.backdrop} aria-label="Cancel delete" onClick={() => { if (!deletingBusy) setDeleting(null); }} />
-        <div className={styles.confirm} role="alertdialog" aria-modal="true" aria-label={`Delete ${deleting.flightNumber}`}>
-          <h2>Delete {deleting.flightNumber}?</h2>
-          <p>This removes the flight from the schedule. Please confirm before continuing.</p>
-          {actionError && <p role="alert" className={styles.error}>{actionError}</p>}
+        <button type="button" className={styles.backdrop} aria-label={localize("Cancel delete")} onClick={() => { if (!deletingBusy) setDeleting(null); }} />
+        <div className={styles.confirm} role="alertdialog" aria-modal="true" aria-label={localize(`Delete ${deleting.flightNumber}`)}>
+          <h2>{localize("Delete ")}{localize(deleting.flightNumber)}?</h2>
+          <p>{localize("This removes the flight from the schedule. Please confirm before continuing.")}</p>
+          {actionError && <p role="alert" className={styles.error}>{localize(actionError)}</p>}
           <div className={styles.confirmActions}>
-            <button type="button" className={styles.secondaryButton} disabled={deletingBusy} onClick={() => setDeleting(null)}>Cancel</button>
-            <button type="button" className={styles.deleteButton} disabled={deletingBusy} onClick={() => void remove()}>{deletingBusy ? 'Deleting…' : 'Delete flight'}</button>
+            <button type="button" className={styles.secondaryButton} disabled={deletingBusy} onClick={() => setDeleting(null)}>{localize("Cancel")}</button>
+            <button type="button" className={styles.deleteButton} disabled={deletingBusy} onClick={() => void remove()}>{localize(deletingBusy ? 'Deleting…' : 'Delete flight')}</button>
           </div>
         </div>
       </>}

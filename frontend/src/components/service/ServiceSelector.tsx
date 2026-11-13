@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React, { useEffect, useState, useCallback } from 'react';
 import { serviceApi, ServiceResponse } from '../../api/serviceApi';
 import type { AncillaryService } from '../../types';
@@ -7,12 +8,15 @@ import { ServiceCard } from './ServiceCard';
 export interface ServiceSelectorProps {
   readonly selectedServices: readonly (BookingSelectedService | AncillaryService)[];
   readonly onToggleService: (service: any) => void;
+  readonly onUpdateQuantity?: (serviceId: number, quantity: number) => void;
 }
 
 export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
   selectedServices,
   onToggleService,
+  onUpdateQuantity,
 }) => {
+  useLanguage();
   const [services, setServices] = useState<AncillaryService[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +27,12 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
     try {
       const data: ServiceResponse[] = await serviceApi.getActiveServices();
 
+      // Chỉ lấy các dịch vụ đang active
+      const activeData = (data || []).filter(item => item.active !== false);
+
       // Ánh xạ ServiceResponse từ Backend sang AncillaryService của Frontend
-      const mappedServices: AncillaryService[] = data.map(item => {
-        const meta = serviceApi.getTypeMeta(item.type);
+      const mappedServices: AncillaryService[] = activeData.map(item => {
+        const meta = serviceApi.getTypeMeta ? serviceApi.getTypeMeta(item.type) : { label: item.type, icon: 'room_service', color: 'gray' };
         const categoryMap: Record<string, AncillaryService['category']> = {
           BAGGAGE: 'baggage',
           MEAL: 'meal',
@@ -96,11 +103,9 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
         <div className="w-14 h-14 rounded-full bg-error/10 text-error flex items-center justify-center mx-auto mb-4">
           <span className="material-symbols-outlined text-[32px]">warning</span>
         </div>
-        <h3 className="text-headline-sm font-bold text-error mb-2">
-          Không thể tải dịch vụ bổ trợ
-        </h3>
+        <h3 className="text-headline-sm font-bold text-error mb-2">{localize("Không thể tải dịch vụ bổ trợ ")}</h3>
         <p className="text-body-sm text-on-surface-variant max-w-md mx-auto mb-6">
-          {error}
+          {localize(error)}
         </p>
         <button
           type="button"
@@ -108,7 +113,7 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
           className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-label-md transition-all shadow-sm flex items-center gap-2 mx-auto"
         >
           <span className="material-symbols-outlined text-[18px]">refresh</span>
-          <span>Thử lại</span>
+          <span>{localize("Thử lại")}</span>
         </button>
       </div>
     );
@@ -121,12 +126,8 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
         <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-outline mx-auto mb-3">
           <span className="material-symbols-outlined text-[28px]">info</span>
         </div>
-        <h4 className="text-headline-sm font-bold text-primary mb-1">
-          Chưa có dịch vụ bổ trợ khả dụng
-        </h4>
-        <p className="text-body-sm text-on-surface-variant max-w-md mx-auto">
-          Hiện tại chuyến bay này chưa có dịch vụ bổ trợ nào khả dụng. Quý khách có thể tiếp tục sang bước thanh toán.
-        </p>
+        <h4 className="text-headline-sm font-bold text-primary mb-1">{localize("Chưa có dịch vụ bổ trợ khả dụng ")}</h4>
+        <p className="text-body-sm text-on-surface-variant max-w-md mx-auto">{localize("Hiện tại chuyến bay này chưa có dịch vụ bổ trợ nào khả dụng. Quý khách có thể tiếp tục sang bước thanh toán. ")}</p>
       </div>
     );
   }
@@ -134,14 +135,22 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
   // 4. Trạng thái Thành công - Hiển thị danh sách dịch vụ thật từ Supabase
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {services.map(service => (
-        <ServiceCard
-          key={service.id}
-          service={service}
-          isSelected={selectedServices.some(s => String(s.id) === String(service.id))}
-          onToggle={onToggleService}
-        />
-      ))}
+      {services.map(service => {
+        const selected = selectedServices.find(s => String(s.id) === String(service.id));
+        const isSelected = Boolean(selected);
+        const quantity = (selected as any)?.quantity || 1;
+
+        return (
+          <ServiceCard
+            key={service.id}
+            service={service}
+            isSelected={isSelected}
+            quantity={quantity}
+            onToggle={onToggleService}
+            onQuantityChange={onUpdateQuantity}
+          />
+        );
+      })}
     </div>
   );
 };

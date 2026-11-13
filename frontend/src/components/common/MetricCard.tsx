@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 
 export interface MetricCardProps {
@@ -15,18 +16,19 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   icon,
   trend = 'positive'
 }) => {
+  useLanguage();
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm hover:shadow transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <span className="text-label-md text-on-surface-variant font-medium uppercase tracking-wider">
-          {title}
+          {localize(title)}
         </span>
         <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary">
           <span className="material-symbols-outlined text-[20px]">{icon}</span>
         </div>
       </div>
       <div className="text-headline-md font-bold text-primary tracking-tight">
-        {value}
+        {localize(value)}
       </div>
       {changeText && (
         <div className="flex items-center gap-1 mt-2 text-label-sm">
@@ -39,7 +41,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 : 'text-outline'
             }`}
           >
-            {changeText}
+            {localize(changeText)}
           </span>
         </div>
       )}

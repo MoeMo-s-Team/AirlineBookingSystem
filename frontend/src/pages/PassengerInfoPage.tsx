@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../i18n/index';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -12,6 +13,7 @@ export interface PassengerInfoPageProps {
 }
 
 export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
+  useLanguage();
   const navigate = useNavigate();
   const {
     searchParams,
@@ -75,29 +77,29 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
               className="text-label-md font-semibold text-primary hover:text-secondary flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              <span>Back to Flights</span>
+              <span>{localize("Back to Flights")}</span>
             </Link>
 
             {/* Stepper Navigation */}
             <div className="flex items-center gap-2 sm:gap-6 text-label-md">
               <div className="flex items-center gap-1.5 text-secondary">
                 <span className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center text-xs font-bold">✓</span>
-                <span className="hidden sm:inline font-semibold">1. Flight</span>
+                <span className="hidden sm:inline font-semibold">{localize("1. Flight")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-primary font-bold">
                 <span className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs">2</span>
-                <span>2. Passenger</span>
+                <span>{localize("2. Passenger")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-outline">
                 <span className="w-6 h-6 rounded-full bg-surface-container text-outline flex items-center justify-center text-xs">3</span>
-                <span className="hidden sm:inline">3. Services</span>
+                <span className="hidden sm:inline">{localize("3. Services")}</span>
               </div>
               <span className="text-outline-variant">›</span>
               <div className="flex items-center gap-1.5 text-outline">
                 <span className="w-6 h-6 rounded-full bg-surface-container text-outline flex items-center justify-center text-xs">4</span>
-                <span className="hidden sm:inline">4. Payment</span>
+                <span className="hidden sm:inline">{localize("4. Payment")}</span>
               </div>
             </div>
           </div>
@@ -109,12 +111,8 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
             {/* Form Column */}
             <div className="lg:col-span-8 space-y-6">
               <div>
-                <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-                  Passenger Information
-                </h1>
-                <p className="text-body-md text-on-surface-variant mt-1">
-                  Enter legal passenger names as displayed on government passports or travel IDs.
-                </p>
+                <h1 className="text-headline-lg font-bold text-primary tracking-tight">{localize("Passenger Information ")}</h1>
+                <p className="text-body-md text-on-surface-variant mt-1">{localize("Enter legal passenger names as displayed on government passports or travel IDs. ")}</p>
               </div>
 
               {/* Validation Error Banner */}
@@ -122,10 +120,8 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
                 <div className="bg-error-container border border-error/30 rounded-xl p-4 flex items-start gap-3">
                   <span className="material-symbols-outlined text-error text-xl mt-0.5">error</span>
                   <div>
-                    <p className="text-error font-semibold">Please complete all required passenger information</p>
-                    <p className="text-error/70 text-body-sm mt-1">
-                      All fields marked with * are required. Please fill in all passenger details before continuing.
-                    </p>
+                    <p className="text-error font-semibold">{localize("Please complete all required passenger information")}</p>
+                    <p className="text-error/70 text-body-sm mt-1">{localize("All fields marked with * are required. Please fill in all passenger details before continuing. ")}</p>
                   </div>
                 </div>
               )}
@@ -148,7 +144,7 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
                 fareClass={selectedFareClass}
                 passengerCount={passengerCount}
                 selectedServices={selectedServices}
-                ctaLabel="Proceed to Services"
+                ctaLabel={localize("Proceed to Services")}
                 onCtaClick={handleContinue}
               />
             </div>

@@ -25,6 +25,16 @@ public class FareClassRequest {
     @Size(max = 100, message = "Tên hạng vé tối đa 100 ký tự")
     private String name;
 
+    @Size(max = 255)
+    private String baggage;
+
+    @Size(max = 255)
+    private String seatPitch;
+
+    @Size(max = 255)
+    private String meal;
+
+
     @NotNull(message = "Hệ số nhân giá không được để trống")
     @DecimalMin(value = "0.01", message = "Hệ số nhân giá phải lớn hơn 0")
     private BigDecimal priceMultiplier;

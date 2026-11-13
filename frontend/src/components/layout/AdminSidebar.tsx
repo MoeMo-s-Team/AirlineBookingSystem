@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -7,6 +8,7 @@ export interface AdminSidebarProps {
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = () => {
+  useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -32,20 +34,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = () => {
             <span className="material-symbols-outlined text-[18px]">flight_takeoff</span>
           </div>
           <div>
-            <span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold block leading-none">
-              SkyWing
-            </span>
-            <span className="text-[10px] font-semibold text-secondary uppercase tracking-widest">
-              Ops Console
-            </span>
+            <span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold block leading-none">{localize("SkyWing ")}</span>
+            <span className="text-body-sm font-semibold text-secondary uppercase tracking-widest">{localize("Ops Console ")}</span>
           </div>
         </div>
 
         {/* Navigation Section */}
         <div className="p-4 space-y-1">
-          <div className="px-3 py-2 text-label-sm text-outline uppercase tracking-wider font-semibold">
-            Operational Modules
-          </div>
+          <div className="px-3 py-2 text-label-sm text-outline uppercase tracking-wider font-semibold">{localize("Operational Modules ")}</div>
           {menuItems.map(item => {
             const isActive = location.pathname === item.path;
             return (
@@ -59,7 +55,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                 }`}
               >
                 <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                <span>{item.label}</span>
+                <span>{localize(item.label)}</span>
               </Link>
             );
           })}
@@ -69,15 +65,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = () => {
       {/* Admin Session & Sign Out Footer */}
       <div className="p-4 border-t border-outline-variant bg-surface-container-lowest space-y-3">
         <div className="flex items-center gap-2 px-1">
-          <div className="w-7 h-7 rounded-full bg-secondary text-on-secondary text-[11px] font-bold flex items-center justify-center">
-            AD
-          </div>
-          <div className="truncate">
-            <span className="text-label-sm font-bold text-primary block leading-tight truncate">
-              {user?.fullName || user?.name || 'Administrator'}
+          <div className="w-7 h-7 rounded-full bg-secondary text-on-secondary text-body-sm font-bold flex items-center justify-center">{localize("AD ")}</div>
+          <div className="min-w-0 flex-1">
+            <span className="text-label-lg font-semibold text-primary block truncate" title={localize(user?.fullName || user?.name || 'Administrator')}>
+              {localize(user?.fullName || user?.name || 'Administrator')}
             </span>
-            <span className="text-[10px] text-on-surface-variant font-mono">
-              Role: System Dispatcher
+            <span className="text-body-sm text-on-surface-variant block">
+              {localize(user?.email || 'Administrator')}
             </span>
           </div>
         </div>
@@ -88,7 +82,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = () => {
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-label-sm font-semibold text-error border border-error/30 hover:bg-error-container/20 transition-colors"
         >
           <span className="material-symbols-outlined text-[16px]">logout</span>
-          <span>Sign Out Console</span>
+          <span>{localize("Sign Out Console")}</span>
         </button>
       </div>
     </aside>
