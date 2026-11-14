@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { FlightSearchParams } from '../../types';
 import { AIRPORTS } from '../../data/mockData';
@@ -16,6 +17,7 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
   onSearch,
   error
 }) => {
+  useLanguage();
   const handleSwapAirports = () => {
     onChange({
       ...searchParams,
@@ -32,27 +34,25 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
         <div className="lg:col-span-3 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
           <div className="flex items-center justify-between mb-1">
             <span className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold">
-              <span className="material-symbols-outlined text-[16px] text-secondary">flight_takeoff</span>
-              From
-            </span>
+              <span className="material-symbols-outlined text-[16px] text-secondary">flight_takeoff</span>{localize("From ")}</span>
             <span className="px-1.5 py-0.5 rounded bg-surface-container text-primary text-label-sm font-bold">
-              {searchParams.origin}
+              {localize(searchParams.origin)}
             </span>
           </div>
           <select
-            aria-label="Origin airport"
+            aria-label={localize("Origin airport")}
             value={searchParams.origin}
             onChange={e => onChange({ ...searchParams, origin: e.target.value })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
           >
             {AIRPORTS.map(airport => (
               <option key={airport.code} value={airport.code} className="text-body-md text-on-surface">
-                {airport.city} ({airport.code})
+                {localize(airport.city)} ({localize(airport.code)})
               </option>
             ))}
           </select>
           <div className="text-label-sm text-on-surface-variant truncate mt-0.5">
-            {AIRPORTS.find(a => a.code === searchParams.origin)?.name}
+            {localize(AIRPORTS.find(a => a.code === searchParams.origin)?.name)}
           </div>
         </div>
 
@@ -62,7 +62,7 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
             type="button"
             onClick={handleSwapAirports}
             className="w-10 h-10 rounded-full bg-surface-container hover:bg-primary hover:text-on-primary text-primary border border-outline-variant flex items-center justify-center transition-all shadow-sm"
-            title="Swap Origin and Destination"
+            title={localize("Swap Origin and Destination")}
           >
             <span className="material-symbols-outlined text-[18px]">swap_horiz</span>
           </button>
@@ -72,94 +72,84 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
         <div className="lg:col-span-3 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
           <div className="flex items-center justify-between mb-1">
             <span className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold">
-              <span className="material-symbols-outlined text-[16px] text-secondary">flight_land</span>
-              To
-            </span>
+              <span className="material-symbols-outlined text-[16px] text-secondary">flight_land</span>{localize("To ")}</span>
             <span className="px-1.5 py-0.5 rounded bg-surface-container text-primary text-label-sm font-bold">
-              {searchParams.destination}
+              {localize(searchParams.destination)}
             </span>
           </div>
           <select
-            aria-label="Destination airport"
+            aria-label={localize("Destination airport")}
             value={searchParams.destination}
             onChange={e => onChange({ ...searchParams, destination: e.target.value })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
           >
             {AIRPORTS.map(airport => (
               <option key={airport.code} value={airport.code} className="text-body-md text-on-surface">
-                {airport.city} ({airport.code})
+                {localize(airport.city)} ({localize(airport.code)})
               </option>
             ))}
           </select>
           <div className="text-label-sm text-on-surface-variant truncate mt-0.5">
-            {AIRPORTS.find(a => a.code === searchParams.destination)?.name}
+            {localize(AIRPORTS.find(a => a.code === searchParams.destination)?.name)}
           </div>
         </div>
 
         {/* Dates Field */}
         <div className="lg:col-span-5 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
           <div className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold mb-1">
-            <span className="material-symbols-outlined text-[16px] text-secondary">calendar_today</span>
-            Departure Date
-          </div>
+            <span className="material-symbols-outlined text-[16px] text-secondary">calendar_today</span>{localize("Departure Date ")}</div>
           <input
             type="date"
-            aria-label="Departure Date"
+            aria-label={localize("Departure Date")}
             min={localToday()}
             value={searchParams.departureDate}
             onChange={e => onChange({ ...searchParams, departureDate: e.target.value })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
           />
-          <div className="text-label-sm text-on-surface-variant mt-0.5">
-            One way flight
-          </div>
+          <div className="text-label-sm text-on-surface-variant mt-0.5">{localize("One way flight ")}</div>
         </div>
 
         {/* Cabin Class Field */}
         <div className="lg:col-span-3 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
           <div className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold mb-1">
-            <span className="material-symbols-outlined text-[16px] text-secondary">airline_seat_recline_extra</span>
-            Cabin Class
-          </div>
+            <span className="material-symbols-outlined text-[16px] text-secondary">airline_seat_recline_extra</span>{localize("Cabin Class ")}</div>
           <select
             value={searchParams.cabinClass}
             onChange={e => onChange({ ...searchParams, cabinClass: e.target.value as any })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
           >
-            <option value="Economy">Economy</option>
-            <option value="Premium Economy">Premium Eco</option>
-            <option value="Business">Business</option>
+            <option value="Economy">{localize("Economy")}</option>
+            <option value="Premium Economy">{localize("Premium Eco")}</option>
+            <option value="Business">{localize("Business")}</option>
           </select>
         </div>
 
         {/* Passengers Field */}
         <div className="lg:col-span-3 bg-surface-container-low/70 hover:bg-surface-container-low transition-colors rounded-xl p-4 border border-outline-variant/60">
           <div className="text-label-sm text-outline uppercase tracking-wider flex items-center gap-1 font-semibold mb-1">
-            <span className="material-symbols-outlined text-[16px] text-secondary">group</span>
-            Passengers
-          </div>
+            <span className="material-symbols-outlined text-[16px] text-secondary">group</span>{localize("Passengers ")}</div>
           <div className="flex items-center justify-between gap-3">
             <span className="text-label-sm text-on-surface-variant">
-              {searchParams.passengers === 1 ? 'Adult' : 'Adults'}
+              {localize(searchParams.passengers === 1 ? 'Adult' : 'Adults')}
             </span>
-            <div className="flex items-center gap-2" role="group" aria-label="Number of adult passengers">
+            <div className="flex items-center gap-2" role="group" aria-label={localize("Number of adult passengers")}>
               <button
                 type="button"
                 onClick={() => onChange({ ...searchParams, passengers: Math.max(1, searchParams.passengers - 1) })}
                 disabled={searchParams.passengers <= 1}
-                aria-label="Decrease passengers"
+                aria-label={localize("Decrease passengers")}
                 className="w-9 h-9 rounded-lg border border-outline-variant text-primary hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="material-symbols-outlined text-[18px]">remove</span>
               </button>
               <output aria-live="polite" aria-atomic="true" className="min-w-6 text-center text-label-lg font-bold text-primary">
-                {searchParams.passengers}
+                {localize(searchParams.passengers)}
               </output>
               <button
                 type="button"
                 onClick={() => onChange({ ...searchParams, passengers: Math.min(9, searchParams.passengers + 1) })}
                 disabled={searchParams.passengers >= 9}
-                aria-label="Increase passengers"
+                aria-label={localize("Increase passengers")}
                 className="w-9 h-9 rounded-lg border border-outline-variant text-primary hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="material-symbols-outlined text-[18px]">add</span>
@@ -169,13 +159,13 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
         </div>
       </div>
 
-      {error && <p role="alert" className="mt-4 text-body-sm font-semibold text-error">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-body-sm font-semibold text-error">{localize(error)}</p>}
 
       {/* CTA Button */}
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-outline-variant">
         <div className="flex items-center gap-2 text-label-md text-on-surface-variant">
           <span className="material-symbols-outlined text-[18px] text-secondary">verified</span>
-          <span>Zero booking fee guarantee & 24h risk-free cancellation</span>
+          <span>{localize("Zero booking fee guarantee & 24h risk-free cancellation")}</span>
         </div>
         <button
           type="button"
@@ -183,7 +173,7 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
           className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
         >
           <span className="material-symbols-outlined text-[20px]">search</span>
-          <span>Search SkyWing Flights</span>
+          <span>{localize("Search SkyWing Flights")}</span>
         </button>
       </div>
     </div>

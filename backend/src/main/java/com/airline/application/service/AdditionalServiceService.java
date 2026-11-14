@@ -2,6 +2,7 @@ package com.airline.application.service;
 
 import com.airline.domain.entity.AdditionalService;
 import com.airline.domain.enums.ServiceType;
+import com.airline.domain.repository.BookingRepository;
 import com.airline.domain.repository.ServiceRepository;
 import com.airline.presentation.dto.request.ServiceRequest;
 import com.airline.presentation.dto.response.ServiceResponse;
@@ -18,6 +19,7 @@ import java.util.List;
 public class AdditionalServiceService {
 
     private final ServiceRepository serviceRepository;
+    private final BookingRepository bookingRepository;
 
     /**
      * Lấy danh sách tất cả các dịch vụ đi kèm đang hoạt động (active = true)
@@ -112,6 +114,9 @@ public class AdditionalServiceService {
     public void deleteService(Long id) {
         if (!serviceRepository.existsById(id)) {
             throw new ResourceNotFoundException("Không tìm thấy dịch vụ với ID: " + id);
+        }
+        if (bookingRepository.existsByServiceId(id)) {
+            throw new IllegalStateException("Không thể xóa dịch vụ này vì đã có đơn đặt vé sử dụng. Vui lòng chuyển trạng thái sang Tạm ẩn (Inactive).");
         }
         serviceRepository.deleteById(id);
     }

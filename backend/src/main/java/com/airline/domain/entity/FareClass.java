@@ -25,6 +25,13 @@ public class FareClass {
     @Column(nullable = false, length = 100)
     private String name;
 
+    private String baggage;
+
+    @Column(name = "seat_pitch")
+    private String seatPitch;
+
+    private String meal;
+
     @Column(name = "price_multiplier", nullable = false, precision = 5, scale = 2)
     private BigDecimal priceMultiplier;
 

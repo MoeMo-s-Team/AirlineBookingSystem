@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../i18n/index';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { NotificationModel } from '../api/notificationApi';
@@ -11,6 +12,7 @@ const PAGE_SIZE = 20;
 type Filter = 'all' | 'unread';
 
 export const NotificationListPage: React.FC = () => {
+  useLanguage();
   const { isAuthenticated, user } = useAuth();
   const { listPage, markRead, markAllRead, refresh, unreadCount } = useNotifications();
   const [filter, setFilter] = useState<Filter>('all');
@@ -100,53 +102,51 @@ export const NotificationListPage: React.FC = () => {
       <main className="flex-1 pt-16">
         <section className="border-b border-outline-variant bg-surface-container-low px-6 py-8 lg:px-12">
           <div className="mx-auto max-w-7xl">
-            <p className="text-label-sm font-bold uppercase tracking-widest text-secondary">Your journey</p>
-            <h1 className="mt-1 text-headline-lg font-bold text-primary">Notifications</h1>
-            <p className="mt-1 text-body-md text-on-surface-variant">Updates about your bookings and payments, in one place.</p>
+            <p className="text-label-sm font-bold uppercase tracking-widest text-secondary">{localize("Your journey")}</p>
+            <h1 className="mt-1 text-headline-lg font-bold text-primary">{localize("Notifications")}</h1>
+            <p className="mt-1 text-body-md text-on-surface-variant">{localize("Updates about your bookings and payments, in one place.")}</p>
           </div>
         </section>
 
         <section className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-12">
           {!isAuthenticated ? (
             <div className="max-w-2xl rounded-xl border border-outline-variant bg-surface-container-lowest p-6">
-              <h2 className="text-headline-sm font-semibold text-primary">Sign in to view notifications</h2>
-              <p className="mt-2 text-body-md text-on-surface-variant">Your booking updates are linked to your SkyWing account.</p>
-              <Link to="/sign-in" className="mt-5 inline-flex rounded-lg bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary hover:bg-primary-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary">
-                Sign in
-              </Link>
+              <h2 className="text-headline-sm font-semibold text-primary">{localize("Sign in to view notifications")}</h2>
+              <p className="mt-2 text-body-md text-on-surface-variant">{localize("Your booking updates are linked to your SkyWing account.")}</p>
+              <Link to="/sign-in" className="mt-5 inline-flex rounded-lg bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary hover:bg-primary-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary">{localize("Sign in ")}</Link>
             </div>
           ) : (
             <div className="max-w-3xl">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div role="group" aria-label="Filter notifications" className="inline-flex gap-1 rounded-lg border border-outline-variant bg-surface-container-lowest p-1">
-                    <button type="button" aria-pressed={filter === 'all'} onClick={() => changeFilter('all')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'all' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>All</button>
-                    <button type="button" aria-pressed={filter === 'unread'} onClick={() => changeFilter('unread')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'unread' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>Unread</button>
+                  <div role="group" aria-label={localize("Filter notifications")} className="inline-flex gap-1 rounded-lg border border-outline-variant bg-surface-container-lowest p-1">
+                    <button type="button" aria-pressed={filter === 'all'} onClick={() => changeFilter('all')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'all' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>{localize("All")}</button>
+                    <button type="button" aria-pressed={filter === 'unread'} onClick={() => changeFilter('unread')} className={`rounded-lg px-4 py-2 text-label-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary ${filter === 'unread' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>{localize("Unread")}</button>
                   </div>
-                  <button type="button" onClick={() => { setReloadKey(value => value + 1); void refresh(); }} disabled={loading} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-secondary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">Refresh</button>
-                  <button type="button" onClick={() => { void handleMarkAllRead(); }} disabled={loading || markingAll || (unreadCount === 0 && !visibleItems.some(item => !item.isRead))} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-secondary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">{markingAll ? 'Updating...' : 'Mark all as read'}</button>
+                  <button type="button" onClick={() => { setReloadKey(value => value + 1); void refresh(); }} disabled={loading} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-secondary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">{localize("Refresh")}</button>
+                  <button type="button" onClick={() => { void handleMarkAllRead(); }} disabled={loading || markingAll || (unreadCount === 0 && !visibleItems.some(item => !item.isRead))} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-secondary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">{localize(markingAll ? 'Updating...' : 'Mark all as read')}</button>
                 </div>
-                {!unavailable && !error && !loading && <span className="text-label-md text-on-surface-variant">{visibleTotal} {visibleTotal === 1 ? 'notification' : 'notifications'}</span>}
+                {!unavailable && !error && !loading && <span className="text-label-md text-on-surface-variant">{localize(visibleTotal)} {localize(visibleTotal === 1 ? 'notification' : 'notifications')}</span>}
               </div>
 
               <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest" aria-live="polite">
                 {loading && (
-                  <div role="status" aria-label="Loading notifications" className="space-y-3 p-5">
+                  <div role="status" aria-label={localize("Loading notifications")} className="space-y-3 p-5">
                     {[1, 2, 3].map(row => <div key={row} className="h-20 animate-pulse rounded-lg bg-surface-container" />)}
                   </div>
                 )}
-                {!loading && unavailable && <p className="p-6 text-body-md text-on-surface-variant">Your session is unavailable. Sign in again to view notifications.</p>}
+                {!loading && unavailable && <p className="p-6 text-body-md text-on-surface-variant">{localize("Your session is unavailable. Sign in again to view notifications.")}</p>}
                 {!loading && error && !unavailable && (
                   <div role="alert" className="p-6 text-body-md text-error">
-                    <p>{error}</p>
-                    <button type="button" onClick={() => setReloadKey(value => value + 1)} className="mt-3 font-semibold underline">Try again</button>
+                    <p>{localize(error)}</p>
+                    <button type="button" onClick={() => setReloadKey(value => value + 1)} className="mt-3 font-semibold underline">{localize("Try again")}</button>
                   </div>
                 )}
                 {!loading && !error && visibleItems.length === 0 && (
                   <div className="px-6 py-12 text-center">
                     <span aria-hidden="true" className="material-symbols-outlined text-[30px] text-secondary">notifications_none</span>
-                    <h2 className="mt-2 text-headline-sm font-semibold text-primary">{filter === 'unread' ? 'No unread notifications' : "You're all caught up"}</h2>
-                    <p className="mt-1 text-body-sm text-on-surface-variant">Booking updates will appear here when they are available.</p>
+                    <h2 className="mt-2 text-headline-sm font-semibold text-primary">{localize(filter === 'unread' ? 'No unread notifications' : "You're all caught up")}</h2>
+                    <p className="mt-1 text-body-sm text-on-surface-variant">{localize("Booking updates will appear here when they are available.")}</p>
                   </div>
                 )}
                 {!loading && !error && visibleItems.map(item => (
@@ -155,10 +155,10 @@ export const NotificationListPage: React.FC = () => {
               </div>
 
               {!loading && !error && visibleTotal > PAGE_SIZE && (
-                <nav aria-label="Notification pages" className="mt-5 flex items-center justify-between gap-3">
-                  <button type="button" disabled={offset === 0} onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">Previous</button>
-                  <span className="text-label-md text-on-surface-variant">{offset + 1}–{Math.min(offset + PAGE_SIZE, visibleTotal)} of {visibleTotal}</span>
-                  <button type="button" disabled={offset + PAGE_SIZE >= visibleTotal} onClick={() => setOffset(value => value + PAGE_SIZE)} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">Next</button>
+                <nav aria-label={localize("Notification pages")} className="mt-5 flex items-center justify-between gap-3">
+                  <button type="button" disabled={offset === 0} onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">{localize("Previous")}</button>
+                  <span className="text-label-md text-on-surface-variant">{localize(offset + 1)}–{localize(Math.min(offset + PAGE_SIZE, visibleTotal))}{localize(" of ")}{localize(visibleTotal)}</span>
+                  <button type="button" disabled={offset + PAGE_SIZE >= visibleTotal} onClick={() => setOffset(value => value + PAGE_SIZE)} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50">{localize("Next")}</button>
                 </nav>
               )}
             </div>

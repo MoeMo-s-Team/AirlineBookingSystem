@@ -1,6 +1,7 @@
 package com.airline.application.service;
 
 import com.airline.domain.entity.FareClass;
+import com.airline.domain.repository.BookingRepository;
 import com.airline.domain.repository.FareClassRepository;
 import com.airline.presentation.dto.request.FareClassRequest;
 import com.airline.presentation.dto.response.FareClassResponse;
@@ -27,8 +28,34 @@ class FareServiceTest {
     @Mock
     private FareClassRepository fareClassRepository;
 
+    @Mock
+    private BookingRepository bookingRepository;
+
     @InjectMocks
     private FareService fareService;
+
+    @Test
+    void savesAndReturnsBenefitsAndPreservesThemDuringStatusUpdate() {
+        FareClassRequest request = FareClassRequest.builder().code("SPECIAL").name("Special")
+                .priceMultiplier(BigDecimal.ONE).baggage("35kg").seatPitch("38 inch").meal("Vegetarian").build();
+        when(fareClassRepository.save(any(FareClass.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        FareClassResponse created = fareService.createFare(request);
+        assertEquals("35kg", created.getBaggage());
+        assertEquals("38 inch", created.getSeatPitch());
+        assertEquals("Vegetarian", created.getMeal());
+
+        FareClass existing = FareClass.builder().id(10L).code("SPECIAL").name("Special")
+                .priceMultiplier(BigDecimal.ONE).baggage("35kg").seatPitch("38 inch").meal("Vegetarian").build();
+        when(fareClassRepository.findById(10L)).thenReturn(Optional.of(existing));
+        FareClassRequest update = FareClassRequest.builder().code("SPECIAL").name("Special")
+                .priceMultiplier(BigDecimal.ONE).active(false).build();
+        assertEquals("35kg", fareService.updateFare(10L, update).getBaggage());
+        update.setBaggage("");
+        update.setSeatPitch("40 inch");
+        assertEquals("", fareService.updateFare(10L, update).getBaggage());
+        assertEquals("40 inch", existing.getSeatPitch());
+        assertEquals("Vegetarian", existing.getMeal());
+    }
 
     @Test
     @DisplayName("Lấy danh sách hạng vé đang hoạt động (active = true)")
@@ -141,10 +168,22 @@ class FareServiceTest {
     @DisplayName("Xóa hạng vé thành công")
     void testDeleteFare_Success() {
         when(fareClassRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.existsByFareClassId(1L)).thenReturn(false);
         doNothing().when(fareClassRepository).deleteById(1L);
 
         assertDoesNotThrow(() -> fareService.deleteFare(1L));
         verify(fareClassRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("Xóa hạng vé thất bại khi đã có đơn đặt vé liên kết -> Ném IllegalStateException")
+    void testDeleteFare_HasExistingBookings_ThrowsIllegalStateException() {
+        when(fareClassRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.existsByFareClassId(1L)).thenReturn(true);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> fareService.deleteFare(1L));
+        assertTrue(ex.getMessage().contains("Không thể xóa hạng vé"));
+        verify(fareClassRepository, never()).deleteById(anyLong());
     }
 
     @Test

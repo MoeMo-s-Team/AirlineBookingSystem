@@ -1,3 +1,4 @@
+import { getLocale, localize, useLanguage } from '../i18n/index';
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -9,6 +10,7 @@ export interface BookingConfirmationPageProps {
 }
 
 export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = () => {
+  useLanguage();
   const { bookingId: routeBookingId } = useParams<{ bookingId?: string }>();
   const [searchParams] = useSearchParams();
   const rawId = routeBookingId ?? searchParams.get('bookingId');
@@ -70,7 +72,7 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
           {loading ? (
             <div className="py-20 text-center" role="status">
               <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-body-md text-on-surface-variant">Đang tải thông tin đặt chỗ...</p>
+              <p className="text-body-md text-on-surface-variant">{localize("Đang tải thông tin đặt chỗ...")}</p>
             </div>
           ) : error || !booking ? (
             <div className="bg-surface-container-lowest border border-error/30 rounded-3xl p-8 text-center max-w-xl mx-auto shadow-sm">
@@ -78,24 +80,18 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                 <span className="material-symbols-outlined text-[32px]">warning</span>
               </div>
               <h1 className="text-title-lg font-bold text-on-surface mb-2">
-                {error ?? 'Đơn đặt vé chưa hoàn tất xác nhận'}
+                {localize(error ?? 'Đơn đặt vé chưa hoàn tất xác nhận')}
               </h1>
-              <p className="text-body-md text-on-surface-variant mb-6">
-                Vui lòng kiểm tra lại trạng thái trong danh sách đặt chỗ hoặc liên hệ hỗ trợ.
-              </p>
+              <p className="text-body-md text-on-surface-variant mb-6">{localize("Vui lòng kiểm tra lại trạng thái trong danh sách đặt chỗ hoặc liên hệ hỗ trợ. ")}</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
                   to="/my-bookings"
                   className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-semibold text-label-lg transition-colors"
-                >
-                  Xem trong Quản lý đặt chỗ
-                </Link>
+                >{localize("Xem trong Quản lý đặt chỗ ")}</Link>
                 <Link
                   to="/"
                   className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-outline hover:bg-surface-container text-primary font-semibold text-label-lg transition-colors"
-                >
-                  Tìm chuyến bay mới
-                </Link>
+                >{localize("Tìm chuyến bay mới ")}</Link>
               </div>
             </div>
           ) : (
@@ -105,22 +101,16 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                 <div className="w-16 h-16 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center mx-auto mb-4 shadow-sm animate-bounce">
                   <span className="material-symbols-outlined text-[36px]">check_circle</span>
                 </div>
-                <h1 className="text-headline-lg font-bold text-primary tracking-tight">
-                  Booking Confirmed
-                </h1>
-                <p className="text-body-lg text-on-surface-variant mt-2 max-w-lg mx-auto">
-                  Đơn đặt vé của bạn đã được xác nhận thành công trên hệ thống.
-                </p>
+                <h1 className="text-headline-lg font-bold text-primary tracking-tight">{localize("Booking Confirmed ")}</h1>
+                <p className="text-body-lg text-on-surface-variant mt-2 max-w-lg mx-auto">{localize("Đơn đặt vé của bạn đã được xác nhận thành công trên hệ thống. ")}</p>
               </div>
 
               {/* Booking Reference Callout */}
               <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
                 <div>
-                  <span className="text-[11px] font-bold text-outline uppercase tracking-widest block">
-                    Mã đặt chỗ (Booking Code)
-                  </span>
-                  <span className="text-headline-lg font-bold text-primary font-mono tracking-wider">
-                    {booking.bookingCode}
+                  <span className="text-body-sm font-bold text-outline uppercase tracking-widest block">{localize("Mã đặt chỗ (Booking Code) ")}</span>
+                  <span className="text-headline-lg font-bold text-primary font-sans tracking-wider">
+                    {localize(booking.bookingCode)}
                   </span>
                 </div>
 
@@ -133,7 +123,7 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                     <span className="material-symbols-outlined text-[18px]">
                       {copied ? 'check' : 'content_copy'}
                     </span>
-                    <span>{copied ? 'Đã sao chép' : 'Sao chép mã'}</span>
+                    <span>{localize(copied ? 'Đã sao chép' : 'Sao chép mã')}</span>
                   </button>
                 </div>
               </div>
@@ -146,32 +136,31 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">flight_takeoff</span>
-                        <span className="text-title-md font-bold text-primary">
-                          Chuyến bay {booking.flight.flightNumber ?? ''}
+                        <span className="text-title-md font-bold text-primary">{localize("Chuyến bay ")}{localize(booking.flight.flightNumber ?? '')}
                         </span>
                       </div>
                       {booking.fareClass?.name && (
                         <span className="text-label-md font-medium px-3 py-1 bg-surface-container-high rounded-full text-on-surface">
-                          {booking.fareClass.name}
+                          {localize(booking.fareClass.name)}
                         </span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-body-md text-on-surface">
                       <div>
-                        <span className="text-outline text-label-sm block">Khởi hành</span>
-                        <span className="font-bold text-title-md">{booking.flight.originAirport}</span>
+                        <span className="text-outline text-label-sm block">{localize("Khởi hành")}</span>
+                        <span className="font-bold text-title-md">{localize(booking.flight.originAirport)}</span>
                         {booking.flight.departureTime && (
                           <span className="block text-body-sm text-on-surface-variant">
-                            {new Date(booking.flight.departureTime).toLocaleString('vi-VN')}
+                            {localize(new Date(booking.flight.departureTime).toLocaleString(getLocale()))}
                           </span>
                         )}
                       </div>
                       <div>
-                        <span className="text-outline text-label-sm block">Điểm đến</span>
-                        <span className="font-bold text-title-md">{booking.flight.destinationAirport}</span>
+                        <span className="text-outline text-label-sm block">{localize("Điểm đến")}</span>
+                        <span className="font-bold text-title-md">{localize(booking.flight.destinationAirport)}</span>
                         {booking.flight.arrivalTime && (
                           <span className="block text-body-sm text-on-surface-variant">
-                            {new Date(booking.flight.arrivalTime).toLocaleString('vi-VN')}
+                            {localize(new Date(booking.flight.arrivalTime).toLocaleString(getLocale()))}
                           </span>
                         )}
                       </div>
@@ -182,13 +171,13 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                 {/* Passengers List */}
                 {booking.passengers && booking.passengers.length > 0 && (
                   <div className="py-6 border-b border-outline-variant">
-                    <h2 className="text-title-sm font-bold text-primary mb-3">Hành khách</h2>
+                    <h2 className="text-title-sm font-bold text-primary mb-3">{localize("Hành khách")}</h2>
                     <ul className="space-y-2">
                       {booking.passengers.map((p, idx: number) => (
                         <li key={idx} className="flex justify-between items-center text-body-md">
-                          <span className="font-medium text-on-surface">{p.fullName}</span>
-                          <span className="text-label-sm text-on-surface-variant font-mono">
-                            {p.passportNo ? `Hộ chiếu/CCCD: ${p.passportNo}` : ''}
+                          <span className="font-medium text-on-surface">{localize(p.fullName)}</span>
+                          <span className="text-label-sm text-on-surface-variant font-sans">
+                            {localize(p.passportNo ? `Hộ chiếu/CCCD: ${p.passportNo}` : '')}
                           </span>
                         </li>
                       ))}
@@ -199,15 +188,15 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                 {/* Ancillary Services */}
                 {booking.services && booking.services.length > 0 && (
                   <div className="py-6 border-b border-outline-variant">
-                    <h2 className="text-title-sm font-bold text-primary mb-3">Dịch vụ bổ sung</h2>
+                    <h2 className="text-title-sm font-bold text-primary mb-3">{localize("Dịch vụ bổ sung")}</h2>
                     <ul className="space-y-2">
                       {booking.services.map((s, idx: number) => (
                         <li key={idx} className="flex justify-between items-center text-body-md">
                           <span className="text-on-surface">
-                            {s.serviceName} x{s.quantity}
+                            {localize(s.serviceName)}{localize("x")}{localize(s.quantity)}
                           </span>
                           <span className="font-semibold text-on-surface">
-                            {((s.unitPrice ?? 0) * (s.quantity ?? 1)).toLocaleString('vi-VN')} ₫
+                            {localize(((s.unitPrice ?? 0) * (s.quantity ?? 1)).toLocaleString(getLocale()))} ₫
                           </span>
                         </li>
                       ))}
@@ -217,9 +206,9 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
 
                 {/* Total Paid */}
                 <div className="pt-6 flex justify-between items-center">
-                  <span className="text-title-md font-bold text-primary">Tổng tiền thanh toán</span>
+                  <span className="text-title-md font-bold text-primary">{localize("Tổng tiền thanh toán")}</span>
                   <span className="text-headline-sm font-extrabold text-primary">
-                    {(booking.totalPrice ?? booking.priceBreakdown?.totalPrice ?? 0).toLocaleString('vi-VN')} ₫
+                    {localize((booking.totalPrice ?? booking.priceBreakdown?.totalPrice ?? 0).toLocaleString(getLocale()))} ₫
                   </span>
                 </div>
               </div>
@@ -229,15 +218,11 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
                 <Link
                   to="/my-bookings"
                   className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-semibold shadow-md transition-all text-center"
-                >
-                  Xem trong Quản lý đặt chỗ
-                </Link>
+                >{localize("Xem trong Quản lý đặt chỗ ")}</Link>
                 <Link
                   to="/"
                   className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-primary font-semibold transition-all text-center"
-                >
-                  Tìm chuyến bay mới
-                </Link>
+                >{localize("Tìm chuyến bay mới ")}</Link>
               </div>
             </>
           )}

@@ -1,6 +1,7 @@
 package com.airline.application.service;
 
 import com.airline.domain.entity.FareClass;
+import com.airline.domain.repository.BookingRepository;
 import com.airline.domain.repository.FareClassRepository;
 import com.airline.presentation.dto.request.FareClassRequest;
 import com.airline.presentation.dto.response.FareClassResponse;
@@ -17,6 +18,7 @@ import java.util.List;
 public class FareService {
 
     private final FareClassRepository fareClassRepository;
+    private final BookingRepository bookingRepository;
 
     /**
      * Lấy danh sách các hạng vé đang mở bán (active = true)
@@ -63,6 +65,9 @@ public class FareService {
         FareClass fareClass = FareClass.builder()
                 .code(request.getCode().toUpperCase().trim())
                 .name(request.getName().trim())
+                .baggage(request.getBaggage())
+                .seatPitch(request.getSeatPitch())
+                .meal(request.getMeal())
                 .priceMultiplier(request.getPriceMultiplier())
                 .active(request.getActive() != null ? request.getActive() : true)
                 .build();
@@ -85,6 +90,9 @@ public class FareService {
 
         fareClass.setCode(request.getCode().toUpperCase().trim());
         fareClass.setName(request.getName().trim());
+        if (request.getBaggage() != null) fareClass.setBaggage(request.getBaggage().trim());
+        if (request.getSeatPitch() != null) fareClass.setSeatPitch(request.getSeatPitch().trim());
+        if (request.getMeal() != null) fareClass.setMeal(request.getMeal().trim());
         fareClass.setPriceMultiplier(request.getPriceMultiplier());
         if (request.getActive() != null) {
             fareClass.setActive(request.getActive());
@@ -100,6 +108,9 @@ public class FareService {
     public void deleteFare(Long id) {
         if (!fareClassRepository.existsById(id)) {
             throw new ResourceNotFoundException("Không tìm thấy hạng vé với ID: " + id);
+        }
+        if (bookingRepository.existsByFareClassId(id)) {
+            throw new IllegalStateException("Không thể xóa hạng vé này vì đã có đơn đặt vé sử dụng. Vui lòng chuyển trạng thái sang Tạm ẩn (Inactive).");
         }
         fareClassRepository.deleteById(id);
     }

@@ -49,7 +49,7 @@ describe('AdminFlightsPage', () => {
     fireEvent.change(screen.getByLabelText('Base price (VND)'), { target: { value: '1400000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(() => expect(flightAdminApi.update).toHaveBeenCalledWith(12, { basePrice: 1400000 }));
-    expect(await screen.findByText('Đã cập nhật chuyến bay.')).toBeInTheDocument();
+    expect(await screen.findByText("Flight updated.")).toBeInTheDocument();
   });
 
   it('creates a flight and displays the saved record', async () => {

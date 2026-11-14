@@ -1,3 +1,4 @@
+import { getLocale, localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { StatusBadge } from '../common/StatusBadge';
 
@@ -16,6 +17,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
   onCancelBooking,
   isLoading = false,
 }) => {
+  useLanguage();
   if (!isOpen) return null;
 
   const code = booking?.bookingCode || booking?.pnr;
@@ -32,7 +34,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
     try {
       const d = new Date(ts);
       if (isNaN(d.getTime())) return ts;
-      return d.toLocaleDateString('vi-VN');
+      return d.toLocaleDateString(getLocale());
     } catch {
       return ts;
     }
@@ -51,9 +53,9 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
 
   const formattedPrice =
     typeof booking?.totalPrice === 'number'
-      ? `${booking.totalPrice.toLocaleString('vi-VN')} ₫`
+      ? `${booking.totalPrice.toLocaleString(getLocale())} ₫`
       : typeof booking?.grandTotal === 'number'
-      ? `${booking.grandTotal.toLocaleString('vi-VN')} ₫`
+      ? `${booking.grandTotal.toLocaleString(getLocale())} ₫`
       : '0 ₫';
 
   return (
@@ -67,14 +69,11 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-headline-sm font-bold text-primary">
-                  Booking Dossier
-                </h2>
+                <h2 className="text-headline-sm font-bold text-primary">{localize("Booking Dossier ")}</h2>
                 {booking?.status && <StatusBadge status={booking.status} />}
               </div>
               {code && (
-                <p className="text-label-sm text-on-surface-variant font-mono">
-                  Mã đặt chỗ: <span className="font-bold text-primary">{code}</span>
+                <p className="text-label-sm text-on-surface-variant font-sans">{localize("Mã đặt chỗ: ")}<span className="font-bold text-primary">{localize(code)}</span>
                 </p>
               )}
             </div>
@@ -92,40 +91,36 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
         {isLoading ? (
           <div className="p-12 text-center">
             <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-body-md text-on-surface-variant">Đang tải thông tin chi tiết...</p>
+            <p className="text-body-md text-on-surface-variant">{localize("Đang tải thông tin chi tiết...")}</p>
           </div>
         ) : !booking ? (
-          <div className="p-8 text-center text-on-surface-variant">
-            Không tìm thấy thông tin đặt chỗ.
-          </div>
+          <div className="p-8 text-center text-on-surface-variant">{localize("Không tìm thấy thông tin đặt chỗ. ")}</div>
         ) : (
           <div className="p-6 space-y-6">
             {/* Customer Account Details (Người đặt / hủy vé) */}
             <div className="bg-surface-container-low border border-outline-variant/60 rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <span className="material-symbols-outlined text-[20px] text-primary">account_circle</span>
-                <span className="text-label-md font-bold text-primary uppercase tracking-wider">
-                  Khách hàng đặt vé
-                </span>
+                <span className="text-label-md font-bold text-primary uppercase tracking-wider">{localize("Khách hàng đặt vé ")}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="text-label-sm text-outline font-semibold block">Họ và tên tài khoản</span>
+                  <span className="text-label-sm text-outline font-semibold block">{localize("Họ và tên tài khoản")}</span>
                   <span className="text-label-lg font-bold text-primary block mt-0.5">
-                    {booking?.user?.fullName || 'Khách vãng lai'}
+                    {localize(booking?.user?.fullName || 'Khách vãng lai')}
                   </span>
                 </div>
                 <div>
-                  <span className="text-label-sm text-outline font-semibold block">Email đăng ký</span>
-                  <span className="text-label-md font-mono text-on-surface-variant block mt-0.5">
-                    {booking?.user?.email || 'N/A'}
+                  <span className="text-label-sm text-outline font-semibold block">{localize("Email đăng ký")}</span>
+                  <span className="text-label-md font-sans text-on-surface-variant block mt-0.5">
+                    {localize(booking?.user?.email || 'N/A')}
                   </span>
                 </div>
               </div>
               {booking?.status === 'CANCELLED' && (
                 <div className="mt-3 p-2.5 rounded-lg bg-error-container/20 border border-error/30 flex items-center gap-2 text-error text-body-sm">
                   <span className="material-symbols-outlined text-[18px]">cancel</span>
-                  <span>Đơn vé này đã được hủy bởi khách hàng ({booking?.user?.fullName || 'Khách hàng'}).</span>
+                  <span>{localize("Đơn vé này đã được hủy bởi khách hàng (")}{localize(booking?.user?.fullName || 'Khách hàng')}).</span>
                 </div>
               )}
             </div>
@@ -134,37 +129,34 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             <div className="bg-surface-container-low border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <span className="text-[11px] uppercase tracking-widest text-outline font-bold block">
-                    Thông tin chuyến bay
-                  </span>
-                  <span className="text-headline-sm font-bold text-primary block mt-0.5">
-                    Chuyến bay {flightNumber}
+                  <span className="text-body-sm uppercase tracking-widest text-outline font-bold block">{localize("Thông tin chuyến bay ")}</span>
+                  <span className="text-headline-sm font-bold text-primary block mt-0.5">{localize("Chuyến bay ")}{localize(flightNumber)}
                   </span>
                 </div>
                 {fare?.name && (
                   <span className="text-label-md font-semibold px-3 py-1 bg-surface-container rounded-full text-on-surface">
-                    {fare.name}
+                    {localize(fare.name)}
                   </span>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-4 items-center">
                 <div>
-                  <span className="text-label-sm text-outline font-semibold block">Khởi hành</span>
-                  <span className="text-title-lg font-extrabold text-primary block">{origin}</span>
+                  <span className="text-label-sm text-outline font-semibold block">{localize("Khởi hành")}</span>
+                  <span className="text-title-lg font-extrabold text-primary block">{localize(origin)}</span>
                   {flight?.departureTime && (
                     <span className="text-body-sm text-on-surface-variant block">
-                      {formatDate(flight.departureTime)} • {formatTime(flight.departureTime)}
+                      {localize(formatDate(flight.departureTime))} • {localize(formatTime(flight.departureTime))}
                     </span>
                   )}
                 </div>
 
                 <div className="text-right">
-                  <span className="text-label-sm text-outline font-semibold block">Điểm đến</span>
-                  <span className="text-title-lg font-extrabold text-primary block">{destination}</span>
+                  <span className="text-label-sm text-outline font-semibold block">{localize("Điểm đến")}</span>
+                  <span className="text-title-lg font-extrabold text-primary block">{localize(destination)}</span>
                   {flight?.arrivalTime && (
                     <span className="text-body-sm text-on-surface-variant block">
-                      {formatDate(flight.arrivalTime)} • {formatTime(flight.arrivalTime)}
+                      {localize(formatDate(flight.arrivalTime))} • {localize(formatTime(flight.arrivalTime))}
                     </span>
                   )}
                 </div>
@@ -174,9 +166,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             {/* Passenger Manifest */}
             {passengers.length > 0 && (
               <div>
-                <h3 className="text-label-lg font-bold text-primary uppercase tracking-wider mb-3">
-                  Danh sách hành khách
-                </h3>
+                <h3 className="text-label-lg font-bold text-primary uppercase tracking-wider mb-3">{localize("Danh sách hành khách ")}</h3>
                 <div className="space-y-2">
                   {passengers.map((p: any, idx: number) => {
                     const name = p.fullName || `${p.lastName || ''} ${p.firstName || ''}`.trim();
@@ -188,18 +178,16 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
                       >
                         <div>
                           <span className="text-label-md font-bold text-primary block">
-                            {name}
+                            {localize(name)}
                           </span>
                           {passport && (
-                            <span className="text-[12px] text-on-surface-variant block mt-0.5 font-mono">
-                              Hộ chiếu / CCCD: {passport}
+                            <span className="text-body-sm text-on-surface-variant block mt-0.5 font-sans">{localize("Hộ chiếu / CCCD: ")}{localize(passport)}
                             </span>
                           )}
                         </div>
                         {p.phone && (
                           <div className="text-left sm:text-right">
-                            <span className="text-[12px] text-on-surface-variant block font-mono">
-                              ĐT: {p.phone}
+                            <span className="text-body-sm text-on-surface-variant block font-sans">{localize("ĐT: ")}{localize(p.phone)}
                             </span>
                           </div>
                         )}
@@ -213,9 +201,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             {/* Ancillary Services Attached */}
             {services.length > 0 && (
               <div>
-                <h3 className="text-label-lg font-bold text-primary uppercase tracking-wider mb-3">
-                  Dịch vụ bổ sung
-                </h3>
+                <h3 className="text-label-lg font-bold text-primary uppercase tracking-wider mb-3">{localize("Dịch vụ bổ sung ")}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {services.map((svc: any, idx: number) => {
                     const name = svc.serviceName || svc.name;
@@ -227,10 +213,10 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
                         className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between gap-3"
                       >
                         <span className="text-label-md font-semibold text-primary block">
-                          {name} {qty > 1 ? `x${qty}` : ''}
+                          {localize(name)} {localize(qty > 1 ? `x${qty}` : '')}
                         </span>
                         <span className="text-label-sm font-semibold text-on-surface">
-                          {(price * qty).toLocaleString('vi-VN')} ₫
+                          {localize((price * qty).toLocaleString(getLocale()))} ₫
                         </span>
                       </div>
                     );
@@ -241,9 +227,9 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
 
             {/* Total Price */}
             <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant flex items-center justify-between">
-              <span className="text-title-md font-bold text-primary">Tổng tiền thanh toán</span>
+              <span className="text-title-md font-bold text-primary">{localize("Tổng tiền thanh toán")}</span>
               <span className="text-headline-sm font-extrabold text-primary">
-                {formattedPrice}
+                {localize(formattedPrice)}
               </span>
             </div>
           </div>
@@ -259,18 +245,14 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
                 onClose();
               }}
               className="px-4 py-2 rounded-lg text-label-md font-bold text-error border border-error/40 hover:bg-error-container/20 transition-colors"
-            >
-              Hủy đặt chỗ
-            </button>
+            >{localize("Hủy đặt chỗ ")}</button>
           ) : <div />}
 
           <button
             type="button"
             onClick={onClose}
             className="px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-on-primary text-label-md font-bold transition-colors ml-auto"
-          >
-            Đóng (Done)
-          </button>
+          >{localize("Đóng (Done) ")}</button>
         </div>
       </div>
     </div>

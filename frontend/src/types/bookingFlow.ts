@@ -20,4 +20,6 @@ export interface BookingPassengerDraft {
   phone: string;
 }
 
-export type BookingSelectedService = ServiceResponse;
+export interface BookingSelectedService extends ServiceResponse {
+  quantity?: number;
+}

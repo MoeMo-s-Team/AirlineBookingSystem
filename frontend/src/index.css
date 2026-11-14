@@ -8,6 +8,14 @@
     padding: 0;
     font-family: 'Roboto Flex', sans-serif;
   }
+
+  body {
+    @apply text-body-md;
+  }
+
+  button, input, select, textarea, code, pre, kbd, samp {
+    font-family: inherit;
+  }
   
   /* Smooth scrolling */
   html {

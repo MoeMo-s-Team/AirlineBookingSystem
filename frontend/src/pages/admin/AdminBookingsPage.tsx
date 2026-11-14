@@ -1,3 +1,4 @@
+import { getLocale, localize, useLanguage } from '../../i18n/index';
 import React, { useEffect, useState } from 'react';
 import { AdminSidebar } from '../../components/layout/AdminSidebar';
 import { AdminHeader } from '../../components/layout/AdminHeader';
@@ -15,6 +16,7 @@ export interface AdminBookingsPageProps {
 }
 
 export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
+  useLanguage();
   const [records, setRecords] = useState<AdminBookingListRecord[]>([]);
   const [pagination, setPagination] = useState<AdminBookingPagination>({
     total: 0,
@@ -91,8 +93,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
 
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
         <AdminHeader
-          title="Global Bookings & PNR Registry"
-          subtitle="Quản lý danh sách đặt chỗ hành khách toàn hệ thống"
+          title={localize("Global Bookings & PNR Registry")}
+          subtitle={localize("Quản lý danh sách đặt chỗ hành khách toàn hệ thống")}
           searchValue={search}
           onSearch={setSearch}
         />
@@ -103,27 +105,24 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
             {/* Table Toolbar */}
             <div className="p-6 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="text-label-md font-bold text-primary uppercase tracking-wider">
-                  Danh sách đặt chỗ
-                </span>
+                <span className="text-label-md font-bold text-primary uppercase tracking-wider">{localize("Danh sách đặt chỗ ")}</span>
                 <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-primary text-label-sm font-semibold">
-                  {pagination.total} Đơn
-                </span>
+                  {localize(pagination.total)}{localize("Đơn ")}</span>
               </div>
 
               {/* Status Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-label-sm text-outline font-semibold">Trạng thái:</span>
+                <span className="text-label-sm text-outline font-semibold">{localize("Trạng thái:")}</span>
                 <select
                   value={statusFilter}
                   onChange={(e) => handleStatusFilterChange(e.target.value as any)}
                   className="px-3 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant text-label-sm text-on-surface focus:outline-none"
                 >
-                  <option value="ALL">Tất cả</option>
-                  <option value="CONFIRMED">CONFIRMED</option>
-                  <option value="PENDING">PENDING</option>
-                  <option value="CANCELLED">CANCELLED</option>
-                  <option value="PAYMENT_FAILED">PAYMENT_FAILED</option>
+                  <option value="ALL">{localize("Tất cả")}</option>
+                  <option value="CONFIRMED">{localize("CONFIRMED")}</option>
+                  <option value="PENDING">{localize("PENDING")}</option>
+                  <option value="CANCELLED">{localize("CANCELLED")}</option>
+                  <option value="PAYMENT_FAILED">{localize("PAYMENT_FAILED")}</option>
                 </select>
               </div>
             </div>
@@ -132,10 +131,10 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
             {isLoading ? (
               <div className="p-12 text-center">
                 <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-                <p className="text-body-md text-on-surface-variant">Đang tải danh sách đặt chỗ...</p>
+                <p className="text-body-md text-on-surface-variant">{localize("Đang tải danh sách đặt chỗ...")}</p>
               </div>
             ) : error ? (
-              <div className="p-8 text-center text-error">{error}</div>
+              <div className="p-8 text-center text-error">{localize(error)}</div>
             ) : (
               <>
                 {/* Bookings Table */}
@@ -143,22 +142,20 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-surface-container-low border-b border-outline-variant text-label-sm text-outline uppercase tracking-wider font-semibold">
-                        <th className="py-3.5 px-6">Mã đặt chỗ</th>
-                        <th className="py-3.5 px-6">Khách hàng đặt vé</th>
-                        <th className="py-3.5 px-6">Hành khách bay</th>
-                        <th className="py-3.5 px-6">Chuyến bay</th>
-                        <th className="py-3.5 px-6">Ngày tạo</th>
-                        <th className="py-3.5 px-6">Tổng tiền</th>
-                        <th className="py-3.5 px-6">Trạng thái</th>
-                        <th className="py-3.5 px-6 text-right">Thao tác</th>
+                        <th className="py-3.5 px-6">{localize("Mã đặt chỗ")}</th>
+                        <th className="py-3.5 px-6">{localize("Khách hàng đặt vé")}</th>
+                        <th className="py-3.5 px-6">{localize("Hành khách bay")}</th>
+                        <th className="py-3.5 px-6">{localize("Chuyến bay")}</th>
+                        <th className="py-3.5 px-6">{localize("Ngày tạo")}</th>
+                        <th className="py-3.5 px-6">{localize("Tổng tiền")}</th>
+                        <th className="py-3.5 px-6">{localize("Trạng thái")}</th>
+                        <th className="py-3.5 px-6 text-right">{localize("Thao tác")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant text-body-sm text-on-surface">
                       {filteredRecords.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-on-surface-variant">
-                            Không tìm thấy bản ghi nào.
-                          </td>
+                          <td colSpan={8} className="py-8 text-center text-on-surface-variant">{localize("Không tìm thấy bản ghi nào. ")}</td>
                         </tr>
                       ) : (
                         filteredRecords.map((b) => {
@@ -172,11 +169,11 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                               })`
                             : 'N/A';
                           const createdDate = b.createdAt
-                            ? new Date(b.createdAt).toLocaleDateString('vi-VN')
+                            ? new Date(b.createdAt).toLocaleDateString(getLocale())
                             : 'N/A';
                           const priceStr =
                             typeof b.totalPrice === 'number'
-                              ? `${b.totalPrice.toLocaleString('vi-VN')} ₫`
+                              ? `${b.totalPrice.toLocaleString(getLocale())} ₫`
                               : '0 ₫';
 
                           return (
@@ -185,8 +182,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                               className="hover:bg-surface-container-low/50 transition-colors"
                             >
                               <td className="py-4 px-6">
-                                <span className="font-mono font-bold text-headline-sm text-primary">
-                                  {b.bookingCode || b.id}
+                                <span className="font-sans font-bold text-headline-sm text-primary">
+                                  {localize(b.bookingCode || b.id)}
                                 </span>
                               </td>
 
@@ -195,19 +192,17 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                                 <div className="flex items-center gap-1.5">
                                   <span className="material-symbols-outlined text-[16px] text-primary">account_circle</span>
                                   <span className="font-bold text-primary">
-                                    {customerName}
+                                    {localize(customerName)}
                                   </span>
                                 </div>
                                 {b.user?.email && (
-                                  <span className="text-[12px] text-on-surface-variant block font-mono mt-0.5">
-                                    {b.user.email}
+                                  <span className="text-body-sm text-on-surface-variant block font-sans mt-0.5">
+                                    {localize(b.user.email)}
                                   </span>
                                 )}
                                 {b.status === 'CANCELLED' && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[11px] font-bold bg-error-container/30 text-error">
-                                    <span className="material-symbols-outlined text-[12px]">cancel</span>
-                                    Đã hủy bởi khách
-                                  </span>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-body-sm font-bold bg-error-container/30 text-error">
+                                    <span className="material-symbols-outlined text-[12px]">cancel</span>{localize("Đã hủy bởi khách ")}</span>
                                 )}
                               </td>
 
@@ -216,30 +211,29 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                                 <div className="flex items-center gap-1.5">
                                   <span className="material-symbols-outlined text-[16px] text-outline">group</span>
                                   <span className="font-semibold text-on-surface">
-                                    {passengerNames}
+                                    {localize(passengerNames)}
                                   </span>
                                 </div>
                                 {b.passengers && b.passengers.length > 1 && (
-                                  <span className="text-[11px] text-secondary font-medium block mt-0.5">
-                                    ({b.passengers.length} hành khách)
-                                  </span>
+                                  <span className="text-body-sm text-secondary font-medium block mt-0.5">
+                                    ({localize(b.passengers.length)}{localize(" hành khách) ")}</span>
                                 )}
                               </td>
 
                               <td className="py-4 px-6">
                                 <span className="font-semibold text-primary block">
-                                  {flightInfo}
+                                  {localize(flightInfo)}
                                 </span>
                                 {b.fareClass?.name && (
-                                  <span className="text-[12px] text-on-surface-variant block">
-                                    {b.fareClass.name}
+                                  <span className="text-body-sm text-on-surface-variant block">
+                                    {localize(b.fareClass.name)}
                                   </span>
                                 )}
                               </td>
 
-                              <td className="py-4 px-6 font-medium">{createdDate}</td>
+                              <td className="py-4 px-6 font-medium">{localize(createdDate)}</td>
 
-                              <td className="py-4 px-6 font-bold text-primary">{priceStr}</td>
+                              <td className="py-4 px-6 font-bold text-primary">{localize(priceStr)}</td>
 
                               <td className="py-4 px-6">
                                 {b.status && <StatusBadge status={b.status as any} />}
@@ -253,9 +247,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
                                     setIsDossierOpen(true);
                                   }}
                                   className="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-label-sm font-semibold text-primary transition-colors"
-                                >
-                                  Dossier
-                                </button>
+                                >{localize("Dossier ")}</button>
                               </td>
                             </tr>
                           );
@@ -267,26 +259,20 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
 
                 {/* Pagination Controls */}
                 <div className="p-4 border-t border-outline-variant flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <span className="text-label-sm text-on-surface-variant">
-                    Trang {pagination.page + 1} / {Math.max(1, pagination.totalPages)} ({pagination.total} đặt chỗ)
-                  </span>
+                  <span className="text-label-sm text-on-surface-variant">{localize("Trang ")}{localize(pagination.page + 1)} / {localize(Math.max(1, pagination.totalPages))} ({localize(pagination.total)}{localize(" đặt chỗ) ")}</span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       disabled={page <= 0}
                       onClick={() => setPage((p) => Math.max(0, p - 1))}
                       className="px-3 py-1.5 rounded-lg border border-outline-variant disabled:opacity-40 hover:bg-surface-container text-label-sm font-semibold text-primary transition-colors"
-                    >
-                      Trước
-                    </button>
+                    >{localize("Trước ")}</button>
                     <button
                       type="button"
                       disabled={page >= pagination.totalPages - 1}
                       onClick={() => setPage((p) => p + 1)}
                       className="px-3 py-1.5 rounded-lg border border-outline-variant disabled:opacity-40 hover:bg-surface-container text-label-sm font-semibold text-primary transition-colors"
-                    >
-                      Sau
-                    </button>
+                    >{localize("Sau ")}</button>
                   </div>
                 </div>
               </>

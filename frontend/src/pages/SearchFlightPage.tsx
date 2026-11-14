@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../i18n/index';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
@@ -12,6 +13,7 @@ export interface SearchFlightPageProps {
 }
 
 export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
+  useLanguage();
   const navigate = useNavigate();
   const { searchParams, setSearchParams } = useBookingFlow();
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -36,21 +38,21 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
       city: 'Hanoi',
       code: 'HAN',
       airport: 'Noi Bai International Airport',
-      image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&auto=format&fit=crop&q=80',
+      image: '/images/destinations/hanoi-hoan-kiem.jpg',
       tag: 'North'
     },
     {
       city: 'Da Nang',
       code: 'DAD',
       airport: 'Da Nang International Airport',
-      image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&auto=format&fit=crop&q=80',
+      image: '/images/destinations/da-nang-dragon-bridge.jpg',
       tag: 'Central'
     },
     {
       city: 'Phu Quoc',
       code: 'PQC',
       airport: 'Phu Quoc International Airport',
-      image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=600&auto=format&fit=crop&q=80',
+      image: '/images/destinations/phu-quoc-khem-beach.jpg',
       tag: 'Island'
     }
   ] as const;
@@ -77,18 +79,14 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
             {/* Mini Brand Fleet Badge */}
             <div className="inline-flex items-center gap-space-xs px-space-md py-1 mb-space-md rounded-full bg-surface-container text-primary text-label-md shadow-sm border border-outline-variant/60">
               <span className="material-symbols-outlined text-[16px] text-secondary">flight_takeoff</span>
-              <span className="tracking-wide font-semibold">SKYBUS A350 & BOEING 787 FLEET DEPLOYED</span>
+              <span className="tracking-wide font-semibold">{localize("SKYBUS A350 & BOEING 787 FLEET DEPLOYED")}</span>
               <span className="w-1.5 h-1.5 rounded-full bg-secondary-container" />
-              <span className="text-on-surface-variant font-medium">99.4% On-Time Index</span>
+              <span className="text-on-surface-variant font-medium">{localize("99.4% On-Time Index")}</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-display-hero text-primary tracking-tight font-bold max-w-4xl">
-              Search and Book Flights Across Classes
-            </h1>
-            <p className="mt-space-sm text-body-lg text-on-surface-variant max-w-2xl">
-              Experience seamless journeys with premium comfort, transparent fares, and precision scheduled departures.
-            </p>
+            <h1 className="text-display-hero text-primary tracking-tight font-bold max-w-4xl">{localize("Search and Book Flights Across Classes ")}</h1>
+            <p className="mt-space-sm text-body-lg text-on-surface-variant max-w-2xl">{localize("Experience seamless journeys with premium comfort, transparent fares, and precision scheduled departures. ")}</p>
           </div>
         </section>
 
@@ -106,19 +104,15 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
         <section className="max-w-7xl mx-auto px-6 lg:px-12 mt-20">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
             <div>
-              <span className="text-[11px] font-bold text-secondary uppercase tracking-widest block">
-                Top Flight Routes
-              </span>
-              <h2 className="text-headline-lg font-bold text-primary tracking-tight mt-1">
-                Explore Destinations from Ho Chi Minh City
-              </h2>
+              <span className="text-body-sm font-bold text-secondary uppercase tracking-widest block">{localize("Top Flight Routes ")}</span>
+              <h2 className="text-headline-lg font-bold text-primary tracking-tight mt-1">{localize("Explore Destinations from Ho Chi Minh City ")}</h2>
             </div>
             <button
               type="button"
               onClick={() => navigate('/flights')}
               className="text-label-lg font-semibold text-primary hover:text-secondary flex items-center gap-1 transition-colors"
             >
-              <span>Explore All Destinations</span>
+              <span>{localize("Explore All Destinations")}</span>
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
           </div>
@@ -141,26 +135,28 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
                 <div className="relative h-48 overflow-hidden">
                   <img
                     src={dest.image}
-                    alt={dest.city}
+                    alt={localize(dest.city)}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
-                  <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/90 text-primary text-[11px] font-bold uppercase tracking-wider backdrop-blur">
-                    {dest.tag}
+                  <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/90 text-primary text-body-sm font-bold uppercase tracking-wider backdrop-blur">
+                    {localize(dest.tag)}
                   </span>
                   <div className="absolute bottom-3 left-4 text-white">
-                    <span className="text-2xl font-bold block">{dest.city}</span>
-                    <span className="text-xs opacity-90">{dest.code} • {dest.airport}</span>
+                    <span className="text-2xl font-bold block">{localize(dest.city)}</span>
+                    <span className="text-xs opacity-90">{localize(dest.code)} • {localize(dest.airport)}</span>
                   </div>
                 </div>
 
                 <div className="p-4 flex items-center justify-between bg-surface-container-lowest">
                   <div>
-                    <span className="text-[11px] text-on-surface-variant block">Ho Chi Minh City → {dest.city}</span>
-                    <span className="text-label-sm font-semibold text-secondary">Choose a date to see flights</span>
+                    <span className="text-body-sm text-on-surface-variant block">{localize("Ho Chi Minh City → ")}{localize(dest.city)}</span>
+                    <span className="text-label-sm font-semibold text-secondary">{localize("Choose a date to see flights")}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-label-sm font-bold text-primary">Search →</span>
+                    <span className="text-label-sm font-bold text-primary">{localize("Search →")}</span>
                   </div>
                 </div>
               </div>
@@ -172,15 +168,9 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
         <section className="max-w-7xl mx-auto px-6 lg:px-12 mt-24">
           <div className="bg-surface-container-low rounded-3xl p-8 lg:p-12 border border-outline-variant">
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <span className="text-[11px] font-bold text-secondary uppercase tracking-widest block">
-                The SkyWing Standard
-              </span>
-              <h2 className="text-headline-lg font-bold text-primary tracking-tight mt-1">
-                Aero Minimalist Engineering for Travelers
-              </h2>
-              <p className="text-body-md text-on-surface-variant mt-2">
-                Every detail calibrated for operational precision, quiet cabins, and effortless air travel.
-              </p>
+              <span className="text-body-sm font-bold text-secondary uppercase tracking-widest block">{localize("The SkyWing Standard ")}</span>
+              <h2 className="text-headline-lg font-bold text-primary tracking-tight mt-1">{localize("Aero Minimalist Engineering for Travelers ")}</h2>
+              <p className="text-body-md text-on-surface-variant mt-2">{localize("Every detail calibrated for operational precision, quiet cabins, and effortless air travel. ")}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -188,36 +178,24 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
                 <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary mb-4">
                   <span className="material-symbols-outlined text-[26px]">speed</span>
                 </div>
-                <h3 className="text-headline-sm font-bold text-primary mb-2">
-                  99.4% On-Time Reliability
-                </h3>
-                <p className="text-body-sm text-on-surface-variant">
-                  Optimized flight turnaround times and modern twin-aisle jets ensure you reach your destination punctually.
-                </p>
+                <h3 className="text-headline-sm font-bold text-primary mb-2">{localize("99.4% On-Time Reliability ")}</h3>
+                <p className="text-body-sm text-on-surface-variant">{localize("Optimized flight turnaround times and modern twin-aisle jets ensure you reach your destination punctually. ")}</p>
               </div>
 
               <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/60 shadow-sm">
                 <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary mb-4">
                   <span className="material-symbols-outlined text-[26px]">airline_seat_flat</span>
                 </div>
-                <h3 className="text-headline-sm font-bold text-primary mb-2">
-                  Full Lie-Flat SkySuites
-                </h3>
-                <p className="text-body-sm text-on-surface-variant">
-                  Direct aisle access, sliding privacy doors, and 180-degree lie-flat beds on all long-haul and trunk routes.
-                </p>
+                <h3 className="text-headline-sm font-bold text-primary mb-2">{localize("Full Lie-Flat SkySuites ")}</h3>
+                <p className="text-body-sm text-on-surface-variant">{localize("Direct aisle access, sliding privacy doors, and 180-degree lie-flat beds on all long-haul and trunk routes. ")}</p>
               </div>
 
               <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/60 shadow-sm">
                 <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary mb-4">
                   <span className="material-symbols-outlined text-[26px]">credit_card</span>
                 </div>
-                <h3 className="text-headline-sm font-bold text-primary mb-2">
-                  Transparent All-In Pricing
-                </h3>
-                <p className="text-body-sm text-on-surface-variant">
-                  No hidden credit card processing surcharges. All government taxes, airport fees, and baggage policies clearly stated.
-                </p>
+                <h3 className="text-headline-sm font-bold text-primary mb-2">{localize("Transparent All-In Pricing ")}</h3>
+                <p className="text-body-sm text-on-surface-variant">{localize("No hidden credit card processing surcharges. All government taxes, airport fees, and baggage policies clearly stated. ")}</p>
               </div>
             </div>
           </div>

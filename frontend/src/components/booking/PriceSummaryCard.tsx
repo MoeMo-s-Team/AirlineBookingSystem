@@ -1,3 +1,4 @@
+import { localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import type { Flight, FareClass, AncillaryService } from '../../types';
 import type { BookingFlightSelection, BookingFareOption, BookingSelectedService } from '../../types/bookingFlow';
@@ -22,25 +23,24 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
   onCtaClick,
   isCtaDisabled = false
 }) => {
+  useLanguage();
   const flightPrice = fareClass ? fareClass.price : (flight?.basePrice ?? 0);
   const baseTotal = flightPrice * passengerCount;
-  const servicesTotal = selectedServices.reduce((sum, s) => sum + (s.price || 0), 0);
+  const servicesTotal = selectedServices.reduce((sum, s) => sum + ((s.price || 0) * ((s as any).quantity || 1)), 0);
   const grandTotal = baseTotal + servicesTotal;
 
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm sticky top-24">
-      <h3 className="text-headline-sm font-bold text-primary mb-4 pb-3 border-b border-outline-variant">
-        Fare & Price Breakdown
-      </h3>
+      <h3 className="text-headline-sm font-bold text-primary mb-4 pb-3 border-b border-outline-variant">{localize("Fare & Price Breakdown ")}</h3>
 
       {flight && (
         <div className="mb-4 pb-4 border-b border-outline-variant text-body-sm">
           <div className="flex items-center justify-between font-bold text-primary">
-            <span>{flight.departureCode} → {flight.arrivalCode}</span>
-            <span>{flight.flightNumber}</span>
+            <span>{localize(flight.departureCode)} → {localize(flight.arrivalCode)}</span>
+            <span>{localize(flight.flightNumber)}</span>
           </div>
-          <div className="text-on-surface-variant text-[12px] mt-0.5">
-            {flight.departureTime} Departure • {fareClass?.name || 'Standard Tier'}
+          <div className="text-on-surface-variant text-body-sm mt-0.5">
+            {localize(flight.departureTime)}{localize("Departure • ")}{localize(fareClass?.name || 'Standard Tier')}
           </div>
         </div>
       )}
@@ -48,21 +48,24 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
       {/* Itemized lines */}
       <div className="space-y-2.5 text-body-sm">
         <div className="flex items-center justify-between text-on-surface">
-          <span>Flight Fare ({passengerCount}x Adult)</span>
-          <span className="font-semibold text-primary">{formatCurrency(baseTotal)}</span>
+          <span>{localize("Flight Fare (")}{localize(passengerCount)}{localize("x Adult)")}</span>
+          <span className="font-semibold text-primary">{localize(formatCurrency(baseTotal))}</span>
         </div>
 
         {selectedServices.length > 0 && (
           <div className="pt-2 border-t border-dashed border-outline-variant space-y-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-outline block">
-              Ancillary Add-ons
-            </span>
-            {selectedServices.map(service => (
-              <div key={service.id} className="flex items-center justify-between text-on-surface-variant text-[13px]">
-                <span className="truncate pr-2">{service.name}</span>
-                <span className="font-medium text-primary">+{formatCurrency(service.price)}</span>
-              </div>
-            ))}
+            <span className="text-body-sm font-bold uppercase tracking-wider text-outline block">{localize("Ancillary Add-ons ")}</span>
+            {selectedServices.map(service => {
+              const qty = (service as any).quantity || 1;
+              return (
+                <div key={service.id} className="flex items-center justify-between text-on-surface-variant text-body-sm">
+                  <span className="truncate pr-2">
+                    {localize(service.name)} {localize(qty > 1 ? `(x${qty})` : '')}
+                  </span>
+                  <span className="font-medium text-primary">+{localize(formatCurrency(service.price * qty))}</span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -70,11 +73,9 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
       {/* Total Due */}
       <div className="mt-6 pt-4 border-t border-outline-variant flex items-center justify-between">
         <div>
-          <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider block">
-            Total Payable
-          </span>
+          <span className="text-body-sm font-semibold text-on-surface-variant uppercase tracking-wider block">{localize("Total Payable ")}</span>
           <span className="text-headline-lg font-bold text-primary">
-            {formatCurrency(grandTotal)}
+            {localize(formatCurrency(grandTotal))}
           </span>
         </div>
       </div>
@@ -91,7 +92,7 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
               : 'bg-primary hover:bg-primary-container text-on-primary hover:shadow-lg'
           }`}
         >
-          <span>{ctaLabel}</span>
+          <span>{localize(ctaLabel)}</span>
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>
       )}

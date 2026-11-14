@@ -58,7 +58,7 @@ describe('SignUpPage', () => {
     await waitFor(() => {
       expect(mockSignUp).toHaveBeenCalledWith('Nguyen Van A', 'a@example.com', '12345678');
       expect(mockNavigate).not.toHaveBeenCalled();
-      expect(screen.getByText(/Vui lòng kiểm tra email để xác nhận tài khoản/i)).toBeInTheDocument();
+      expect(screen.getByText(/Please check your email to confirm your account/i)).toBeInTheDocument();
     });
   });
 

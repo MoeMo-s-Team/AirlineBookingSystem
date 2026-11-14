@@ -2,6 +2,7 @@ package com.airline.application.service;
 
 import com.airline.domain.entity.AdditionalService;
 import com.airline.domain.enums.ServiceType;
+import com.airline.domain.repository.BookingRepository;
 import com.airline.domain.repository.ServiceRepository;
 import com.airline.presentation.dto.request.ServiceRequest;
 import com.airline.presentation.dto.response.ServiceResponse;
@@ -26,6 +27,9 @@ class AdditionalServiceServiceTest {
 
     @Mock
     private ServiceRepository serviceRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @InjectMocks
     private AdditionalServiceService additionalServiceService;
@@ -108,10 +112,22 @@ class AdditionalServiceServiceTest {
     @DisplayName("Xóa dịch vụ thành công")
     void testDeleteService_Success() {
         when(serviceRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.existsByServiceId(1L)).thenReturn(false);
         doNothing().when(serviceRepository).deleteById(1L);
 
         assertDoesNotThrow(() -> additionalServiceService.deleteService(1L));
         verify(serviceRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("Xóa dịch vụ thất bại khi đã có đơn đặt vé sử dụng -> Ném IllegalStateException")
+    void testDeleteService_HasExistingBookings_ThrowsIllegalStateException() {
+        when(serviceRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.existsByServiceId(1L)).thenReturn(true);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> additionalServiceService.deleteService(1L));
+        assertTrue(ex.getMessage().contains("Không thể xóa dịch vụ"));
+        verify(serviceRepository, never()).deleteById(anyLong());
     }
 
     @Test

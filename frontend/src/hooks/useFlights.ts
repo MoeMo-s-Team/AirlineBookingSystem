@@ -7,6 +7,7 @@ import type { BookingFlightSelection, BookingFareOption } from '../types/booking
 
 export function useFlights(searchParams: FlightSearchParams) {
   const [flights, setFlights] = useState<readonly BookingFlightSelection[]>([]);
+  const [activeFares, setActiveFares] = useState<FareClassResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,10 +34,12 @@ export function useFlights(searchParams: FlightSearchParams) {
         destination: searchParams.destination,
         date: searchParams.departureDate
       }, controller.signal),
-      fareApi.getActiveFares().catch(() => [] as FareClassResponse[]),
+      fareApi.getActiveFares(),
     ])
-      .then(([flightsResult, activeFares]) => {
-        setFlights(flightsResult.map(f => toFlightViewModel(f, activeFares)));
+      .then(([flightsResult, activeFaresResult]) => {
+        if (controller.signal.aborted) return;
+        setActiveFares(activeFaresResult);
+        setFlights(flightsResult.map(f => toFlightViewModel(f, activeFaresResult)));
       })
       .catch(cause => {
         if (cause instanceof DOMException && cause.name === 'AbortError') return;
@@ -104,6 +107,7 @@ export function useFlights(searchParams: FlightSearchParams) {
     updateFilter,
     filteredFlights,
     allFlights: flights,
+    activeFares,
     maxAvailablePrice,
     isLoading,
     error
@@ -168,9 +172,9 @@ function buildFareClasses(basePrice: number, activeFares: FareClassResponse[]): 
         tier: template?.tier || 'Economy',
         priceMultiplier: fare.priceMultiplier,
         price: Math.round(basePrice * fare.priceMultiplier),
-        baggage: template?.baggage || 'Standard baggage allowance',
-        seatPitch: template?.seatPitch || 'Standard pitch',
-        meal: template?.meal || 'Standard meal options',
+        baggage: fare.baggage || 'Chưa có thông tin hành lý',
+        seatPitch: fare.seatPitch || 'Chưa có thông tin ghế',
+        meal: fare.meal || 'Chưa có thông tin suất ăn',
         changes: template?.changes || 'Ticket change conditions apply',
         cancellation: template?.cancellation || 'Cancellation conditions apply',
         milesMultiplier: template?.milesMultiplier ?? 1,

@@ -1,0 +1,2890 @@
+{
+  ") không? Thao tác này không thể hoàn tác.": [
+    ")? This action cannot be undone.",
+    ") không? Thao tác này không thể hoàn tác."
+  ],
+  "Bạn chưa có đơn đặt vé nào phù hợp với bộ lọc tìm kiếm hiện tại.": [
+    "You have no bookings matching the current filters.",
+    "Bạn chưa có đơn đặt vé nào phù hợp với bộ lọc tìm kiếm hiện tại."
+  ],
+  "Bạn có chắc chắn muốn xóa vĩnh viễn dịch vụ": [
+    "Are you sure you want to permanently delete the service",
+    "Bạn có chắc chắn muốn xóa vĩnh viễn dịch vụ"
+  ],
+  "Bạn có chắc chắn muốn xóa vĩnh viễn hạng vé": [
+    "Are you sure you want to permanently delete the fare class",
+    "Bạn có chắc chắn muốn xóa vĩnh viễn hạng vé"
+  ],
+  "Bấm để bật/tắt mở bán": [
+    "Click to enable or disable sales",
+    "Bấm để bật/tắt mở bán"
+  ],
+  "Cho phép hành khách lựa chọn dịch vụ này trong giỏ hàng": [
+    "Allow passengers to add this service to their booking",
+    "Cho phép hành khách lựa chọn dịch vụ này trong giỏ hàng"
+  ],
+  "Cho phép hành khách nhìn thấy và chọn hạng vé này": [
+    "Allow passengers to see and select this fare class",
+    "Cho phép hành khách nhìn thấy và chọn hạng vé này"
+  ],
+  "Chuyến bay": [
+    "Flight",
+    "Chuyến bay"
+  ],
+  "Chưa có dịch vụ bổ trợ khả dụng": [
+    "No additional services available",
+    "Chưa có dịch vụ bổ trợ khả dụng"
+  ],
+  "Chưa có dịch vụ nào trong hệ thống.": [
+    "No services have been added yet.",
+    "Chưa có dịch vụ nào trong hệ thống."
+  ],
+  "Chưa có hạng vé nào trong hệ thống.": [
+    "No fare classes have been added yet.",
+    "Chưa có hạng vé nào trong hệ thống."
+  ],
+  "Chưa có thông tin ghế": [
+    "Seat details unavailable",
+    "Chưa có thông tin ghế"
+  ],
+  "Chưa có thông tin hành lý": [
+    "Baggage details unavailable",
+    "Chưa có thông tin hành lý"
+  ],
+  "Chưa có thông tin suất ăn": [
+    "Meal details unavailable",
+    "Chưa có thông tin suất ăn"
+  ],
+  "Chưa cập nhật": [
+    "Not updated",
+    "Chưa cập nhật"
+  ],
+  "Chưa xác minh được trạng thái. Thanh toán đang tạm dừng; hãy kiểm tra lại trước khi tiếp tục.": [
+    "The current status could not be verified. Payment is paused; check again before continuing.",
+    "Chưa xác minh được trạng thái. Thanh toán đang tạm dừng; hãy kiểm tra lại trước khi tiếp tục."
+  ],
+  "Chỉnh sửa Hạng vé: {0}": [
+    "Edit fare class: {0}",
+    "Chỉnh sửa Hạng vé: {0}"
+  ],
+  "Chỉnh sửa: {0}": [
+    "Edit: {0}",
+    "Chỉnh sửa: {0}"
+  ],
+  "Chọn chỗ ngồi (SEAT)": [
+    "Seat selection (SEAT)",
+    "Chọn chỗ ngồi (SEAT)"
+  ],
+  "Chọn chỗ ngồi": [
+    "Seat selection",
+    "Chọn chỗ ngồi"
+  ],
+  "Chọn hạng": [
+    "Select fare",
+    "Chọn hạng"
+  ],
+  "Chữ mờ là gợi ý theo hệ số. Nhấn ⚡ để điền rồi chỉnh sửa; đổi hệ số sẽ đặt lại cả 3 ô.": [
+    "Faded text is a suggestion based on the multiplier. Click ⚡ to fill in and edit; changing the multiplier resets all three fields.",
+    "Chữ mờ là gợi ý theo hệ số. Nhấn ⚡ để điền rồi chỉnh sửa; đổi hệ số sẽ đặt lại cả 3 ô."
+  ],
+  "Công thức tính giá vé: Giá vé = Giá chuyến bay gốc × Hệ số này.": [
+    "Ticket price = flight base price × this multiplier.",
+    "Công thức tính giá vé: Giá vé = Giá chuyến bay gốc × Hệ số này."
+  ],
+  "Cổng thanh toán thử nghiệm (Mock Gateway)": [
+    "Test payment gateway (Mock Gateway)",
+    "Cổng thanh toán thử nghiệm (Mock Gateway)"
+  ],
+  "Danh sách hành khách": [
+    "Passenger list",
+    "Danh sách hành khách"
+  ],
+  "Danh sách đặt chỗ": [
+    "Bookings",
+    "Danh sách đặt chỗ"
+  ],
+  "Dịch vụ bổ sung được cung cấp cho hành khách trong luồng đặt vé.": [
+    "Additional services available to passengers during booking.",
+    "Dịch vụ bổ sung được cung cấp cho hành khách trong luồng đặt vé."
+  ],
+  "Dịch vụ bổ sung": [
+    "Additional services",
+    "Dịch vụ bổ sung"
+  ],
+  "Dịch vụ {0} tiêu chuẩn cao cấp giúp chuyến bay của bạn thoải mái và trọn vẹn hơn.": [
+    "Premium {0} service for a more comfortable and enjoyable flight.",
+    "Dịch vụ {0} tiêu chuẩn cao cấp giúp chuyến bay của bạn thoải mái và trọn vẹn hơn."
+  ],
+  "Dịch vụ": [
+    "Service",
+    "Dịch vụ"
+  ],
+  "Dữ liệu trực tiếp từ Supabase Database qua API Backend (": [
+    "Live data from the booking system (",
+    "Dữ liệu trực tiếp từ Supabase Database qua API Backend ("
+  ],
+  "Email đăng ký": [
+    "Registered email",
+    "Email đăng ký"
+  ],
+  "Fine dining à la carte & vintage champagne": [
+    "Fine dining à la carte & vintage champagne",
+    "Fine dining à la carte & vintage champagne"
+  ],
+  "Giao dịch thanh toán không thành công. Đơn đặt vé này đã chuyển sang trạng thái thất bại. Vui lòng bắt đầu một hành trình đặt vé mới.": [
+    "Payment was unsuccessful. This booking has been marked as failed. Please start a new booking.",
+    "Giao dịch thanh toán không thành công. Đơn đặt vé này đã chuyển sang trạng thái thất bại. Vui lòng bắt đầu một hành trình đặt vé mới."
+  ],
+  "Giá dịch vụ không được âm": [
+    "Service price cannot be negative",
+    "Giá dịch vụ không được âm"
+  ],
+  "Giá dịch vụ không được để trống": [
+    "Service price is required",
+    "Giá dịch vụ không được để trống"
+  ],
+  "Giá và số ghế phải lớn hơn 0.": [
+    "Price and available seats must be greater than zero.",
+    "Giá và số ghế phải lớn hơn 0."
+  ],
+  "Giờ khởi hành phải ở tương lai.": [
+    "Departure must be in the future.",
+    "Giờ khởi hành phải ở tương lai."
+  ],
+  "Giờ đến phải sau giờ khởi hành.": [
+    "Arrival must be after departure.",
+    "Giờ đến phải sau giờ khởi hành."
+  ],
+  "Hiển thị:": [
+    "Showing:",
+    "Hiển thị:"
+  ],
+  "Hiện tại chuyến bay này chưa có dịch vụ bổ trợ nào khả dụng. Quý khách có thể tiếp tục sang bước thanh toán.": [
+    "No additional services are currently available for this flight. You can continue to payment.",
+    "Hiện tại chuyến bay này chưa có dịch vụ bổ trợ nào khả dụng. Quý khách có thể tiếp tục sang bước thanh toán."
+  ],
+  "Hiện tại chuyến bay này chưa có hạng vé khả dụng.": [
+    "No fare classes are currently available for this flight.",
+    "Hiện tại chuyến bay này chưa có hạng vé khả dụng."
+  ],
+  "Hành khách bay": [
+    "Traveling passengers",
+    "Hành khách bay"
+  ],
+  "Hành khách": [
+    "Passenger",
+    "Hành khách"
+  ],
+  "Hành lý ký gửi (BAGGAGE)": [
+    "Checked baggage (BAGGAGE)",
+    "Hành lý ký gửi (BAGGAGE)"
+  ],
+  "Hành lý": [
+    "Baggage",
+    "Hành lý"
+  ],
+  "Hệ số nhân (Multiplier)": [
+    "Price multiplier",
+    "Hệ số nhân (Multiplier)"
+  ],
+  "Hệ số nhân giá (Price Multiplier)": [
+    "Price multiplier",
+    "Hệ số nhân giá (Price Multiplier)"
+  ],
+  "Hệ số nhân giá không được để trống": [
+    "Price multiplier is required",
+    "Hệ số nhân giá không được để trống"
+  ],
+  "Hệ số nhân giá phải từ 0,01 đến 999,99": [
+    "Price multiplier must be between 0.01 and 999.99",
+    "Hệ số nhân giá phải từ 0,01 đến 999,99"
+  ],
+  "Hệ số nhân giá": [
+    "Price multiplier",
+    "Hệ số nhân giá"
+  ],
+  "Hệ thống máy chủ đang gặp sự cố khi xử lý dữ liệu dịch vụ (Mã lỗi: 500). Vui lòng thử lại sau ít phút.": [
+    "The server could not load services (error 500). Please try again shortly.",
+    "Hệ thống máy chủ đang gặp sự cố khi xử lý dữ liệu dịch vụ (Mã lỗi: 500). Vui lòng thử lại sau ít phút."
+  ],
+  "Hệ thống máy chủ đang gặp sự cố khi xử lý dữ liệu hạng vé. Vui lòng thử lại sau.": [
+    "The server could not load fare classes. Please try again later.",
+    "Hệ thống máy chủ đang gặp sự cố khi xử lý dữ liệu hạng vé. Vui lòng thử lại sau."
+  ],
+  "Họ và tên tài khoản": [
+    "Account holder's full name",
+    "Họ và tên tài khoản"
+  ],
+  "Hộ chiếu / CCCD:": [
+    "Passport / ID:",
+    "Hộ chiếu / CCCD:"
+  ],
+  "Hộ chiếu/CCCD: {0}": [
+    "Passport / ID: {0}",
+    "Hộ chiếu/CCCD: {0}"
+  ],
+  "Hội Viên": [
+    "Member",
+    "Hội Viên"
+  ],
+  "Hủy bỏ": [
+    "Cancel",
+    "Hủy bỏ"
+  ],
+  "Hủy đặt chỗ": [
+    "Cancel booking",
+    "Hủy đặt chỗ"
+  ],
+  "Khoảng cách / loại ghế": [
+    "Seat pitch / type",
+    "Khoảng cách / loại ghế"
+  ],
+  "Khách hàng đặt vé": [
+    "Booked by",
+    "Khách hàng đặt vé"
+  ],
+  "Khách hàng": [
+    "Customer",
+    "Khách hàng"
+  ],
+  "Khách vãng lai": [
+    "Guest",
+    "Khách vãng lai"
+  ],
+  "Không có dịch vụ nào khớp với từ khóa tìm kiếm.": [
+    "No services match your search.",
+    "Không có dịch vụ nào khớp với từ khóa tìm kiếm."
+  ],
+  "Không có hạng vé nào khớp với từ khóa tìm kiếm.": [
+    "No fare classes match your search.",
+    "Không có hạng vé nào khớp với từ khóa tìm kiếm."
+  ],
+  "Không thể kết nối với máy chủ.": [
+    "Cannot connect to the server.",
+    "Không thể kết nối với máy chủ."
+  ],
+  "Không thể kết nối đến máy chủ Backend (Port 8080). Vui lòng kiểm tra dịch vụ.": [
+    "Cannot connect to the booking server. Please try again later.",
+    "Không thể kết nối đến máy chủ Backend (Port 8080). Vui lòng kiểm tra dịch vụ."
+  ],
+  "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ Backend hoặc thử lại.": [
+    "Cannot connect to the server. Please try again.",
+    "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ Backend hoặc thử lại."
+  ],
+  "Không thể kết nối đến máy chủ.": [
+    "Cannot connect to the server.",
+    "Không thể kết nối đến máy chủ."
+  ],
+  "Không thể mở đơn đặt vé này. Vui lòng kiểm tra trong lịch sử đặt vé.": [
+    "Cannot open this booking. Please check your booking history.",
+    "Không thể mở đơn đặt vé này. Vui lòng kiểm tra trong lịch sử đặt vé."
+  ],
+  "Không thể tải danh sách chuyến bay.": [
+    "Unable to load flights.",
+    "Không thể tải danh sách chuyến bay."
+  ],
+  "Không thể tải danh sách đặt chỗ": [
+    "Unable to load bookings",
+    "Không thể tải danh sách đặt chỗ"
+  ],
+  "Không thể tải danh sách đặt chỗ.": [
+    "Unable to load bookings.",
+    "Không thể tải danh sách đặt chỗ."
+  ],
+  "Không thể tải dịch vụ bổ trợ": [
+    "Unable to load additional services",
+    "Không thể tải dịch vụ bổ trợ"
+  ],
+  "Không thể tải hạng vé": [
+    "Unable to load fare classes",
+    "Không thể tải hạng vé"
+  ],
+  "Không thể tải thông tin hồ sơ của bạn.": [
+    "Unable to load your profile.",
+    "Không thể tải thông tin hồ sơ của bạn."
+  ],
+  "Không thể tải thông tin đơn đặt vé.": [
+    "Unable to load booking details.",
+    "Không thể tải thông tin đơn đặt vé."
+  ],
+  "Không thể xác nhận trạng thái thanh toán.": [
+    "Unable to verify payment status.",
+    "Không thể xác nhận trạng thái thanh toán."
+  ],
+  "Không thể xác nhận trạng thái đơn đặt vé.": [
+    "Unable to verify booking status.",
+    "Không thể xác nhận trạng thái đơn đặt vé."
+  ],
+  "Không thể xóa dịch vụ này.": [
+    "Unable to delete this service.",
+    "Không thể xóa dịch vụ này."
+  ],
+  "Không thể xóa hạng vé này.": [
+    "Unable to delete this fare class.",
+    "Không thể xóa hạng vé này."
+  ],
+  "Không thể đổi trạng thái dịch vụ.": [
+    "Unable to change service status.",
+    "Không thể đổi trạng thái dịch vụ."
+  ],
+  "Không thể đổi trạng thái hạng vé.": [
+    "Unable to change fare class status.",
+    "Không thể đổi trạng thái hạng vé."
+  ],
+  "Không tìm thấy bản ghi nào.": [
+    "No records found.",
+    "Không tìm thấy bản ghi nào."
+  ],
+  "Không tìm thấy dịch vụ nào": [
+    "No services found",
+    "Không tìm thấy dịch vụ nào"
+  ],
+  "Không tìm thấy hạng vé nào": [
+    "No fare classes found",
+    "Không tìm thấy hạng vé nào"
+  ],
+  "Không tìm thấy thông tin đặt chỗ.": [
+    "Booking information not found.",
+    "Không tìm thấy thông tin đặt chỗ."
+  ],
+  "Không tìm thấy đặt chỗ nào": [
+    "No bookings found",
+    "Không tìm thấy đặt chỗ nào"
+  ],
+  "Khởi hành": [
+    "Departure",
+    "Khởi hành"
+  ],
+  "Kiểm tra trạng thái lại": [
+    "Check status again",
+    "Kiểm tra trạng thái lại"
+  ],
+  "Kích hoạt mở bán": [
+    "Enable sales",
+    "Kích hoạt mở bán"
+  ],
+  "Loại dịch vụ": [
+    "Service type",
+    "Loại dịch vụ"
+  ],
+  "Loại:": [
+    "Type:",
+    "Loại:"
+  ],
+  "Lưu thay đổi": [
+    "Save changes",
+    "Lưu thay đổi"
+  ],
+  "Lỗi yêu cầu HTTP: {0} {1}": [
+    "HTTP request failed: {0} {1}",
+    "Lỗi yêu cầu HTTP: {0} {1}"
+  ],
+  "Máy chủ trả về dữ liệu không hợp lệ (HTTP {0}).": [
+    "The server returned invalid data (HTTP {0}).",
+    "Máy chủ trả về dữ liệu không hợp lệ (HTTP {0})."
+  ],
+  "Mã hạng vé (Code)": [
+    "Fare class code",
+    "Mã hạng vé (Code)"
+  ],
+  "Mã hạng vé không được để trống": [
+    "Fare class code is required",
+    "Mã hạng vé không được để trống"
+  ],
+  "Mã hạng vé là khóa định danh, không thể thay đổi sau khi tạo.": [
+    "The fare class code cannot be changed after creation.",
+    "Mã hạng vé là khóa định danh, không thể thay đổi sau khi tạo."
+  ],
+  "Mã hạng vé tối đa 20 ký tự": [
+    "Fare class code must be 20 characters or fewer",
+    "Mã hạng vé tối đa 20 ký tự"
+  ],
+  "Mã hạng vé": [
+    "Fare class code",
+    "Mã hạng vé"
+  ],
+  "Mã sân bay phải gồm đúng 3 chữ cái.": [
+    "Airport codes must contain exactly three letters.",
+    "Mã sân bay phải gồm đúng 3 chữ cái."
+  ],
+  "Mã đơn đặt vé không hợp lệ.": [
+    "Invalid booking ID.",
+    "Mã đơn đặt vé không hợp lệ."
+  ],
+  "Mã đơn đặt vé": [
+    "Booking ID",
+    "Mã đơn đặt vé"
+  ],
+  "Mã đặt chỗ (Booking Code)": [
+    "Booking code",
+    "Mã đặt chỗ (Booking Code)"
+  ],
+  "Mã đặt chỗ (Code)": [
+    "Booking code",
+    "Mã đặt chỗ (Code)"
+  ],
+  "Mã đặt chỗ": [
+    "Booking code",
+    "Mã đặt chỗ"
+  ],
+  "Mã đặt chỗ:": [
+    "Booking code:",
+    "Mã đặt chỗ:"
+  ],
+  "Mặc định: {0} (Theo hệ số x{1})": [
+    "Default: {0} (multiplier x{1})",
+    "Mặc định: {0} (Theo hệ số x{1})"
+  ],
+  "Ngày bay không được ở trong quá khứ.": [
+    "Departure date cannot be in the past.",
+    "Ngày bay không được ở trong quá khứ."
+  ],
+  "Ngày tạo": [
+    "Created",
+    "Ngày tạo"
+  ],
+  "Ngày đặt:": [
+    "Booked on:",
+    "Ngày đặt:"
+  ],
+  "Nhấn nút bên dưới để tạo đơn đặt vé chính thức trên hệ thống. Sau khi tạo thành công, mã đặt chỗ sẽ được cấp phát và bạn có thể tiến hành thanh toán.": [
+    "Click below to create your booking. Once created, you will receive a booking code and can proceed to payment.",
+    "Nhấn nút bên dưới để tạo đơn đặt vé chính thức trên hệ thống. Sau khi tạo thành công, mã đặt chỗ sẽ được cấp phát và bạn có thể tiến hành thanh toán."
+  ],
+  "Nhập hệ số hợp lệ để xem gợi ý": [
+    "Enter a valid multiplier to see suggestions",
+    "Nhập hệ số hợp lệ để xem gợi ý"
+  ],
+  "Phân loại": [
+    "Category",
+    "Phân loại"
+  ],
+  "Phản hồi thanh toán không hợp lệ.": [
+    "Invalid payment response.",
+    "Phản hồi thanh toán không hợp lệ."
+  ],
+  "Phản hồi tạo đơn đặt vé không hợp lệ.": [
+    "Invalid booking response.",
+    "Phản hồi tạo đơn đặt vé không hợp lệ."
+  ],
+  "Phổ biến": [
+    "Popular",
+    "Phổ biến"
+  ],
+  "Quay lại Đăng nhập": [
+    "Back to sign in",
+    "Quay lại Đăng nhập"
+  ],
+  "Quyền lợi hạng vé": [
+    "Fare benefits",
+    "Quyền lợi hạng vé"
+  ],
+  "Quản lý các chuyến bay đã đặt, tra cứu thông tin mã đặt chỗ và theo dõi trạng thái.": [
+    "Manage your flights, look up booking codes, and track booking status.",
+    "Quản lý các chuyến bay đã đặt, tra cứu thông tin mã đặt chỗ và theo dõi trạng thái."
+  ],
+  "Quản lý danh mục hành lý, suất ăn, chọn ghế và ưu tiên lên tàu bay": [
+    "Manage baggage, meals, seat selection, and priority boarding",
+    "Quản lý danh mục hành lý, suất ăn, chọn ghế và ưu tiên lên tàu bay"
+  ],
+  "Quản lý danh mục hạng vé, hệ số nhân giá và cấu hình mở bán (Strategy Pattern)": [
+    "Manage fare classes, price multipliers, and sales availability",
+    "Quản lý danh mục hạng vé, hệ số nhân giá và cấu hình mở bán (Strategy Pattern)"
+  ],
+  "Quản lý danh sách đặt chỗ hành khách toàn hệ thống": [
+    "Manage passenger bookings across the system",
+    "Quản lý danh sách đặt chỗ hành khách toàn hệ thống"
+  ],
+  "Sao chép mã": [
+    "Copy code",
+    "Sao chép mã"
+  ],
+  "Suất ăn trên tàu bay (MEAL)": [
+    "Onboard meal (MEAL)",
+    "Suất ăn trên tàu bay (MEAL)"
+  ],
+  "Suất ăn": [
+    "Meal",
+    "Suất ăn"
+  ],
+  "Sân bay đi và sân bay đến phải khác nhau.": [
+    "Origin and destination airports must be different.",
+    "Sân bay đi và sân bay đến phải khác nhau."
+  ],
+  "Sân bay đi và đến phải khác nhau.": [
+    "Origin and destination airports must be different.",
+    "Sân bay đi và đến phải khác nhau."
+  ],
+  "Sửa": [
+    "Edit",
+    "Sửa"
+  ],
+  "Thanh toán thất bại (PAYMENT_FAILED)": [
+    "Payment failed (PAYMENT_FAILED)",
+    "Thanh toán thất bại (PAYMENT_FAILED)"
+  ],
+  "Thao tác không thành công. Vui lòng thử lại.": [
+    "The operation failed. Please try again.",
+    "Thao tác không thành công. Vui lòng thử lại."
+  ],
+  "Thao tác": [
+    "Actions",
+    "Thao tác"
+  ],
+  "Thêm Hạng Vé Mới": [
+    "Add fare class",
+    "Thêm Hạng Vé Mới"
+  ],
+  "Thông tin chuyến bay": [
+    "Flight details",
+    "Thông tin chuyến bay"
+  ],
+  "Thông tin đặt vé chưa đầy đủ. Vui lòng quay lại kiểm tra.": [
+    "Your booking information is incomplete. Please go back and check it.",
+    "Thông tin đặt vé chưa đầy đủ. Vui lòng quay lại kiểm tra."
+  ],
+  "Thử lại": [
+    "Try again",
+    "Thử lại"
+  ],
+  "Tiện lợi": [
+    "Convenient",
+    "Tiện lợi"
+  ],
+  "Trước": [
+    "Previous",
+    "Trước"
+  ],
+  "Trạng thái mở bán": [
+    "Sales status",
+    "Trạng thái mở bán"
+  ],
+  "Trạng thái": [
+    "Status",
+    "Trạng thái"
+  ],
+  "Trạng thái:": [
+    "Status:",
+    "Trạng thái:"
+  ],
+  "Tài khoản hiện tại không có quyền Quản trị viên (403 Forbidden). Vui lòng đăng nhập bằng tài khoản Admin.": [
+    "This account does not have administrator access (403 Forbidden). Please sign in with an admin account.",
+    "Tài khoản hiện tại không có quyền Quản trị viên (403 Forbidden). Vui lòng đăng nhập bằng tài khoản Admin."
+  ],
+  "Tài khoản hiện tại không có quyền Quản trị viên (403 Forbidden). Vui lòng đăng nhập với tài khoản ADMIN.": [
+    "This account does not have administrator access (403 Forbidden). Please sign in with an admin account.",
+    "Tài khoản hiện tại không có quyền Quản trị viên (403 Forbidden). Vui lòng đăng nhập với tài khoản ADMIN."
+  ],
+  "Tên dịch vụ không được để trống": [
+    "Service name is required",
+    "Tên dịch vụ không được để trống"
+  ],
+  "Tên dịch vụ tối đa 100 ký tự": [
+    "Service name must be 100 characters or fewer",
+    "Tên dịch vụ tối đa 100 ký tự"
+  ],
+  "Tên dịch vụ": [
+    "Service name",
+    "Tên dịch vụ"
+  ],
+  "Tên hạng vé hiển thị": [
+    "Display name",
+    "Tên hạng vé hiển thị"
+  ],
+  "Tên hạng vé không được để trống": [
+    "Fare class name is required",
+    "Tên hạng vé không được để trống"
+  ],
+  "Tên hạng vé tối đa 100 ký tự": [
+    "Fare class name must be 100 characters or fewer",
+    "Tên hạng vé tối đa 100 ký tự"
+  ],
+  "Tên hạng vé": [
+    "Fare class name",
+    "Tên hạng vé"
+  ],
+  "Tìm chuyến bay mới": [
+    "Find a new flight",
+    "Tìm chuyến bay mới"
+  ],
+  "Tìm chuyến bay ngay": [
+    "Find flights now",
+    "Tìm chuyến bay ngay"
+  ],
+  "Tìm theo mã đặt chỗ, chuyến bay...": [
+    "Search by booking code or flight...",
+    "Tìm theo mã đặt chỗ, chuyến bay..."
+  ],
+  "TẠM ẨN": [
+    "INACTIVE",
+    "TẠM ẨN"
+  ],
+  "Tạo Dịch Vụ Mới": [
+    "Add service",
+    "Tạo Dịch Vụ Mới"
+  ],
+  "Tạo dịch vụ": [
+    "Create service",
+    "Tạo dịch vụ"
+  ],
+  "Tạo hạng vé": [
+    "Create fare class",
+    "Tạo hạng vé"
+  ],
+  "Tất cả": [
+    "All",
+    "Tất cả"
+  ],
+  "Tổng tiền cần thanh toán (xác nhận từ hệ thống):": [
+    "Amount due (confirmed by the system):",
+    "Tổng tiền cần thanh toán (xác nhận từ hệ thống):"
+  ],
+  "Tổng tiền thanh toán": [
+    "Total payment",
+    "Tổng tiền thanh toán"
+  ],
+  "Tổng tiền": [
+    "Total price",
+    "Tổng tiền"
+  ],
+  "Tổng": [
+    "Total",
+    "Tổng"
+  ],
+  "Vui lòng chọn ngày bay hợp lệ.": [
+    "Please choose a valid departure date.",
+    "Vui lòng chọn ngày bay hợp lệ."
+  ],
+  "Vui lòng kiểm tra lại trạng thái trong danh sách đặt chỗ hoặc liên hệ hỗ trợ.": [
+    "Please check the status in your booking list or contact support.",
+    "Vui lòng kiểm tra lại trạng thái trong danh sách đặt chỗ hoặc liên hệ hỗ trợ."
+  ],
+  "Ví dụ: 1.5, 2.5, 3.0": [
+    "e.g. 1.5, 2.5, 3.0",
+    "Ví dụ: 1.5, 2.5, 3.0"
+  ],
+  "Ví dụ: 200000": [
+    "e.g. 200000",
+    "Ví dụ: 200000"
+  ],
+  "Ví dụ: FIRST, BUSINESS, PREMIUM": [
+    "e.g. FIRST, BUSINESS, PREMIUM",
+    "Ví dụ: FIRST, BUSINESS, PREMIUM"
+  ],
+  "Ví dụ: First Class, Hạng Thương gia Đặc biệt": [
+    "e.g. First Class, Premium Business",
+    "Ví dụ: First Class, Hạng Thương gia Đặc biệt"
+  ],
+  "Ví dụ: Suất ăn chay thanh đạm, Hành lý 20kg": [
+    "e.g. Vegetarian meal, 20kg baggage",
+    "Ví dụ: Suất ăn chay thanh đạm, Hành lý 20kg"
+  ],
+  "Xem chi tiết (Dossier)": [
+    "View booking details",
+    "Xem chi tiết (Dossier)"
+  ],
+  "Xem trong Quản lý đặt chỗ": [
+    "View in My Bookings",
+    "Xem trong Quản lý đặt chỗ"
+  ],
+  "Xem đơn đặt vé": [
+    "View booking",
+    "Xem đơn đặt vé"
+  ],
+  "Xác nhận thông tin đặt vé": [
+    "Confirm booking details",
+    "Xác nhận thông tin đặt vé"
+  ],
+  "Xác nhận xóa dịch vụ": [
+    "Confirm service deletion",
+    "Xác nhận xóa dịch vụ"
+  ],
+  "Xác nhận xóa hạng vé": [
+    "Confirm fare class deletion",
+    "Xác nhận xóa hạng vé"
+  ],
+  "Xác nhận đơn đặt vé và xử lý thanh toán qua cổng thử nghiệm Mock Gateway.": [
+    "Confirm your booking and process payment through the test gateway.",
+    "Xác nhận đơn đặt vé và xử lý thanh toán qua cổng thử nghiệm Mock Gateway."
+  ],
+  "Xác thực thất bại": [
+    "Authentication failed",
+    "Xác thực thất bại"
+  ],
+  "Xóa vĩnh viễn": [
+    "Delete permanently",
+    "Xóa vĩnh viễn"
+  ],
+  "Xóa": [
+    "Delete",
+    "Xóa"
+  ],
+  "Yêu cầu đặt vé không hợp lệ.": [
+    "Invalid booking request.",
+    "Yêu cầu đặt vé không hợp lệ."
+  ],
+  "bật mở bán": [
+    "enabled",
+    "bật mở bán"
+  ],
+  "dịch vụ)": [
+    "services)",
+    "dịch vụ)"
+  ],
+  "hành khách)": [
+    "passengers)",
+    "hành khách)"
+  ],
+  "hạng vé)": [
+    "fare classes)",
+    "hạng vé)"
+  ],
+  "khách:": [
+    "passengers:",
+    "khách:"
+  ],
+  "không?": [
+    "?",
+    "không?"
+  ],
+  "kích hoạt mở bán": [
+    "enabled sales for",
+    "kích hoạt mở bán"
+  ],
+  "ngừng kích hoạt": [
+    "disabled sales for",
+    "ngừng kích hoạt"
+  ],
+  "tắt": [
+    "disabled",
+    "tắt"
+  ],
+  "×": [
+    "×",
+    "×"
+  ],
+  "ĐANG MỞ BÁN": [
+    "ACTIVE",
+    "ĐANG MỞ BÁN"
+  ],
+  "ĐT:": [
+    "Phone:",
+    "ĐT:"
+  ],
+  "Đang kiểm tra...": [
+    "Checking...",
+    "Đang kiểm tra..."
+  ],
+  "Đang tạo đơn đặt vé...": [
+    "Creating booking...",
+    "Đang tạo đơn đặt vé..."
+  ],
+  "Đang tải danh sách dịch vụ bổ trợ từ máy chủ...": [
+    "Loading additional services...",
+    "Đang tải danh sách dịch vụ bổ trợ từ máy chủ..."
+  ],
+  "Đang tải danh sách hạng vé từ máy chủ...": [
+    "Loading fare classes...",
+    "Đang tải danh sách hạng vé từ máy chủ..."
+  ],
+  "Đang tải danh sách đặt chỗ...": [
+    "Loading bookings...",
+    "Đang tải danh sách đặt chỗ..."
+  ],
+  "Đang tải thông tin chi tiết...": [
+    "Loading details...",
+    "Đang tải thông tin chi tiết..."
+  ],
+  "Đang tải thông tin đặt chỗ...": [
+    "Loading booking information...",
+    "Đang tải thông tin đặt chỗ..."
+  ],
+  "Đang tải đơn đặt vé...": [
+    "Loading booking...",
+    "Đang tải đơn đặt vé..."
+  ],
+  "Đang xác minh": [
+    "Verifying",
+    "Đang xác minh"
+  ],
+  "Đang xác thực tài khoản và tải hồ sơ...": [
+    "Verifying your account and loading your profile...",
+    "Đang xác thực tài khoản và tải hồ sơ..."
+  ],
+  "Đang xử lý thanh toán...": [
+    "Processing payment...",
+    "Đang xử lý thanh toán..."
+  ],
+  "Điểm đến": [
+    "Destination",
+    "Điểm đến"
+  ],
+  "Đây là cổng thanh toán mô phỏng phục vụ thử nghiệm tính năng. Không yêu cầu nhập thẻ tín dụng hay chuyển khoản thực tế.": [
+    "This is a simulated payment gateway for testing. No real credit card or bank transfer is required.",
+    "Đây là cổng thanh toán mô phỏng phục vụ thử nghiệm tính năng. Không yêu cầu nhập thẻ tín dụng hay chuyển khoản thực tế."
+  ],
+  "Đã chọn hạng này": [
+    "Selected fare",
+    "Đã chọn hạng này"
+  ],
+  "Đã cập nhật chuyến bay.": [
+    "Flight updated.",
+    "Đã cập nhật chuyến bay."
+  ],
+  "Đã cập nhật dịch vụ \"{0}\" thành công.": [
+    "Service \"{0}\" updated successfully.",
+    "Đã cập nhật dịch vụ \"{0}\" thành công."
+  ],
+  "Đã cập nhật hạng vé \"{0}\" thành công.": [
+    "Fare class \"{0}\" updated successfully.",
+    "Đã cập nhật hạng vé \"{0}\" thành công."
+  ],
+  "Đã hủy bởi khách": [
+    "Cancelled by customer",
+    "Đã hủy bởi khách"
+  ],
+  "Đã sao chép": [
+    "Copied",
+    "Đã sao chép"
+  ],
+  "Đã tạo chuyến bay.": [
+    "Flight created.",
+    "Đã tạo chuyến bay."
+  ],
+  "Đã tạo mới dịch vụ \"{0}\" thành công.": [
+    "Service \"{0}\" created successfully.",
+    "Đã tạo mới dịch vụ \"{0}\" thành công."
+  ],
+  "Đã tạo mới hạng vé \"{0}\" thành công.": [
+    "Fare class \"{0}\" created successfully.",
+    "Đã tạo mới hạng vé \"{0}\" thành công."
+  ],
+  "Đã xóa dịch vụ \"{0}\" thành công.": [
+    "Service \"{0}\" deleted successfully.",
+    "Đã xóa dịch vụ \"{0}\" thành công."
+  ],
+  "Đã xóa hạng vé \"{0}\" thành công.": [
+    "Fare class \"{0}\" deleted successfully.",
+    "Đã xóa hạng vé \"{0}\" thành công."
+  ],
+  "Đã xóa {0}.": [
+    "Deleted {0}.",
+    "Đã xóa {0}."
+  ],
+  "Đã xảy ra lỗi khi tải danh sách dịch vụ bổ trợ.": [
+    "An error occurred while loading additional services.",
+    "Đã xảy ra lỗi khi tải danh sách dịch vụ bổ trợ."
+  ],
+  "Đã xảy ra lỗi khi tải danh sách hạng vé.": [
+    "An error occurred while loading fare classes.",
+    "Đã xảy ra lỗi khi tải danh sách hạng vé."
+  ],
+  "Đã xảy ra sự cố khi tải danh sách dịch vụ bổ trợ.": [
+    "An error occurred while loading additional services.",
+    "Đã xảy ra sự cố khi tải danh sách dịch vụ bổ trợ."
+  ],
+  "Đã xảy ra xung đột khi thanh toán. Trạng thái hiện tại: PENDING": [
+    "A payment conflict occurred. Current status: PENDING",
+    "Đã xảy ra xung đột khi thanh toán. Trạng thái hiện tại: PENDING"
+  ],
+  "Đã {0} dịch vụ \"{1}\".": [
+    "Service \"{1}\" {0}.",
+    "Đã {0} dịch vụ \"{1}\"."
+  ],
+  "Đã {0} hạng vé \"{1}\".": [
+    "Fare class \"{1}\" {0}.",
+    "Đã {0} hạng vé \"{1}\"."
+  ],
+  "Đóng (Done)": [
+    "Done",
+    "Đóng (Done)"
+  ],
+  "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản của bạn trước khi đăng nhập.": [
+    "Registration successful! Please check your email to confirm your account before signing in.",
+    "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản của bạn trước khi đăng nhập."
+  ],
+  "Đăng nhập thất bại: không có session": [
+    "Sign-in failed: no session was returned",
+    "Đăng nhập thất bại: không có session"
+  ],
+  "Đơn giá (VNĐ)": [
+    "Unit price (VND)",
+    "Đơn giá (VNĐ)"
+  ],
+  "Đơn giá": [
+    "Unit price",
+    "Đơn giá"
+  ],
+  "Đơn vé này đã được hủy bởi khách hàng (": [
+    "This booking was cancelled by the customer (",
+    "Đơn vé này đã được hủy bởi khách hàng ("
+  ],
+  "Đơn đặt vé chưa hoàn tất xác nhận hoặc không tìm thấy mã đặt chỗ.": [
+    "The booking is not confirmed or the booking code was not found.",
+    "Đơn đặt vé chưa hoàn tất xác nhận hoặc không tìm thấy mã đặt chỗ."
+  ],
+  "Đơn đặt vé chưa hoàn tất xác nhận": [
+    "Booking not yet confirmed",
+    "Đơn đặt vé chưa hoàn tất xác nhận"
+  ],
+  "Đơn đặt vé chưa hoàn tất xác nhận.": [
+    "Booking not yet confirmed.",
+    "Đơn đặt vé chưa hoàn tất xác nhận."
+  ],
+  "Đơn đặt vé chưa rõ kết quả tạo (Manual Verification Required)": [
+    "Booking status unknown (manual verification required)",
+    "Đơn đặt vé chưa rõ kết quả tạo (Manual Verification Required)"
+  ],
+  "Đơn đặt vé của bạn đã được xác nhận thành công trên hệ thống.": [
+    "Your booking has been confirmed successfully.",
+    "Đơn đặt vé của bạn đã được xác nhận thành công trên hệ thống."
+  ],
+  "Đơn đặt vé vừa tạo đang được hệ thống xử lý hoặc kết nối bị gián đoạn. Vui lòng kiểm tra lại danh sách đặt chỗ bên dưới và không tạo lại đơn mới ngay để tránh thanh toán trùng lặp.": [
+    "Your new booking is still being processed or the connection was interrupted. Please check the booking list below and avoid creating another booking immediately to prevent duplicate payments.",
+    "Đơn đặt vé vừa tạo đang được hệ thống xử lý hoặc kết nối bị gián đoạn. Vui lòng kiểm tra lại danh sách đặt chỗ bên dưới và không tạo lại đơn mới ngay để tránh thanh toán trùng lặp."
+  ],
+  "Đơn đặt vé đã bị hủy và không thể thanh toán.": [
+    "This booking was cancelled and cannot be paid.",
+    "Đơn đặt vé đã bị hủy và không thể thanh toán."
+  ],
+  "Đơn": [
+    "Booking",
+    "Đơn"
+  ],
+  "Đặt chuyến bay mới": [
+    "Book a new flight",
+    "Đặt chuyến bay mới"
+  ],
+  "đặt chỗ)": [
+    "bookings)",
+    "đặt chỗ)"
+  ],
+  "Ưu tiên lên máy bay (PRIORITY_BOARDING)": [
+    "Priority boarding (PRIORITY_BOARDING)",
+    "Ưu tiên lên máy bay (PRIORITY_BOARDING)"
+  ],
+  "Ưu tiên lên tàu bay": [
+    "Priority boarding",
+    "Ưu tiên lên tàu bay"
+  ],
+  "⚡ Tự động điền theo hệ số": [
+    "⚡ Autofill from multiplier",
+    "⚡ Tự động điền theo hệ số"
+  ],
+  "(Adult)": [
+    "(Adult)",
+    "(Người lớn)"
+  ],
+  ", unread": [
+    ", unread",
+    ", chưa đọc"
+  ],
+  "1 Stop": [
+    "1 Stop",
+    "1 điểm dừng"
+  ],
+  "1. Flight": [
+    "1. Flight",
+    "1. Chuyến bay"
+  ],
+  "100% full refund anytime": [
+    "100% full refund anytime",
+    "Hoàn tiền 100% bất cứ lúc nào"
+  ],
+  "10kg cabin baggage, 30kg checked": [
+    "10kg cabin baggage, 30kg checked",
+    "10kg xách tay, 30kg ký gửi"
+  ],
+  "13.3-inch 4K OLED seatback touchscreens with 300+ movies and live television": [
+    "13.3-inch 4K OLED seatback touchscreens with 300+ movies and live television",
+    "Màn hình cảm ứng OLED 4K 13,3 inch với hơn 300 phim và truyền hình trực tiếp"
+  ],
+  "2. Passenger": [
+    "2. Passenger",
+    "2. Hành khách"
+  ],
+  "2x 10kg cabin, 40kg priority baggage": [
+    "2x 10kg cabin, 40kg priority baggage",
+    "2 kiện xách tay 10kg, 40kg hành lý ưu tiên"
+  ],
+  "2x 15kg cabin, 50kg VIP baggage": [
+    "2x 15kg cabin, 50kg VIP baggage",
+    "2 kiện xách tay 15kg, 50kg hành lý VIP"
+  ],
+  "2x 15kg cabin, 50kg VIP": [
+    "2x 15kg cabin, 50kg VIP",
+    "2 kiện xách tay 15kg, 50kg hành lý VIP"
+  ],
+  "3-3-3 Ergonomic": [
+    "3-3-3 Ergonomic",
+    "Bố trí 3-3-3 công thái học"
+  ],
+  "3. Services": [
+    "3. Services",
+    "3. Dịch vụ"
+  ],
+  "4. Payment": [
+    "4. Payment",
+    "4. Thanh toán"
+  ],
+  "7kg cabin baggage, 20kg checked": [
+    "7kg cabin baggage, 20kg checked",
+    "7kg xách tay, 20kg ký gửi"
+  ],
+  "99.4% On-Time Index": [
+    "99.4% On-Time Index",
+    "Tỷ lệ đúng giờ 99,4%"
+  ],
+  "99.4% On-Time Reliability": [
+    "99.4% On-Time Reliability",
+    "Độ tin cậy đúng giờ 99,4%"
+  ],
+  "Access your saved flights, miles balance, and rapid 1-click booking.": [
+    "Access your saved flights, miles balance, and rapid 1-click booking.",
+    "Truy cập chuyến bay đã lưu, số dư dặm và đặt vé nhanh chỉ với một lần nhấn."
+  ],
+  "Account": [
+    "Account",
+    "Tài khoản"
+  ],
+  "Actions": [
+    "Actions",
+    "Thao tác"
+  ],
+  "Active Catalog (": [
+    "Active Catalog (",
+    "Danh mục dịch vụ ("
+  ],
+  "Active noise-reduction headphones provided across all cabin classes": [
+    "Active noise-reduction headphones provided across all cabin classes",
+    "Tai nghe chống ồn chủ động được cung cấp ở mọi hạng vé"
+  ],
+  "Add Service": [
+    "Add Service",
+    "Thêm dịch vụ"
+  ],
+  "Add a flight": [
+    "Add a flight",
+    "Thêm chuyến bay"
+  ],
+  "Add flight": [
+    "Add flight",
+    "Thêm chuyến bay"
+  ],
+  "Add the first flight to build your schedule.": [
+    "Add the first flight to build your schedule.",
+    "Thêm chuyến bay đầu tiên để xây dựng lịch bay."
+  ],
+  "Added": [
+    "Added",
+    "Đã thêm"
+  ],
+  "Additional services": [
+    "Additional services",
+    "Dịch vụ bổ sung"
+  ],
+  "Aero Minimalist Engineering for Travelers": [
+    "Aero Minimalist Engineering for Travelers",
+    "Thiết kế hàng không tinh gọn dành cho hành khách"
+  ],
+  "Aircraft Model": [
+    "Aircraft Model",
+    "Loại máy bay"
+  ],
+  "Aircraft Specifications & Cabin Comfort": [
+    "Aircraft Specifications & Cabin Comfort",
+    "Thông số máy bay và tiện nghi khoang khách"
+  ],
+  "Aircraft not specified": [
+    "Aircraft not specified",
+    "Chưa có thông tin máy bay"
+  ],
+  "Airlines": [
+    "Airlines",
+    "Hãng hàng không"
+  ],
+  "All Flights": [
+    "All Flights",
+    "Tất cả chuyến bay"
+  ],
+  "All fields marked with * are required. Please fill in all passenger details before continuing.": [
+    "All fields marked with * are required. Please fill in all passenger details before continuing.",
+    "Các mục có dấu * là bắt buộc. Vui lòng điền đủ thông tin hành khách trước khi tiếp tục."
+  ],
+  "All": [
+    "All",
+    "Tất cả"
+  ],
+  "Already have an account?": [
+    "Already have an account?",
+    "Bạn đã có tài khoản?"
+  ],
+  "Ancillary Add-ons": [
+    "Ancillary Add-ons",
+    "Dịch vụ bổ trợ"
+  ],
+  "Ancillary Services Catalog": [
+    "Ancillary Services Catalog",
+    "Danh mục dịch vụ bổ trợ"
+  ],
+  "Ancillary Services": [
+    "Ancillary Services",
+    "Dịch vụ bổ trợ"
+  ],
+  "Arrival": [
+    "Arrival",
+    "Đến"
+  ],
+  "At least 2 characters required": [
+    "At least 2 characters required",
+    "Cần ít nhất 2 ký tự"
+  ],
+  "At least 5 characters required": [
+    "At least 5 characters required",
+    "Cần ít nhất 5 ký tự"
+  ],
+  "At least 8 characters": [
+    "At least 8 characters",
+    "Ít nhất 8 ký tự"
+  ],
+  "Authentication failed. Please verify your credentials.": [
+    "Authentication failed. Please verify your credentials.",
+    "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập."
+  ],
+  "Available seats": [
+    "Available seats",
+    "Số ghế còn trống"
+  ],
+  "Back to Flights": [
+    "Back to Flights",
+    "Quay lại chuyến bay"
+  ],
+  "Back to Passenger Details": [
+    "Back to Passenger Details",
+    "Quay lại thông tin hành khách"
+  ],
+  "Back to Services": [
+    "Back to Services",
+    "Quay lại dịch vụ"
+  ],
+  "Baggage & Special Care": [
+    "Baggage & Special Care",
+    "Hành lý và hỗ trợ đặc biệt"
+  ],
+  "Baggage Allowance": [
+    "Baggage Allowance",
+    "Hạn mức hành lý"
+  ],
+  "Base fare": [
+    "Base fare",
+    "Giá vé gốc"
+  ],
+  "Base price (VND)": [
+    "Base price (VND)",
+    "Giá gốc (VNĐ)"
+  ],
+  "Best Value": [
+    "Best Value",
+    "Lựa chọn tiết kiệm"
+  ],
+  "Book & Fly": [
+    "Book & Fly",
+    "Đặt vé và bay"
+  ],
+  "Book Flight": [
+    "Book Flight",
+    "Đặt vé"
+  ],
+  "Booking Confirmed": [
+    "Booking Confirmed",
+    "Đặt vé thành công"
+  ],
+  "Booking Dossier": [
+    "Booking Dossier",
+    "Hồ sơ đặt chỗ"
+  ],
+  "Booking cancelled": [
+    "Booking cancelled",
+    "Đã hủy đặt vé"
+  ],
+  "Booking code": [
+    "Booking code",
+    "Mã đặt chỗ"
+  ],
+  "Booking confirmed": [
+    "Booking confirmed",
+    "Đặt vé đã được xác nhận"
+  ],
+  "Booking created": [
+    "Booking created",
+    "Đã tạo đơn đặt vé"
+  ],
+  "Booking details": [
+    "Booking details",
+    "Chi tiết đặt vé"
+  ],
+  "Booking update": [
+    "Booking update",
+    "Cập nhật đặt vé"
+  ],
+  "Booking updates will appear here when they are available.": [
+    "Booking updates will appear here when they are available.",
+    "Các cập nhật đặt vé sẽ xuất hiện tại đây khi có thông tin."
+  ],
+  "Booking updates will appear here.": [
+    "Booking updates will appear here.",
+    "Các cập nhật đặt vé sẽ xuất hiện tại đây."
+  ],
+  "Bookings & PNRs": [
+    "Bookings & PNRs",
+    "Đơn đặt vé và mã đặt chỗ"
+  ],
+  "Business": [
+    "Business",
+    "Thương gia"
+  ],
+  "CANCELLED": [
+    "CANCELLED",
+    "ĐÃ HỦY"
+  ],
+  "CONFIRMED": [
+    "CONFIRMED",
+    "ĐÃ XÁC NHẬN"
+  ],
+  "SCHEDULED": [
+    "SCHEDULED",
+    "ĐÃ LÊN LỊCH"
+  ],
+  "BOARDING": [
+    "BOARDING",
+    "ĐANG LÊN MÁY BAY"
+  ],
+  "DEPARTED": [
+    "DEPARTED",
+    "ĐÃ KHỞI HÀNH"
+  ],
+  "DELAYED": [
+    "DELAYED",
+    "BỊ HOÃN"
+  ],
+  "COMPLETED": [
+    "COMPLETED",
+    "HOÀN TẤT"
+  ],
+  "ACTIVE": [
+    "ACTIVE",
+    "ĐANG MỞ BÁN"
+  ],
+  "INACTIVE": [
+    "INACTIVE",
+    "TẠM ẨN"
+  ],
+  "SUCCESS": [
+    "SUCCESS",
+    "THÀNH CÔNG"
+  ],
+  "FAILED": [
+    "FAILED",
+    "THẤT BẠI"
+  ],
+  "Cabin Air Filtration": [
+    "Cabin Air Filtration",
+    "Lọc không khí khoang khách"
+  ],
+  "Cabin Class": [
+    "Cabin Class",
+    "Hạng khoang"
+  ],
+  "Cabin Fare Tiers (": [
+    "Cabin Fare Tiers (",
+    "Các hạng vé ("
+  ],
+  "Cabin Inclusions": [
+    "Cabin Inclusions",
+    "Tiện ích theo hạng vé"
+  ],
+  "Cabin Layout": [
+    "Cabin Layout",
+    "Bố trí khoang khách"
+  ],
+  "Cancel delete": [
+    "Cancel delete",
+    "Hủy xóa"
+  ],
+  "Cancel": [
+    "Cancel",
+    "Hủy bỏ"
+  ],
+  "Cancellation conditions apply": [
+    "Cancellation conditions apply",
+    "Áp dụng điều kiện hủy vé"
+  ],
+  "Cannot connect to the notification service. Try again shortly.": [
+    "Cannot connect to the notification service. Try again shortly.",
+    "Không thể kết nối dịch vụ thông báo. Vui lòng thử lại sau."
+  ],
+  "Change fee applies ($25 + fare diff)": [
+    "Change fee applies ($25 + fare diff)",
+    "Phí đổi vé 25 USD cộng chênh lệch giá"
+  ],
+  "Checkout & Payment": [
+    "Checkout & Payment",
+    "Xác nhận và thanh toán"
+  ],
+  "Chef-curated gourmet dining & fine wines": [
+    "Chef-curated gourmet dining & fine wines",
+    "Thực đơn cao cấp từ đầu bếp và rượu vang chọn lọc"
+  ],
+  "Choose a date to see flights": [
+    "Choose a date to see flights",
+    "Chọn ngày để xem chuyến bay"
+  ],
+  "Close Details": [
+    "Close Details",
+    "Đóng chi tiết"
+  ],
+  "Close flight form": [
+    "Close flight form",
+    "Đóng biểu mẫu chuyến bay"
+  ],
+  "Close navigation": [
+    "Close navigation",
+    "Đóng điều hướng"
+  ],
+  "Complimentary seasonal culinary dining with barista-crafted coffee and beverages": [
+    "Complimentary seasonal culinary dining with barista-crafted coffee and beverages",
+    "Ẩm thực theo mùa, cà phê pha chế và đồ uống miễn phí"
+  ],
+  "Complimentary snack & water": [
+    "Complimentary snack & water",
+    "Đồ ăn nhẹ và nước uống miễn phí"
+  ],
+  "Confirm & Create Booking": [
+    "Confirm & Create Booking",
+    "Xác nhận và tạo đơn đặt vé"
+  ],
+  "Confirm Password *": [
+    "Confirm Password *",
+    "Xác nhận mật khẩu *"
+  ],
+  "Continue to Passenger Details": [
+    "Continue to Passenger Details",
+    "Tiếp tục đến thông tin hành khách"
+  ],
+  "Cookie Preferences": [
+    "Cookie Preferences",
+    "Tùy chọn cookie"
+  ],
+  "Could not load notifications.": [
+    "Could not load notifications.",
+    "Không thể tải thông báo."
+  ],
+  "Could not load your profile": [
+    "Could not load your profile",
+    "Không thể tải hồ sơ của bạn"
+  ],
+  "Could not update notification.": [
+    "Could not update notification.",
+    "Không thể cập nhật thông báo."
+  ],
+  "Could not update notifications.": [
+    "Could not update notifications.",
+    "Không thể cập nhật các thông báo."
+  ],
+  "Create Account & Join Club": [
+    "Create Account & Join Club",
+    "Tạo tài khoản và tham gia câu lạc bộ"
+  ],
+  "Create Secure Password *": [
+    "Create Secure Password *",
+    "Tạo mật khẩu bảo mật *"
+  ],
+  "Create flight": [
+    "Create flight",
+    "Tạo chuyến bay"
+  ],
+  "Creating Account...": [
+    "Creating Account...",
+    "Đang tạo tài khoản..."
+  ],
+  "Customer Helpdesk": [
+    "Customer Helpdesk",
+    "Trung tâm hỗ trợ khách hàng"
+  ],
+  "Da Nang International Airport": [
+    "Da Nang International Airport",
+    "Sân bay quốc tế Đà Nẵng"
+  ],
+  "Da Nang": [
+    "Da Nang",
+    "Đà Nẵng"
+  ],
+  "Date of Birth *": [
+    "Date of Birth *",
+    "Ngày sinh *"
+  ],
+  "Date of birth is required": [
+    "Date of birth is required",
+    "Vui lòng nhập ngày sinh"
+  ],
+  "Date of birth must be in the past": [
+    "Date of birth must be in the past",
+    "Ngày sinh phải ở trong quá khứ"
+  ],
+  "Decrease passengers": [
+    "Decrease passengers",
+    "Giảm số hành khách"
+  ],
+  "Decrease quantity": [
+    "Decrease quantity",
+    "Giảm số lượng"
+  ],
+  "Delete flight": [
+    "Delete flight",
+    "Xóa chuyến bay"
+  ],
+  "Delete {0}": [
+    "Delete {0}",
+    "Xóa {0}"
+  ],
+  "Delete": [
+    "Delete",
+    "Xóa"
+  ],
+  "Departure Date": [
+    "Departure Date",
+    "Ngày khởi hành"
+  ],
+  "Departure Index": [
+    "Departure Index",
+    "Chỉ số khởi hành"
+  ],
+  "Departure •": [
+    "Departure •",
+    "Khởi hành •"
+  ],
+  "Departure": [
+    "Departure",
+    "Khởi hành"
+  ],
+  "Destination (IATA)": [
+    "Destination (IATA)",
+    "Điểm đến (IATA)"
+  ],
+  "Destination airport": [
+    "Destination airport",
+    "Sân bay đến"
+  ],
+  "Details": [
+    "Details",
+    "Chi tiết"
+  ],
+  "Direct Non-stop": [
+    "Direct Non-stop",
+    "Bay thẳng"
+  ],
+  "Direct aisle access, sliding privacy doors, and 180-degree lie-flat beds on all long-haul and trunk routes.": [
+    "Direct aisle access, sliding privacy doors, and 180-degree lie-flat beds on all long-haul and trunk routes.",
+    "Lối đi riêng, cửa trượt riêng tư và ghế giường nằm phẳng 180 độ trên các đường bay dài và đường bay trục."
+  ],
+  "Dismiss notification": [
+    "Dismiss notification",
+    "Đóng thông báo"
+  ],
+  "Dossier": [
+    "Dossier",
+    "Hồ sơ"
+  ],
+  "Earn miles on every journey and enjoy priority boarding, lounge access, and exclusive fares.": [
+    "Earn miles on every journey and enjoy priority boarding, lounge access, and exclusive fares.",
+    "Tích dặm mỗi hành trình và tận hưởng ưu tiên lên máy bay, phòng chờ và giá vé ưu đãi."
+  ],
+  "Economy / Premium / Business": [
+    "Economy / Premium / Business",
+    "Phổ thông / Phổ thông đặc biệt / Thương gia"
+  ],
+  "Economy": [
+    "Economy",
+    "Phổ thông"
+  ],
+  "Edit flight": [
+    "Edit flight",
+    "Sửa chuyến bay"
+  ],
+  "Edit {0}": [
+    "Edit {0}",
+    "Sửa {0}"
+  ],
+  "Edit": [
+    "Edit",
+    "Sửa"
+  ],
+  "Email Address *": [
+    "Email Address *",
+    "Địa chỉ email *"
+  ],
+  "Enhance Your Flight Experience": [
+    "Enhance Your Flight Experience",
+    "Nâng tầm trải nghiệm chuyến bay"
+  ],
+  "Enroll me in the SkyWing Frequent Flyer loyalty program automatically": [
+    "Enroll me in the SkyWing Frequent Flyer loyalty program automatically",
+    "Tự động đăng ký chương trình khách hàng thường xuyên SkyWing cho tôi"
+  ],
+  "Enter legal passenger names as displayed on government passports or travel IDs.": [
+    "Enter legal passenger names as displayed on government passports or travel IDs.",
+    "Nhập họ tên hành khách đúng như trên hộ chiếu hoặc giấy tờ tùy thân."
+  ],
+  "Enter your password": [
+    "Enter your password",
+    "Nhập mật khẩu"
+  ],
+  "Every detail calibrated for operational precision, quiet cabins, and effortless air travel.": [
+    "Every detail calibrated for operational precision, quiet cabins, and effortless air travel.",
+    "Từng chi tiết hướng đến vận hành chính xác, khoang khách yên tĩnh và hành trình nhẹ nhàng."
+  ],
+  "Experience seamless journeys with premium comfort, transparent fares, and precision scheduled departures.": [
+    "Experience seamless journeys with premium comfort, transparent fares, and precision scheduled departures.",
+    "Tận hưởng hành trình liền mạch với tiện nghi cao cấp, giá vé minh bạch và lịch bay chính xác."
+  ],
+  "Explore All Destinations": [
+    "Explore All Destinations",
+    "Khám phá tất cả điểm đến"
+  ],
+  "Explore Destinations from Ho Chi Minh City": [
+    "Explore Destinations from Ho Chi Minh City",
+    "Khám phá điểm đến từ TP. Hồ Chí Minh"
+  ],
+  "Extra 34-36\" pitch with leg-rest": [
+    "Extra 34-36\" pitch with leg-rest",
+    "Khoảng cách ghế 34–36 inch, có chỗ để chân"
+  ],
+  "Failed to fetch": [
+    "Failed to fetch",
+    "Không thể kết nối máy chủ"
+  ],
+  "Failed to load flights:": [
+    "Failed to load flights:",
+    "Không thể tải chuyến bay:"
+  ],
+  "Fare & Price Breakdown": [
+    "Fare & Price Breakdown",
+    "Chi tiết giá vé"
+  ],
+  "Fare Classes Management": [
+    "Fare Classes Management",
+    "Quản lý hạng vé"
+  ],
+  "Fare Classes": [
+    "Fare Classes",
+    "Hạng vé"
+  ],
+  "Fare and inventory": [
+    "Fare and inventory",
+    "Giá vé và số ghế"
+  ],
+  "Filter flights by departure": [
+    "Filter flights by departure",
+    "Lọc chuyến bay theo thời gian khởi hành"
+  ],
+  "Filter notifications": [
+    "Filter notifications",
+    "Lọc thông báo"
+  ],
+  "Filters": [
+    "Filters",
+    "Bộ lọc"
+  ],
+  "First Class": [
+    "First Class",
+    "Hạng nhất"
+  ],
+  "Flight Details": [
+    "Flight Details",
+    "Chi tiết chuyến bay"
+  ],
+  "Flight Fare (": [
+    "Flight Fare (",
+    "Giá vé ("
+  ],
+  "Flight Management": [
+    "Flight Management",
+    "Quản lý chuyến bay"
+  ],
+  "Flight Results": [
+    "Flight Results",
+    "Kết quả tìm chuyến bay"
+  ],
+  "Flight Schedule & Terminals": [
+    "Flight Schedule & Terminals",
+    "Lịch bay và nhà ga"
+  ],
+  "Flight Schedules & Status": [
+    "Flight Schedules & Status",
+    "Lịch bay và trạng thái"
+  ],
+  "Flight Schedules": [
+    "Flight Schedules",
+    "Lịch bay"
+  ],
+  "Flight Selected:": [
+    "Flight Selected:",
+    "Chuyến bay đã chọn:"
+  ],
+  "Flight and route": [
+    "Flight and route",
+    "Chuyến bay và đường bay"
+  ],
+  "Flight management": [
+    "Flight management",
+    "Quản lý chuyến bay"
+  ],
+  "Flight number or airport code": [
+    "Flight number or airport code",
+    "Số hiệu chuyến bay hoặc mã sân bay"
+  ],
+  "Flight number": [
+    "Flight number",
+    "Số hiệu chuyến bay"
+  ],
+  "Flight schedules": [
+    "Flight schedules",
+    "Lịch bay"
+  ],
+  "Flight summary": [
+    "Flight summary",
+    "Tổng quan chuyến bay"
+  ],
+  "Flight": [
+    "Flight",
+    "Chuyến bay"
+  ],
+  "Forgot password?": [
+    "Forgot password?",
+    "Quên mật khẩu?"
+  ],
+  "Found": [
+    "Found",
+    "Tìm thấy"
+  ],
+  "Free 1st change up to 24h before": [
+    "Free 1st change up to 24h before",
+    "Miễn phí đổi lần đầu trước 24 giờ"
+  ],
+  "Free Wi-Fi Fleet": [
+    "Free Wi-Fi Fleet",
+    "Đội bay có Wi-Fi miễn phí"
+  ],
+  "Free refund up to 2h before departure": [
+    "Free refund up to 2h before departure",
+    "Hoàn tiền miễn phí trước khởi hành 2 giờ"
+  ],
+  "Free unlimited booking changes": [
+    "Free unlimited booking changes",
+    "Đổi vé miễn phí không giới hạn"
+  ],
+  "Free unlimited changes anytime": [
+    "Free unlimited changes anytime",
+    "Đổi vé miễn phí không giới hạn bất cứ lúc nào"
+  ],
+  "From": [
+    "From",
+    "Từ"
+  ],
+  "Full Lie-Flat SkySuites": [
+    "Full Lie-Flat SkySuites",
+    "Khoang SkySuite giường nằm phẳng"
+  ],
+  "Full Name (As on Passport) *": [
+    "Full Name (As on Passport) *",
+    "Họ tên (như trên hộ chiếu) *"
+  ],
+  "Full Name (as in Passport / ID) *": [
+    "Full Name (as in Passport / ID) *",
+    "Họ tên (như trên hộ chiếu / CCCD) *"
+  ],
+  "Full flat-bed seat with direct aisle access": [
+    "Full flat-bed seat with direct aisle access",
+    "Ghế giường nằm phẳng với lối đi riêng"
+  ],
+  "Full name is required": [
+    "Full name is required",
+    "Vui lòng nhập họ tên"
+  ],
+  "Global Bookings & PNR Registry": [
+    "Global Bookings & PNR Registry",
+    "Danh sách đơn đặt vé và mã đặt chỗ"
+  ],
+  "Go to My Bookings": [
+    "Go to My Bookings",
+    "Đến danh sách đặt vé"
+  ],
+  "Go to Ops Console (/admin/flights)": [
+    "Go to Ops Console (/admin/flights)",
+    "Đến trang quản trị (/admin/flights)"
+  ],
+  "Guest Traveler": [
+    "Guest Traveler",
+    "Khách vãng lai"
+  ],
+  "HEPA Grade 99.97%": [
+    "HEPA Grade 99.97%",
+    "Lọc HEPA 99,97%"
+  ],
+  "Hide Fares": [
+    "Hide Fares",
+    "Ẩn hạng vé"
+  ],
+  "High-Speed Ka-Band": [
+    "High-Speed Ka-Band",
+    "Kết nối Ka-Band tốc độ cao"
+  ],
+  "Ho Chi Minh City →": [
+    "Ho Chi Minh City →",
+    "TP. Hồ Chí Minh →"
+  ],
+  "Ho Chi Minh City": [
+    "Ho Chi Minh City",
+    "TP. Hồ Chí Minh"
+  ],
+  "Hanoi": [
+    "Hanoi",
+    "Hà Nội"
+  ],
+  "Hot Meals Included": [
+    "Hot Meals Included",
+    "Bao gồm suất ăn nóng"
+  ],
+  "Hot meal selection & beverages": [
+    "Hot meal selection & beverages",
+    "Lựa chọn suất ăn nóng và đồ uống"
+  ],
+  "I agree to the SkyWing Terms of Carriage and Privacy Standards": [
+    "I agree to the SkyWing Terms of Carriage and Privacy Standards",
+    "Tôi đồng ý với điều kiện vận chuyển và tiêu chuẩn bảo mật của SkyWing"
+  ],
+  "In-Seat Power": [
+    "In-Seat Power",
+    "Nguồn điện tại ghế"
+  ],
+  "In-seat USB-C Power": [
+    "In-seat USB-C Power",
+    "Cổng sạc USB-C tại ghế"
+  ],
+  "Included Inflight Amenities": [
+    "Included Inflight Amenities",
+    "Tiện nghi trên chuyến bay"
+  ],
+  "Increase passengers": [
+    "Increase passengers",
+    "Tăng số hành khách"
+  ],
+  "Increase quantity": [
+    "Increase quantity",
+    "Tăng số lượng"
+  ],
+  "Invalid account profile": [
+    "Invalid account profile",
+    "Hồ sơ tài khoản không hợp lệ"
+  ],
+  "Invalid departure date": [
+    "Invalid departure date",
+    "Ngày khởi hành không hợp lệ"
+  ],
+  "Invalid phone number format": [
+    "Invalid phone number format",
+    "Số điện thoại không hợp lệ"
+  ],
+  "Join Club": [
+    "Join Club",
+    "Tham gia câu lạc bộ"
+  ],
+  "Join SkyWing Club": [
+    "Join SkyWing Club",
+    "Tham gia SkyWing Club"
+  ],
+  "Loading available flights…": [
+    "Loading available flights…",
+    "Đang tải chuyến bay khả dụng…"
+  ],
+  "Loading flights…": [
+    "Loading flights…",
+    "Đang tải chuyến bay…"
+  ],
+  "Loading notifications": [
+    "Loading notifications",
+    "Đang tải thông báo"
+  ],
+  "Loading profile...": [
+    "Loading profile...",
+    "Đang tải hồ sơ..."
+  ],
+  "Local departure time": [
+    "Local departure time",
+    "Giờ khởi hành địa phương"
+  ],
+  "Manage Booking": [
+    "Manage Booking",
+    "Quản lý đặt vé"
+  ],
+  "Manage Trips & Miles": [
+    "Manage Trips & Miles",
+    "Quản lý hành trình và dặm thưởng"
+  ],
+  "Manage routes, departure times, fares and available seats.": [
+    "Manage routes, departure times, fares and available seats.",
+    "Quản lý đường bay, giờ khởi hành, giá vé và số ghế còn trống."
+  ],
+  "Mark all as read": [
+    "Mark all as read",
+    "Đánh dấu tất cả đã đọc"
+  ],
+  "Mark as read": [
+    "Mark as read",
+    "Đánh dấu đã đọc"
+  ],
+  "Max Price": [
+    "Max Price",
+    "Giá tối đa"
+  ],
+  "Member Sign In": [
+    "Member Sign In",
+    "Đăng nhập hội viên"
+  ],
+  "Modify Search": [
+    "Modify Search",
+    "Sửa tìm kiếm"
+  ],
+  "My Bookings & Dossier": [
+    "My Bookings & Dossier",
+    "Đặt vé và hồ sơ của tôi"
+  ],
+  "My Bookings & Journeys": [
+    "My Bookings & Journeys",
+    "Đặt vé và hành trình của tôi"
+  ],
+  "New booking update": [
+    "New booking update",
+    "Cập nhật đặt vé mới"
+  ],
+  "Next": [
+    "Next",
+    "Sau"
+  ],
+  "No flights found for this route and date.": [
+    "No flights found for this route and date.",
+    "Không có chuyến bay cho đường bay và ngày này."
+  ],
+  "No flights yet": [
+    "No flights yet",
+    "Chưa có chuyến bay"
+  ],
+  "No hidden credit card processing surcharges. All government taxes, airport fees, and baggage policies clearly stated.": [
+    "No hidden credit card processing surcharges. All government taxes, airport fees, and baggage policies clearly stated.",
+    "Không có phụ phí xử lý thẻ ẩn. Thuế, phí sân bay và chính sách hành lý đều được công khai."
+  ],
+  "No matching flights": [
+    "No matching flights",
+    "Không có chuyến bay phù hợp"
+  ],
+  "No unread notifications": [
+    "No unread notifications",
+    "Không có thông báo chưa đọc"
+  ],
+  "Noi Bai International Airport": [
+    "Noi Bai International Airport",
+    "Sân bay quốc tế Nội Bài"
+  ],
+  "Non-stop Only": [
+    "Non-stop Only",
+    "Chỉ bay thẳng"
+  ],
+  "Not a member yet?": [
+    "Not a member yet?",
+    "Bạn chưa là hội viên?"
+  ],
+  "Notification pages": [
+    "Notification pages",
+    "Các trang thông báo"
+  ],
+  "Notification service returned an invalid response (HTTP {0}).": [
+    "Notification service returned an invalid response (HTTP {0}).",
+    "Dịch vụ thông báo trả về phản hồi không hợp lệ (HTTP {0})."
+  ],
+  "Notifications will be available after Supabase sign-in is connected.": [
+    "Notifications will be available after Supabase sign-in is connected.",
+    "Thông báo sẽ khả dụng sau khi kết nối đăng nhập Supabase."
+  ],
+  "Notifications, {0} unread": [
+    "Notifications, {0} unread",
+    "Thông báo, {0} chưa đọc"
+  ],
+  "Notifications": [
+    "Notifications",
+    "Thông báo"
+  ],
+  "Number of adult passengers": [
+    "Number of adult passengers",
+    "Số hành khách người lớn"
+  ],
+  "On-Time": [
+    "On-Time",
+    "Đúng giờ"
+  ],
+  "One way flight": [
+    "One way flight",
+    "Chuyến bay một chiều"
+  ],
+  "Online Check-in": [
+    "Online Check-in",
+    "Làm thủ tục trực tuyến"
+  ],
+  "Open navigation": [
+    "Open navigation",
+    "Mở điều hướng"
+  ],
+  "Operational Modules": [
+    "Operational Modules",
+    "Các chức năng quản trị"
+  ],
+  "Operations / Flights": [
+    "Operations / Flights",
+    "Vận hành / Chuyến bay"
+  ],
+  "Ops Console": [
+    "Ops Console",
+    "Trang quản trị"
+  ],
+  "Optimized flight turnaround times and modern twin-aisle jets ensure you reach your destination punctually.": [
+    "Optimized flight turnaround times and modern twin-aisle jets ensure you reach your destination punctually.",
+    "Thời gian quay đầu tối ưu và đội bay hai lối đi hiện đại giúp bạn đến nơi đúng giờ."
+  ],
+  "Origin (IATA)": [
+    "Origin (IATA)",
+    "Điểm đi (IATA)"
+  ],
+  "Origin airport": [
+    "Origin airport",
+    "Sân bay đi"
+  ],
+  "PAYMENT_FAILED": [
+    "PAYMENT_FAILED",
+    "THANH TOÁN THẤT BẠI"
+  ],
+  "PENDING": [
+    "PENDING",
+    "CHỜ XÁC NHẬN"
+  ],
+  "Page": [
+    "Page",
+    "Trang"
+  ],
+  "Passenger Information": [
+    "Passenger Information",
+    "Thông tin hành khách"
+  ],
+  "Passenger Self-Service": [
+    "Passenger Self-Service",
+    "Dịch vụ hành khách"
+  ],
+  "Passenger": [
+    "Passenger",
+    "Hành khách"
+  ],
+  "Passengers": [
+    "Passengers",
+    "Hành khách"
+  ],
+  "Passport / National ID Number *": [
+    "Passport / National ID Number *",
+    "Số hộ chiếu / CCCD *"
+  ],
+  "Passport / National ID is required": [
+    "Passport / National ID is required",
+    "Vui lòng nhập số hộ chiếu / CCCD"
+  ],
+  "Password *": [
+    "Password *",
+    "Mật khẩu *"
+  ],
+  "Password reset link simulated.": [
+    "Password reset link simulated.",
+    "Đã mô phỏng liên kết đặt lại mật khẩu."
+  ],
+  "Passwords do not match. Please re-enter.": [
+    "Passwords do not match. Please re-enter.",
+    "Mật khẩu không khớp. Vui lòng nhập lại."
+  ],
+  "Pay with Mock Gateway": [
+    "Pay with Mock Gateway",
+    "Thanh toán qua cổng thử nghiệm"
+  ],
+  "Payment unsuccessful": [
+    "Payment unsuccessful",
+    "Thanh toán không thành công"
+  ],
+  "Phone Number *": [
+    "Phone Number *",
+    "Số điện thoại *"
+  ],
+  "Phone number is required": [
+    "Phone number is required",
+    "Vui lòng nhập số điện thoại"
+  ],
+  "Phu Quoc International Airport": [
+    "Phu Quoc International Airport",
+    "Sân bay quốc tế Phú Quốc"
+  ],
+  "Phu Quoc": [
+    "Phu Quoc",
+    "Phú Quốc"
+  ],
+  "Please complete all required passenger information": [
+    "Please complete all required passenger information",
+    "Vui lòng điền đủ thông tin hành khách bắt buộc"
+  ],
+  "Please enter both your email/ID and password.": [
+    "Please enter both your email/ID and password.",
+    "Vui lòng nhập email hoặc ID và mật khẩu."
+  ],
+  "Please fill in all mandatory fields.": [
+    "Please fill in all mandatory fields.",
+    "Vui lòng điền tất cả các trường bắt buộc."
+  ],
+  "Precision aerospace commercial carrier operating modern Airbus A350 and Boeing 787 fleets with 99.4% on-time departure index.": [
+    "Precision aerospace commercial carrier operating modern Airbus A350 and Boeing 787 fleets with 99.4% on-time departure index.",
+    "Hãng hàng không khai thác đội bay Airbus A350 và Boeing 787 hiện đại với tỷ lệ khởi hành đúng giờ 99,4%."
+  ],
+  "Premium Eco": [
+    "Premium Eco",
+    "Phổ thông đặc biệt"
+  ],
+  "Premium Economy": [
+    "Premium Economy",
+    "Phổ thông đặc biệt"
+  ],
+  "Previous": [
+    "Previous",
+    "Trước"
+  ],
+  "Privacy Policy": [
+    "Privacy Policy",
+    "Chính sách bảo mật"
+  ],
+  "Private suite with sliding door & 180° flat bed": [
+    "Private suite with sliding door & 180° flat bed",
+    "Khoang riêng có cửa trượt và giường nằm phẳng 180°"
+  ],
+  "Proceed to Passenger Info": [
+    "Proceed to Passenger Info",
+    "Tiếp tục đến thông tin hành khách"
+  ],
+  "Proceed to Secure Payment": [
+    "Proceed to Secure Payment",
+    "Tiếp tục thanh toán an toàn"
+  ],
+  "Proceed to Services": [
+    "Proceed to Services",
+    "Tiếp tục chọn dịch vụ"
+  ],
+  "Re-enter your password": [
+    "Re-enter your password",
+    "Nhập lại mật khẩu"
+  ],
+  "Refresh notifications": [
+    "Refresh notifications",
+    "Tải lại thông báo"
+  ],
+  "Refresh": [
+    "Refresh",
+    "Tải lại"
+  ],
+  "Refund fee applies ($35)": [
+    "Refund fee applies ($35)",
+    "Phí hoàn vé 35 USD"
+  ],
+  "Registration failed. Please try again.": [
+    "Registration failed. Please try again.",
+    "Đăng ký thất bại. Vui lòng thử lại."
+  ],
+  "Remember me on this trusted terminal": [
+    "Remember me on this trusted terminal",
+    "Ghi nhớ đăng nhập trên thiết bị này"
+  ],
+  "Reset": [
+    "Reset",
+    "Đặt lại"
+  ],
+  "Restricted Admin Area": [
+    "Restricted Admin Area",
+    "Khu vực quản trị hạn chế"
+  ],
+  "Retry": [
+    "Retry",
+    "Thử lại"
+  ],
+  "Return to SkyWing Flights": [
+    "Return to SkyWing Flights",
+    "Quay lại chuyến bay SkyWing"
+  ],
+  "Route": [
+    "Route",
+    "Đường bay"
+  ],
+  "SKYBUS A350 & BOEING 787 FLEET DEPLOYED": [
+    "SKYBUS A350 & BOEING 787 FLEET DEPLOYED",
+    "ĐỘI BAY A350 VÀ BOEING 787 ĐANG KHAI THÁC"
+  ],
+  "Save changes": [
+    "Save changes",
+    "Lưu thay đổi"
+  ],
+  "Schedule": [
+    "Schedule",
+    "Lịch bay"
+  ],
+  "Search Flights": [
+    "Search Flights",
+    "Tìm chuyến bay"
+  ],
+  "Search SkyWing Flights": [
+    "Search SkyWing Flights",
+    "Tìm chuyến bay SkyWing"
+  ],
+  "Search and Book Flights Across Classes": [
+    "Search and Book Flights Across Classes",
+    "Tìm và đặt chuyến bay theo hạng vé"
+  ],
+  "Search flights by number or airport": [
+    "Search flights by number or airport",
+    "Tìm chuyến bay theo số hiệu hoặc sân bay"
+  ],
+  "Search records, PNR, flight...": [
+    "Search records, PNR, flight...",
+    "Tìm hồ sơ, mã đặt chỗ, chuyến bay..."
+  ],
+  "Search →": [
+    "Search →",
+    "Tìm kiếm →"
+  ],
+  "Seats available": [
+    "Seats available",
+    "Số ghế còn trống"
+  ],
+  "Seats": [
+    "Seats",
+    "Ghế"
+  ],
+  "Select Fare Tier for Flight": [
+    "Select Fare Tier for Flight",
+    "Chọn hạng vé cho chuyến bay"
+  ],
+  "Select ancillary options to travel with maximum comfort, extra luggage, and premium lounge hospitality.": [
+    "Select ancillary options to travel with maximum comfort, extra luggage, and premium lounge hospitality.",
+    "Chọn dịch vụ bổ trợ để có hành trình thoải mái hơn, thêm hành lý và trải nghiệm phòng chờ cao cấp."
+  ],
+  "Select": [
+    "Select",
+    "Chọn"
+  ],
+  "Selected Tier": [
+    "Selected Tier",
+    "Hạng vé đã chọn"
+  ],
+  "Service Rate": [
+    "Service Rate",
+    "Giá dịch vụ"
+  ],
+  "Showing": [
+    "Showing",
+    "Hiển thị"
+  ],
+  "Sign In With Admin Account": [
+    "Sign In With Admin Account",
+    "Đăng nhập bằng tài khoản quản trị"
+  ],
+  "Sign In to Account": [
+    "Sign In to Account",
+    "Đăng nhập tài khoản"
+  ],
+  "Sign In to SkyWing": [
+    "Sign In to SkyWing",
+    "Đăng nhập SkyWing"
+  ],
+  "Sign In": [
+    "Sign In",
+    "Đăng nhập"
+  ],
+  "Sign Out Console": [
+    "Sign Out Console",
+    "Đăng xuất quản trị"
+  ],
+  "Sign Out": [
+    "Sign Out",
+    "Đăng xuất"
+  ],
+  "Sign in to see updates about your bookings.": [
+    "Sign in to see updates about your bookings.",
+    "Đăng nhập để xem cập nhật đặt vé của bạn."
+  ],
+  "Sign in to view notifications": [
+    "Sign in to view notifications",
+    "Đăng nhập để xem thông báo"
+  ],
+  "Sign in to view your booking.": [
+    "Sign in to view your booking.",
+    "Đăng nhập để xem đơn đặt vé."
+  ],
+  "Sign in": [
+    "Sign in",
+    "Đăng nhập"
+  ],
+  "Signed in as": [
+    "Signed in as",
+    "Đã đăng nhập với tài khoản"
+  ],
+  "Standard 30-31\" legroom": [
+    "Standard 30-31\" legroom",
+    "Khoảng cách ghế tiêu chuẩn 30–31 inch"
+  ],
+  "Standard Tier": [
+    "Standard Tier",
+    "Hạng tiêu chuẩn"
+  ],
+  "Starting from": [
+    "Starting from",
+    "Giá từ"
+  ],
+  "Stops": [
+    "Stops",
+    "Điểm dừng"
+  ],
+  "Support & Assistance": [
+    "Support & Assistance",
+    "Hỗ trợ và trợ giúp"
+  ],
+  "Swap Origin and Destination": [
+    "Swap Origin and Destination",
+    "Đổi điểm đi và điểm đến"
+  ],
+  "Terms of Carriage": [
+    "Terms of Carriage",
+    "Điều kiện vận chuyển"
+  ],
+  "The SkyWing Standard": [
+    "The SkyWing Standard",
+    "Tiêu chuẩn SkyWing"
+  ],
+  "This removes the flight from the schedule. Please confirm before continuing.": [
+    "This removes the flight from the schedule. Please confirm before continuing.",
+    "Chuyến bay sẽ bị xóa khỏi lịch bay. Vui lòng xác nhận trước khi tiếp tục."
+  ],
+  "Ticket change conditions apply": [
+    "Ticket change conditions apply",
+    "Áp dụng điều kiện đổi vé"
+  ],
+  "To": [
+    "To",
+    "Đến"
+  ],
+  "Top Flight Routes": [
+    "Top Flight Routes",
+    "Đường bay phổ biến"
+  ],
+  "Total Payable": [
+    "Total Payable",
+    "Tổng tiền cần thanh toán"
+  ],
+  "Total flights": [
+    "Total flights",
+    "Tổng chuyến bay"
+  ],
+  "Total": [
+    "Total",
+    "Tổng"
+  ],
+  "Transparent All-In Pricing": [
+    "Transparent All-In Pricing",
+    "Giá trọn gói minh bạch"
+  ],
+  "Travel Insurance Policies": [
+    "Travel Insurance Policies",
+    "Chính sách bảo hiểm du lịch"
+  ],
+  "Try again": [
+    "Try again",
+    "Thử lại"
+  ],
+  "Try another departure date or route.": [
+    "Try another departure date or route.",
+    "Thử ngày khởi hành hoặc đường bay khác."
+  ],
+  "Try another flight number, airport or departure filter.": [
+    "Try another flight number, airport or departure filter.",
+    "Thử số hiệu, sân bay hoặc bộ lọc khởi hành khác."
+  ],
+  "Unable to load flights": [
+    "Unable to load flights",
+    "Không thể tải chuyến bay"
+  ],
+  "Unread": [
+    "Unread",
+    "Chưa đọc"
+  ],
+  "Upcoming flights": [
+    "Upcoming flights",
+    "Chuyến bay sắp khởi hành"
+  ],
+  "Update the schedule, fare and seat inventory shown to passengers.": [
+    "Update the schedule, fare and seat inventory shown to passengers.",
+    "Cập nhật lịch bay, giá vé và số ghế hiển thị cho hành khách."
+  ],
+  "Updates about your bookings and payments, in one place.": [
+    "Updates about your bookings and payments, in one place.",
+    "Cập nhật đặt vé và thanh toán của bạn tại một nơi."
+  ],
+  "VIP Lounge Passes": [
+    "VIP Lounge Passes",
+    "Vé phòng chờ VIP"
+  ],
+  "VIP baggage": [
+    "VIP baggage",
+    "Hành lý VIP"
+  ],
+  "Verifying Admin Authorization...": [
+    "Verifying Admin Authorization...",
+    "Đang xác minh quyền quản trị..."
+  ],
+  "Verifying Credentials...": [
+    "Verifying Credentials...",
+    "Đang xác minh thông tin đăng nhập..."
+  ],
+  "View Fares": [
+    "View Fares",
+    "Xem hạng vé"
+  ],
+  "View My Account": [
+    "View My Account",
+    "Xem tài khoản của tôi"
+  ],
+  "View all notifications": [
+    "View all notifications",
+    "Xem tất cả thông báo"
+  ],
+  "View booking #": [
+    "View booking #",
+    "Xem đơn đặt vé #"
+  ],
+  "View booking": [
+    "View booking",
+    "Xem đơn đặt vé"
+  ],
+  "Wi-Fi System": [
+    "Wi-Fi System",
+    "Hệ thống Wi-Fi"
+  ],
+  "You are already enrolled as": [
+    "You are already enrolled as",
+    "Bạn đã đăng ký với tài khoản"
+  ],
+  "You're all caught up": [
+    "You're all caught up",
+    "Bạn đã xem hết thông báo"
+  ],
+  "Your booking updates are linked to your SkyWing account.": [
+    "Your booking updates are linked to your SkyWing account.",
+    "Cập nhật đặt vé được liên kết với tài khoản SkyWing của bạn."
+  ],
+  "Your journey": [
+    "Your journey",
+    "Hành trình của bạn"
+  ],
+  "Your session has expired. Sign in again to view notifications.": [
+    "Your session has expired. Sign in again to view notifications.",
+    "Phiên đăng nhập đã hết hạn. Đăng nhập lại để xem thông báo."
+  ],
+  "Your session is unavailable. Sign in again to view notifications.": [
+    "Your session is unavailable. Sign in again to view notifications.",
+    "Không tìm thấy phiên đăng nhập. Đăng nhập lại để xem thông báo."
+  ],
+  "Zero booking fee guarantee & 24h risk-free cancellation": [
+    "Zero booking fee guarantee & 24h risk-free cancellation",
+    "Cam kết không phí đặt vé và hủy miễn phí trong 24 giờ"
+  ],
+  "e.g. 0901234567": [
+    "e.g. 0901234567",
+    "Ví dụ: 0901234567"
+  ],
+  "e.g. C1234567": [
+    "e.g. C1234567",
+    "Ví dụ: C1234567"
+  ],
+  "e.g. NGUYEN VAN A": [
+    "e.g. NGUYEN VAN A",
+    "Ví dụ: NGUYEN VAN A"
+  ],
+  "e.g. Tran Thi Mai": [
+    "e.g. Tran Thi Mai",
+    "Ví dụ: Tran Thi Mai"
+  ],
+  "e.g. name@email.com": [
+    "e.g. name@email.com",
+    "Ví dụ: name@email.com"
+  ],
+  "flights": [
+    "flights",
+    "chuyến bay"
+  ],
+  "includes taxes & fees": [
+    "includes taxes & fees",
+    "đã gồm thuế và phí"
+  ],
+  "is registered as a passenger and does not have Flight Operations or Dispatcher privileges.": [
+    "is registered as a passenger and does not have Flight Operations or Dispatcher privileges.",
+    "được đăng ký là hành khách và không có quyền quản trị chuyến bay."
+  ],
+  "matching criteria": [
+    "matching criteria",
+    "phù hợp tiêu chí"
+  ],
+  "of": [
+    "of",
+    "trên"
+  ],
+  "seats remaining at this rate": [
+    "seats remaining at this rate",
+    "ghế còn trống ở mức giá này"
+  ],
+  "total per person": [
+    "total per person",
+    "tổng mỗi khách"
+  ],
+  "x Adult)": [
+    "x Adult)",
+    "x Người lớn)"
+  ],
+  "{0} (x{1})": [
+    "{0} (x{1})",
+    "{0} (x{1})"
+  ],
+  "{0} Stop": [
+    "{0} Stop",
+    "{0} điểm dừng"
+  ],
+  "{0} stop": [
+    "{0} stop",
+    "{0} điểm dừng"
+  ],
+  "{0}h {1}m": [
+    "{0}h {1}m",
+    "{0} giờ {1} phút"
+  ],
+  "{0}x SkyWing Miles Accumulation": [
+    "{0}x SkyWing Miles Accumulation",
+    "Tích dặm SkyWing x{0}"
+  ],
+  "• Terminal": [
+    "• Terminal",
+    "• Nhà ga"
+  ],
+  "← Back to notifications": [
+    "← Back to notifications",
+    "← Quay lại thông báo"
+  ],
+  "Administrator": [
+    "Administrator",
+    "Quản trị viên"
+  ],
+  "Vietnam": [
+    "Vietnam",
+    "Việt Nam"
+  ],
+  "Tan Son Nhat International Airport": [
+    "Tan Son Nhat International Airport",
+    "Sân bay quốc tế Tân Sơn Nhất"
+  ],
+  "Cam Ranh International Airport": [
+    "Cam Ranh International Airport",
+    "Sân bay quốc tế Cam Ranh"
+  ],
+  "Lien Khuong Airport": [
+    "Lien Khuong Airport",
+    "Sân bay Liên Khương"
+  ],
+  "Nha Trang": [
+    "Nha Trang",
+    "Nha Trang"
+  ],
+  "Da Lat": [
+    "Da Lat",
+    "Đà Lạt"
+  ],
+  "Changi International Airport": [
+    "Changi International Airport",
+    "Sân bay quốc tế Changi"
+  ],
+  "Suvarnabhumi International Airport": [
+    "Suvarnabhumi International Airport",
+    "Sân bay quốc tế Suvarnabhumi"
+  ],
+  "Narita International Airport": [
+    "Narita International Airport",
+    "Sân bay quốc tế Narita"
+  ],
+  "Incheon International Airport": [
+    "Incheon International Airport",
+    "Sân bay quốc tế Incheon"
+  ],
+  "Thailand": [
+    "Thailand",
+    "Thái Lan"
+  ],
+  "Japan": [
+    "Japan",
+    "Nhật Bản"
+  ],
+  "South Korea": [
+    "South Korea",
+    "Hàn Quốc"
+  ],
+  "Economy Classic": [
+    "Economy Classic",
+    "Phổ thông cơ bản"
+  ],
+  "Economy Flex": [
+    "Economy Flex",
+    "Phổ thông linh hoạt"
+  ],
+  "7kg Carry-on + 23kg Checked": [
+    "7kg Carry-on + 23kg Checked",
+    "7kg xách tay + 23kg ký gửi"
+  ],
+  "7kg Carry-on + 32kg Checked": [
+    "7kg Carry-on + 32kg Checked",
+    "7kg xách tay + 32kg ký gửi"
+  ],
+  "10kg Carry-on + 2x 23kg Checked": [
+    "10kg Carry-on + 2x 23kg Checked",
+    "10kg xách tay + 2 kiện ký gửi 23kg"
+  ],
+  "2x 10kg Carry-on + 2x 32kg Checked": [
+    "2x 10kg Carry-on + 2x 32kg Checked",
+    "2 kiện xách tay 10kg + 2 kiện ký gửi 32kg"
+  ],
+  "31 inches Standard Ergonomic": [
+    "31 inches Standard Ergonomic",
+    "Ghế tiêu chuẩn công thái học 31 inch"
+  ],
+  "32 inches Preferred Zone": [
+    "32 inches Preferred Zone",
+    "Ghế khu vực ưu tiên 32 inch"
+  ],
+  "38 inches Recline + Footrest": [
+    "38 inches Recline + Footrest",
+    "Ghế ngả 38 inch và chỗ để chân"
+  ],
+  "180° Full Lie-Flat Private Suite": [
+    "180° Full Lie-Flat Private Suite",
+    "Khoang riêng giường nằm phẳng 180°"
+  ],
+  "Complimentary Snack & Beverages": [
+    "Complimentary Snack & Beverages",
+    "Đồ ăn nhẹ và đồ uống miễn phí"
+  ],
+  "Complimentary Hot Meal & Drinks": [
+    "Complimentary Hot Meal & Drinks",
+    "Suất ăn nóng và đồ uống miễn phí"
+  ],
+  "Chef Curated Multi-Course Menu": [
+    "Chef Curated Multi-Course Menu",
+    "Thực đơn nhiều món do đầu bếp tuyển chọn"
+  ],
+  "Fine Dining, Champagne & Signature Cocktails": [
+    "Fine Dining, Champagne & Signature Cocktails",
+    "Ẩm thực cao cấp, sâm panh và cocktail đặc trưng"
+  ],
+  "Allowed with $30 Fee": [
+    "Allowed with $30 Fee",
+    "Được đổi với phí 30 USD"
+  ],
+  "Non-refundable": [
+    "Non-refundable",
+    "Không hoàn vé"
+  ],
+  "Free 1-Time Rebooking": [
+    "Free 1-Time Rebooking",
+    "Miễn phí đổi vé một lần"
+  ],
+  "Refundable with $20 Fee": [
+    "Refundable with $20 Fee",
+    "Hoàn vé với phí 20 USD"
+  ],
+  "Unlimited Free Date Changes": [
+    "Unlimited Free Date Changes",
+    "Đổi ngày miễn phí không giới hạn"
+  ],
+  "Full Refund before 24h": [
+    "Full Refund before 24h",
+    "Hoàn tiền toàn bộ trước 24 giờ"
+  ],
+  "Unlimited Complimentary Changes": [
+    "Unlimited Complimentary Changes",
+    "Đổi vé miễn phí không giới hạn"
+  ],
+  "100% Fully Refundable Anytime": [
+    "100% Fully Refundable Anytime",
+    "Hoàn tiền toàn bộ bất cứ lúc nào"
+  ],
+  "Standard baggage allowance": [
+    "Standard baggage allowance",
+    "Hạn mức hành lý tiêu chuẩn"
+  ],
+  "Standard pitch": [
+    "Standard pitch",
+    "Khoảng cách ghế tiêu chuẩn"
+  ],
+  "Standard meal options": [
+    "Standard meal options",
+    "Lựa chọn suất ăn tiêu chuẩn"
+  ],
+  "From price": [
+    "From price",
+    "Giá từ"
+  ],
+  "Close": [
+    "Close",
+    "Đóng"
+  ],
+  "Round trip": [
+    "Round trip",
+    "Khứ hồi"
+  ],
+  "One way": [
+    "One way",
+    "Một chiều"
+  ],
+  "Amount": [
+    "Amount",
+    "Số tiền"
+  ],
+  "Payment": [
+    "Payment",
+    "Thanh toán"
+  ],
+  "Name": [
+    "Name",
+    "Tên"
+  ],
+  "Flight number or airport": [
+    "Flight number or airport",
+    "Số hiệu chuyến bay hoặc sân bay"
+  ],
+  "Sau": [
+    "Next",
+    "Sau"
+  ],
+  "Trang": [
+    "Page",
+    "Trang"
+  ],
+  "Hạng vé đã ngừng áp dụng": [
+    "This fare class is no longer available",
+    "Hạng vé đã ngừng áp dụng"
+  ],
+  "Danh sách hành khách không được để trống": [
+    "The passenger list is required",
+    "Danh sách hành khách không được để trống"
+  ],
+  "Số lượng dịch vụ phải lớn hơn 0": [
+    "Service quantity must be greater than zero",
+    "Số lượng dịch vụ phải lớn hơn 0"
+  ],
+  "Dịch vụ bổ sung đã ngừng cung cấp: {0}": [
+    "This service is no longer available: {0}",
+    "Dịch vụ bổ sung đã ngừng cung cấp: {0}"
+  ],
+  "Số hộ chiếu/CCCD trùng lặp trong cùng đơn đặt vé: {0}": [
+    "Duplicate passport or ID in this booking: {0}",
+    "Số hộ chiếu/CCCD trùng lặp trong cùng đơn đặt vé: {0}"
+  ],
+  "Không thể xóa hạng vé này vì đã có đơn đặt vé sử dụng. Vui lòng chuyển trạng thái sang Tạm ẩn (Inactive).": [
+    "This fare class is used by existing bookings and cannot be deleted. Set it to Inactive instead.",
+    "Không thể xóa hạng vé này vì đã có đơn đặt vé sử dụng. Vui lòng chuyển trạng thái sang Tạm ẩn (Inactive)."
+  ],
+  "Không thể xóa dịch vụ này vì đã có đơn đặt vé sử dụng. Vui lòng chuyển trạng thái sang Tạm ẩn (Inactive).": [
+    "This service is used by existing bookings and cannot be deleted. Set it to Inactive instead.",
+    "Không thể xóa dịch vụ này vì đã có đơn đặt vé sử dụng. Vui lòng chuyển trạng thái sang Tạm ẩn (Inactive)."
+  ],
+  "Không thể xóa hạng vé này vì đã có đơn đặt vé sử dụng.": [
+    "This fare class is used by existing bookings and cannot be deleted.",
+    "Không thể xóa hạng vé này vì đã có đơn đặt vé sử dụng."
+  ],
+  "Không thể xóa dịch vụ đã có đơn đặt vé sử dụng.": [
+    "A service used by existing bookings cannot be deleted.",
+    "Không thể xóa dịch vụ đã có đơn đặt vé sử dụng."
+  ],
+  "Không thể xóa chuyến bay đã có đặt vé": [
+    "A flight with existing bookings cannot be deleted",
+    "Không thể xóa chuyến bay đã có đặt vé"
+  ],
+  "Mã hạng vé đã tồn tại: {0}": [
+    "Fare class code already exists: {0}",
+    "Mã hạng vé đã tồn tại: {0}"
+  ],
+  "Tên dịch vụ đã tồn tại: {0}": [
+    "Service name already exists: {0}",
+    "Tên dịch vụ đã tồn tại: {0}"
+  ],
+  "Số hiệu chuyến bay đã tồn tại: {0}": [
+    "Flight number already exists: {0}",
+    "Số hiệu chuyến bay đã tồn tại: {0}"
+  ],
+  "Không tìm thấy hạng vé với ID: {0}": [
+    "Fare class not found: {0}",
+    "Không tìm thấy hạng vé với ID: {0}"
+  ],
+  "Không tìm thấy dịch vụ với ID: {0}": [
+    "Service not found: {0}",
+    "Không tìm thấy dịch vụ với ID: {0}"
+  ],
+  "Không tìm thấy chuyến bay với ID: {0}": [
+    "Flight not found: {0}",
+    "Không tìm thấy chuyến bay với ID: {0}"
+  ],
+  "Người dùng không tồn tại": [
+    "User not found",
+    "Người dùng không tồn tại"
+  ],
+  "Chuyến bay không tồn tại": [
+    "Flight not found",
+    "Chuyến bay không tồn tại"
+  ],
+  "Hạng vé không tồn tại": [
+    "Fare class not found",
+    "Hạng vé không tồn tại"
+  ],
+  "Đơn đặt vé không tồn tại": [
+    "Booking not found",
+    "Đơn đặt vé không tồn tại"
+  ],
+  "Dịch vụ bổ sung không tồn tại: {0}": [
+    "Additional service not found: {0}",
+    "Dịch vụ bổ sung không tồn tại: {0}"
+  ],
+  "Ngày bay không được để trống": [
+    "Departure date is required",
+    "Ngày bay không được để trống"
+  ],
+  "Số hiệu chuyến bay không được để trống": [
+    "Flight number is required",
+    "Số hiệu chuyến bay không được để trống"
+  ],
+  "Sân bay đi và sân bay đến phải khác nhau": [
+    "Origin and destination airports must be different",
+    "Sân bay đi và sân bay đến phải khác nhau"
+  ],
+  "Thời gian khởi hành và thời gian đến không được để trống": [
+    "Departure and arrival times are required",
+    "Thời gian khởi hành và thời gian đến không được để trống"
+  ],
+  "Thời gian đến phải sau thời gian khởi hành": [
+    "Arrival must be after departure",
+    "Thời gian đến phải sau thời gian khởi hành"
+  ],
+  "isRead phải là true hoặc false": [
+    "isRead must be true or false",
+    "isRead phải là true hoặc false"
+  ],
+  "limit phải từ 1 đến 100": [
+    "limit must be between 1 and 100",
+    "limit phải từ 1 đến 100"
+  ],
+  "offset không được âm": [
+    "offset cannot be negative",
+    "offset không được âm"
+  ],
+  "{0} phải là số nguyên": [
+    "{0} must be an integer",
+    "{0} phải là số nguyên"
+  ],
+  "{0} phải gồm đúng 3 chữ cái": [
+    "{0} must contain exactly three letters",
+    "{0} phải gồm đúng 3 chữ cái"
+  ],
+  ". All rights reserved. Precision Airway Standards.": [
+    ". All rights reserved. Precision Airway Standards.",
+    ". Bảo lưu mọi quyền. Tiêu chuẩn hàng không chính xác."
+  ],
+  "/ hành khách": [
+    "/ passenger",
+    "/ hành khách"
+  ],
+  "/ passenger": [
+    "/ passenger",
+    "/ hành khách"
+  ],
+  "ALL": [
+    "ALL",
+    "TẤT CẢ"
+  ],
+  "Adult": [
+    "Adult",
+    "Người lớn"
+  ],
+  "Adults": [
+    "Adults",
+    "Người lớn"
+  ],
+  "Deleting…": [
+    "Deleting…",
+    "Đang xóa…"
+  ],
+  "Departure:": [
+    "Departure:",
+    "Khởi hành:"
+  ],
+  "Fare:": [
+    "Fare:",
+    "Hạng vé:"
+  ],
+  "Payment:": [
+    "Payment:",
+    "Thanh toán:"
+  ],
+  "Incomplete": [
+    "Incomplete",
+    "Chưa hoàn tất"
+  ],
+  "N/A": [
+    "N/A",
+    "Chưa có"
+  ],
+  "Non-stop": [
+    "Non-stop",
+    "Bay thẳng"
+  ],
+  "Ready": [
+    "Ready",
+    "Sẵn sàng"
+  ],
+  "Saving…": [
+    "Saving…",
+    "Đang lưu…"
+  ],
+  "Sort:": [
+    "Sort:",
+    "Sắp xếp:"
+  ],
+  "UNKNOWN": [
+    "UNKNOWN",
+    "CHƯA XÁC ĐỊNH"
+  ],
+  "Updating...": [
+    "Updating...",
+    "Đang cập nhật..."
+  ],
+  "unread": [
+    "unread",
+    "chưa đọc"
+  ]
+}

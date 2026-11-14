@@ -18,11 +18,16 @@ vi.mock('../hooks/useBookingFlow', () => ({
   useBookingFlow: vi.fn(),
 }));
 
-vi.mock('../api/serviceApi', () => ({
-  serviceApi: {
-    getActiveServices: vi.fn(),
-  },
-}));
+vi.mock('../api/serviceApi', async () => {
+  const actual = await vi.importActual<any>('../api/serviceApi');
+  return {
+    ...actual,
+    serviceApi: {
+      ...actual.serviceApi,
+      getActiveServices: vi.fn(),
+    },
+  };
+});
 
 vi.mock('../context/NotificationContext', () => ({
   useNotifications: () => ({ unreadCount: 0 }),

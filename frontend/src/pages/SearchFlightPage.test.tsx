@@ -56,7 +56,7 @@ describe('SearchFlightPage', () => {
     );
     fireEvent.change(screen.getByLabelText('Destination airport'), { target: { value: 'SGN' } });
     fireEvent.click(screen.getByRole('button', { name: /Search SkyWing Flights/i }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Sân bay đi và sân bay đến phải khác nhau.');
+    expect(screen.getByRole('alert')).toHaveTextContent("Origin and destination airports must be different.");
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
@@ -66,7 +66,7 @@ describe('SearchFlightPage', () => {
     );
     fireEvent.change(screen.getByLabelText('Departure Date'), { target: { value: '2020-01-01' } });
     fireEvent.click(screen.getByRole('button', { name: /Search SkyWing Flights/i }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Ngày bay không được ở trong quá khứ.');
+    expect(screen.getByRole('alert')).toHaveTextContent("Departure date cannot be in the past.");
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

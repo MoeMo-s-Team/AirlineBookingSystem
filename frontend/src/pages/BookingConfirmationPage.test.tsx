@@ -89,8 +89,8 @@ describe('BookingConfirmationPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Đơn đặt vé chưa hoàn tất xác nhận/i)).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /Xem trong Quản lý đặt chỗ/i })).toHaveAttribute(
+      expect(screen.getByText(/Booking not yet confirmed/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /View in My Bookings/i })).toHaveAttribute(
         'href',
         '/my-bookings'
       );
