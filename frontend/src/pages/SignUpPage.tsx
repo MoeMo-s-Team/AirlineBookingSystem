@@ -5,6 +5,7 @@ import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
 import { safeReturnTo } from '../utils/safeReturnTo';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 
 export interface SignUpPageProps {
   readonly onSignUpSuccess?: () => void;
@@ -215,6 +216,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = () => {
                   )}
                 </button>
               </form>
+              <GoogleSignInButton />
 
               {/* Footer link */}
               <p className="text-center text-body-sm text-on-surface-variant mt-6">{localize("Already have an account?")}{localize(' ')}

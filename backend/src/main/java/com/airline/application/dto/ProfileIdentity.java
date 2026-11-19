@@ -16,4 +16,7 @@ public class ProfileIdentity {
     private String email;
     private String fullName;
     private String role;
+    private String phone;
+    private java.time.LocalDate dateOfBirth;
+    private String passportNo;
 }

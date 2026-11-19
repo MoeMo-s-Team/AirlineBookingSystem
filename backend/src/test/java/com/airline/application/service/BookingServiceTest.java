@@ -48,6 +48,8 @@ class BookingServiceTest {
     private PricingContext pricingContext;
     @Mock
     private PricingStrategy selectedPricingStrategy;
+    @Mock
+    private BookingHoldService bookingHoldService;
 
     private BookingService bookingService;
     private ProfileIdentity customerPrincipal;
@@ -63,7 +65,9 @@ class BookingServiceTest {
                 profileRepository,
                 bookingSubject,
                 pricingStrategyFactory,
-                pricingContext
+                pricingContext,
+                bookingHoldService,
+                new BookingPricingService()
         );
         userId = UUID.randomUUID();
         customerPrincipal = ProfileIdentity.builder()
@@ -81,13 +85,15 @@ class BookingServiceTest {
         AdditionalService service = AdditionalService.builder().id(3L).name("Baggage 20kg").price(new BigDecimal("200000.00")).active(true).build();
 
         when(profileRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(flight));
         when(fareClassRepository.findById(2L)).thenReturn(Optional.of(fareClass));
         when(additionalServiceRepository.findById(3L)).thenReturn(Optional.of(service));
-        when(pricingStrategyFactory.getStrategy("BUSINESS")).thenReturn(selectedPricingStrategy);
+        when(pricingStrategyFactory.getStrategy("BUSINESS", fareClass.getPriceMultiplier())).thenReturn(selectedPricingStrategy);
         when(pricingContext.executeStrategy(selectedPricingStrategy, flight.getBasePrice(), fareClass.getPriceMultiplier(), 1))
                 .thenReturn(new BigDecimal("2000000.00"));
         when(bookingRepository.existsByBookingCode(any())).thenReturn(false);
+        java.time.LocalDateTime expiry = java.time.LocalDateTime.of(2026, 12, 25, 10, 15);
+        when(bookingHoldService.reserve(flight, 1)).thenReturn(expiry);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
             Booking b = invocation.getArgument(0);
             b.setId(10L);
@@ -103,18 +109,20 @@ class BookingServiceTest {
         assertNotNull(response);
         assertEquals(10L, response.id());
         assertEquals(BookingStatus.PENDING, response.status());
+        assertEquals(expiry, response.expiresAt());
         // Price: 1,000,000 * 2.00 * 1 passenger + 200,000 * 2 = 2,000,000 + 400,000 = 2,400,000
         assertEquals(new BigDecimal("2400000.00"), response.totalPrice());
         assertEquals(3L, response.services().getFirst().id());
         assertEquals(0, new BigDecimal("2000000.00").compareTo(response.priceBreakdown().baseFare()));
         assertEquals(0, new BigDecimal("400000.00").compareTo(response.priceBreakdown().servicesTotal()));
-        verify(pricingStrategyFactory).getStrategy("BUSINESS");
+        verify(pricingStrategyFactory).getStrategy("BUSINESS", fareClass.getPriceMultiplier());
         verify(pricingContext).executeStrategy(
                 selectedPricingStrategy, flight.getBasePrice(), fareClass.getPriceMultiplier(), 1);
 
         ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
         verify(bookingSubject).publishStatusChanged(bookingCaptor.capture(), isNull());
         assertEquals(10L, bookingCaptor.getValue().getId());
+        assertTrue(bookingCaptor.getValue().isSeatsHeld());
     }
 
     @Test
@@ -124,7 +132,7 @@ class BookingServiceTest {
         FareClass inactiveFare = FareClass.builder().id(2L).active(false).build();
 
         when(profileRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(flight));
         when(fareClassRepository.findById(2L)).thenReturn(Optional.of(inactiveFare));
 
         CreateBookingCommand request = new CreateBookingCommand(1L, 2L,
@@ -141,7 +149,7 @@ class BookingServiceTest {
         FareClass fareClass = FareClass.builder().id(2L).active(true).priceMultiplier(BigDecimal.ONE).build();
 
         when(profileRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(flight));
         when(fareClassRepository.findById(2L)).thenReturn(Optional.of(fareClass));
 
         CreateBookingCommand request = new CreateBookingCommand(1L, 2L, List.of(
@@ -168,6 +176,7 @@ class BookingServiceTest {
         BookingView response = bookingService.cancelBooking(customerPrincipal, 10L);
 
         assertEquals(BookingStatus.CANCELLED, response.status());
+        verify(bookingHoldService).release(booking);
         verify(bookingSubject).publishStatusChanged(booking, BookingStatus.PENDING);
     }
 
@@ -186,7 +195,7 @@ class BookingServiceTest {
 
     @Test
     void getBookingDetail_throwsNotFound_whenNotOwner() {
-        when(bookingRepository.findByIdAndUserId(10L, userId)).thenReturn(Optional.empty());
+        when(bookingRepository.findByIdAndUserIdForUpdate(10L, userId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> bookingService.getBookingDetail(customerPrincipal, 10L));
     }
@@ -212,5 +221,16 @@ class BookingServiceTest {
         assertEquals(0, new BigDecimal("6000000.00").compareTo(view.priceBreakdown().baseFare()));
         assertEquals(0, new BigDecimal("1300000.00").compareTo(view.priceBreakdown().servicesTotal()));
         assertEquals(3L, view.services().getFirst().id());
+    }
+
+    @Test
+    void historicalBundleDiscountDoesNotReduceReportedTicketFare() {
+        Booking booking = Booking.builder().flight(Flight.builder().build()).fareClass(FareClass.builder().build())
+                .totalPrice(new BigDecimal("2850")).serviceDiscount(new BigDecimal("150"))
+                .services(List.of(BookingServiceItem.builder().service(AdditionalService.builder().build())
+                        .quantity(2).unitPrice(new BigDecimal("500")).build())).build();
+        var view = bookingService.mapToView(booking);
+        assertEquals(0, new BigDecimal("2000").compareTo(view.priceBreakdown().baseFare()));
+        assertEquals(0, new BigDecimal("150").compareTo(view.priceBreakdown().discount()));
     }
 }

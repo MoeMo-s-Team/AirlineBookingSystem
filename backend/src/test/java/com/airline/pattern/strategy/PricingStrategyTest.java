@@ -22,7 +22,7 @@ class PricingStrategyTest {
         economyStrategy = new EconomyPricingStrategy();
         premiumStrategy = new PremiumPricingStrategy();
         businessStrategy = new BusinessPricingStrategy();
-        strategyFactory = new PricingStrategyFactory(economyStrategy, premiumStrategy, businessStrategy);
+        strategyFactory = new PricingStrategyFactory(economyStrategy, premiumStrategy, businessStrategy, new FirstClassPricingStrategy());
         pricingContext = new PricingContext();
     }
 
@@ -106,7 +106,7 @@ class PricingStrategyTest {
         assertSame(businessStrategy, strategyFactory.getStrategy("BUSINESS"));
 
         // Mã không tồn tại hoặc null mặc định về Economy
-        assertSame(economyStrategy, strategyFactory.getStrategy("UNKNOWN"));
+        assertInstanceOf(CustomPricingStrategy.class, strategyFactory.getStrategy("UNKNOWN"));
         assertSame(economyStrategy, strategyFactory.getStrategy(null));
     }
 
@@ -117,5 +117,25 @@ class PricingStrategyTest {
         assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), null, 2));
         assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), BigDecimal.ONE, 0));
         assertEquals(BigDecimal.ZERO, economyStrategy.calculatePrice(new BigDecimal("1000000"), BigDecimal.ONE, -1));
+    }
+
+    @Test
+    void firstClassDefaultsToThreePointFiveAndHonorsDatabaseOverride() {
+        var first = strategyFactory.getStrategy(" first_class ", new BigDecimal("3.75"));
+        assertInstanceOf(FirstClassPricingStrategy.class, first);
+        assertEquals(new BigDecimal("3.50"), first.getMultiplier());
+        assertEquals(new BigDecimal("7000000.00"), first.calculatePrice(new BigDecimal("1000000"), null, 2));
+        assertEquals(new BigDecimal("7500000.00"), first.calculatePrice(new BigDecimal("1000000"), new BigDecimal("3.75"), 2));
+    }
+
+    @Test
+    void customFaresUseCurrentDatabaseMultiplierIncludingPromotionalRates() {
+        var custom = strategyFactory.getStrategy("PROMO", new BigDecimal("0.85"));
+        assertEquals(new BigDecimal("1700000.00"), custom.calculatePrice(new BigDecimal("1000000"), null, 2));
+        var updated = strategyFactory.getStrategy("PROMO", new BigDecimal("0.75"));
+        assertEquals(new BigDecimal("750000.00"), updated.calculatePrice(new BigDecimal("1000000"), null, 1));
+        assertEquals(new BigDecimal("0.85"), custom.getMultiplier());
+        assertThrows(IllegalArgumentException.class, () -> strategyFactory.getStrategy("CUSTOM", BigDecimal.ZERO));
+        assertThrows(IllegalArgumentException.class, () -> new CustomPricingStrategy(null));
     }
 }

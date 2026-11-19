@@ -4,6 +4,15 @@ import type { ApiResponse } from './apiClient';
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'PAYMENT_FAILED';
 export type PaymentStatus = 'SUCCESS' | 'FAILED';
 
+export interface ReturnFlightInfo {
+  status?: 'SCHEDULED' | 'DELAYED' | 'CANCELLED';
+  id?: number;
+  flightNumber?: string;
+  origin?: string;
+  destination?: string;
+  departureTime?: string;
+}
+
 export interface CreateBookingPassenger {
   fullName: string;
   dateOfBirth: string;
@@ -17,8 +26,11 @@ export interface CreateBookingServiceItem {
 }
 
 export interface CreateBookingRequest {
+  serviceBundle?: boolean;
   flightId: number;
   fareClassId: number;
+  returnFlightId?: number;
+  returnFareClassId?: number;
   passengers: CreateBookingPassenger[];
   services?: CreateBookingServiceItem[];
 }
@@ -27,6 +39,10 @@ export interface BookingDetail {
   id: number;
   bookingCode: string;
   status: BookingStatus;
+  returnFlight?: ReturnFlightInfo;
+  returnFareClass?: { name?: string; code?: string };
+  expiresAt?: string;
+  serverTime?: string;
   flight?: {
     id?: number;
     flightNumber?: string;
@@ -61,6 +77,7 @@ export interface BookingDetail {
     [key: string]: unknown;
   }>;
   priceBreakdown?: {
+    discount?: number;
     baseFare?: number;
     fareMultiplier?: number;
     ticketPrice?: number;
@@ -88,6 +105,7 @@ export interface BookingSummary {
   id: number;
   bookingCode: string;
   status: BookingStatus;
+  returnFlight?: ReturnFlightInfo;
   flight?: {
     flightNumber?: string;
     originAirport?: string;
@@ -121,6 +139,7 @@ export interface AdminBookingPagination {
 
 export interface AdminBookingListRecord {
   id: number;
+  returnFlight?: ReturnFlightInfo;
   bookingCode?: string;
   status?: BookingStatus;
   totalPrice?: number;
@@ -171,6 +190,8 @@ export type AdminBookingEnvelope<T> = ApiResponse<{
 }>;
 
 export const bookingApi = {
+  getAdminBooking: (id: number): Promise<BookingDetail> =>
+    apiClient.get<BookingDetail>(`/bookings/admin/${id}`),
   createBooking: (request: CreateBookingRequest): Promise<BookingDetail> =>
     apiClient.post<BookingDetail>('/bookings', request),
 

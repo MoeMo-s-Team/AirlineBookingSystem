@@ -38,4 +38,5 @@ public class FlightUpdateRequest {
 
     @Positive(message = "Số ghế còn lại phải lớn hơn 0")
     private Integer availableSeats;
+    private com.airline.domain.enums.FlightStatus status;
 }

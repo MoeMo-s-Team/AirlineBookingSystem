@@ -115,6 +115,12 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
                     <span>{localize("My Bookings & Dossier")}</span>
                   </Link>
 
+                  <Link to="/profile" onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-body-sm text-on-surface hover:bg-surface-container-low">
+                    <span className="material-symbols-outlined text-[18px] text-secondary">person</span>
+                    <span>{localize('My profile')}</span>
+                  </Link>
+
                   <button
                     type="button"
                     onClick={async () => {

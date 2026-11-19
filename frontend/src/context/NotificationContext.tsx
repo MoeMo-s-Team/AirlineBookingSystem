@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabase';
 import {
   fetchNotifications,
   fetchUnreadCount,
@@ -107,6 +108,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const timer = window.setInterval(() => { void refresh(); }, 60_000);
     return () => window.clearInterval(timer);
   }, [auth.isAuthenticated, auth.getAccessToken, refresh]);
+
+  useEffect(() => {
+    if (!auth.isAuthenticated || !auth.user?.id) return;
+    const channel = supabase.channel(`notifications:${auth.user.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'notifications',
+        filter: `user_id=eq.${auth.user.id}`,
+      }, () => { void refresh(); })
+      .subscribe(status => {
+        // Also reconcile events missed while the connection was offline.
+        if (status === 'SUBSCRIBED') void refresh();
+      });
+    return () => { void supabase.removeChannel(channel); };
+  }, [auth.isAuthenticated, auth.user?.id, refresh]);
 
   const listPage = useCallback(async (query: NotificationQuery) => {
     return fetchNotifications(await accessToken(), query);

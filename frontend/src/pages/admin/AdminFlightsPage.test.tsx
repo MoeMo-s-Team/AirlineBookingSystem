@@ -94,4 +94,16 @@ describe('AdminFlightsPage', () => {
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search flights by number or airport' }), { target: { value: 'PQC' } });
     expect(screen.getByText('No matching flights')).toBeInTheDocument();
   });
+
+  it('cancels a flight without deleting its history', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(flightAdminApi.update).mockResolvedValue({ ...flight, status: 'CANCELLED' });
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel flight' }));
+    await waitFor(() => expect(flightAdminApi.update).toHaveBeenCalledWith(12, { status: 'CANCELLED' }));
+    expect(flightAdminApi.remove).not.toHaveBeenCalled();
+    expect(await screen.findByText('Flight cancelled. Customer notifications are queued.')).toBeInTheDocument();
+    expect(screen.getByText('SW012')).toBeInTheDocument();
+    vi.mocked(window.confirm).mockRestore();
+  });
 });

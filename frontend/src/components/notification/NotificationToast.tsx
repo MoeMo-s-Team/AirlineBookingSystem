@@ -2,6 +2,7 @@ import { localize, useLanguage } from '../../i18n/index';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../../context/NotificationContext';
+import { notificationBookingPath } from '../../utils/notificationLink';
 
 export function NotificationToast() {
   useLanguage();
@@ -26,7 +27,7 @@ export function NotificationToast() {
       </div>
       {toast.bookingId !== null && (
         <Link
-          to={`/my-bookings/${toast.bookingId}`}
+          to={notificationBookingPath(toast)}
           onClick={dismissToast}
           className="mt-3 inline-block text-label-md font-semibold text-secondary hover:underline"
         >{localize("View booking ")}</Link>

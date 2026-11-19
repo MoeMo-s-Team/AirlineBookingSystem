@@ -5,6 +5,7 @@ import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
 import { safeReturnTo } from '../utils/safeReturnTo';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 
 export interface SignInPageProps {
   readonly onSignInSuccess?: () => void;
@@ -137,7 +138,7 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label htmlFor="password" className="text-label-sm font-semibold text-outline uppercase tracking-wider">{localize("Password * ")}</label>
-                    <a href="#forgot" onClick={(e) => { e.preventDefault(); alert(localize('Password reset link simulated.')); }} className="text-label-sm text-secondary hover:underline">{localize("Forgot password? ")}</a>
+                    <Link to="/forgot-password" className="text-label-sm text-secondary hover:underline">{localize("Forgot password? ")}</Link>
                   </div>
                   <input
                     id="password"
@@ -170,6 +171,7 @@ export const SignInPage: React.FC<SignInPageProps> = () => {
                   )}
                 </button>
               </form>
+              <GoogleSignInButton />
 
               {/* Footer link */}
               <p className="text-center text-body-sm text-on-surface-variant mt-6">{localize("Not a member yet?")}{localize(' ')}

@@ -40,6 +40,14 @@ public class Booking {
     @JoinColumn(name = "fare_class_id", nullable = false)
     private FareClass fareClass;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "return_flight_id")
+    private Flight returnFlight;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "return_fare_class_id")
+    private FareClass returnFareClass;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -47,6 +55,17 @@ public class Booking {
 
     @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
     private BigDecimal totalPrice;
+
+    @Column(name = "service_discount", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal serviceDiscount = BigDecimal.ZERO;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @Column(name = "seats_held", nullable = false)
+    @Builder.Default
+    private boolean seatsHeld = false;
 
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

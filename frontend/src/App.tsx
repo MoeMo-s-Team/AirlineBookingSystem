@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { SessionTimeoutModal } from './components/auth/SessionTimeoutModal';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { SearchFlightPage } from './pages/SearchFlightPage';
 import { FlightResultsPage } from './pages/FlightResultsPage';
@@ -22,6 +23,10 @@ import { BookingFlowProvider } from './context/BookingFlowContext';
 import { NotificationListPage } from './pages/NotificationListPage';
 import { NotificationBookingDetailPage } from './pages/NotificationBookingDetailPage';
 import { NotificationToast } from './components/notification/NotificationToast';
+import { ProfilePage } from './pages/ProfilePage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { PasswordRecoveryGuard } from './components/auth/PasswordRecoveryGuard';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -36,11 +41,15 @@ function ScrollToTop() {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
+      <SessionTimeoutModal />
       <NotificationProvider>
         <NotificationToast />
         <BookingFlowProvider>
           <ScrollToTop />
-          <Routes>
+          <PasswordRecoveryGuard><Routes>
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         {/* Passenger Experience Routes (Guarded: Admins are redirected to /admin/flights) */}
         <Route
           path="/"
@@ -179,7 +188,7 @@ export const App: React.FC = () => {
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      </Routes></PasswordRecoveryGuard>
         </BookingFlowProvider>
       </NotificationProvider>
     </AuthProvider>

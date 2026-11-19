@@ -54,6 +54,7 @@ export const AIRPORTS = [
   { code: 'CXR', city: 'Nha Trang', name: 'Cam Ranh International Airport', country: 'Vietnam' },
   { code: 'DLI', city: 'Da Lat', name: 'Lien Khuong Airport', country: 'Vietnam' },
   { code: 'SIN', city: 'Singapore', name: 'Changi International Airport', country: 'Singapore' },
+  { code: 'KUL', city: 'Kuala Lumpur', name: 'Kuala Lumpur International Airport', country: 'Malaysia' },
   { code: 'BKK', city: 'Bangkok', name: 'Suvarnabhumi International Airport', country: 'Thailand' },
   { code: 'NRT', city: 'Tokyo', name: 'Narita International Airport', country: 'Japan' },
   { code: 'ICN', city: 'Seoul', name: 'Incheon International Airport', country: 'South Korea' }

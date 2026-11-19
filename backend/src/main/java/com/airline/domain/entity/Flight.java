@@ -43,6 +43,11 @@ public class Flight {
     @Column(name = "available_seats", nullable = false)
     private Integer availableSeats;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private com.airline.domain.enums.FlightStatus status = com.airline.domain.enums.FlightStatus.SCHEDULED;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

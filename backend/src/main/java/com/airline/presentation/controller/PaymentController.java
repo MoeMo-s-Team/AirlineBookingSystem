@@ -2,7 +2,6 @@ package com.airline.presentation.controller;
 
 import com.airline.application.dto.ProfileIdentity;
 import com.airline.application.dto.ProcessPaymentCommand;
-import com.airline.application.service.PaymentService;
 import com.airline.presentation.dto.request.PaymentRequest;
 import com.airline.presentation.dto.response.ApiResponse;
 import com.airline.presentation.dto.response.PaymentResponse;
@@ -23,14 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Payment", description = "APIs thanh toán đơn đặt vé máy bay")
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final com.airline.pattern.facade.BookingFacade bookingFacade;
 
     @PostMapping
     @Operation(summary = "Thanh toán đơn đặt vé ở trạng thái PENDING (Customer)")
     public ResponseEntity<ApiResponse<PaymentResponse>> processPayment(
             @AuthenticationPrincipal ProfileIdentity principal,
             @Valid @RequestBody PaymentRequest request) {
-        PaymentResponse response = PaymentResponse.from(paymentService.processPayment(principal,
+        PaymentResponse response = PaymentResponse.from(bookingFacade.pay(principal,
                 new ProcessPaymentCommand(request.getBookingId(), request.getPaymentMethod())));
         return ResponseEntity.ok(ApiResponse.success("Xử lý thanh toán thành công", response));
     }

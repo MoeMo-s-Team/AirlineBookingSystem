@@ -3,12 +3,16 @@ import React from 'react';
 import type { Flight, FareClass, AncillaryService } from '../../types';
 import type { BookingFlightSelection, BookingFareOption, BookingSelectedService } from '../../types/bookingFlow';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { serviceDiscount } from '../../utils/serviceBundle';
 
 export interface PriceSummaryCardProps {
   readonly flight: BookingFlightSelection | Flight | null;
   readonly fareClass: BookingFareOption | FareClass | null;
+  readonly returnFlight?: BookingFlightSelection | null;
+  readonly returnFareClass?: BookingFareOption | null;
   readonly passengerCount?: number;
   readonly selectedServices?: readonly (BookingSelectedService | AncillaryService)[];
+  readonly serviceBundle?: boolean;
   readonly ctaLabel?: string;
   readonly onCtaClick?: () => void;
   readonly isCtaDisabled?: boolean;
@@ -17,17 +21,21 @@ export interface PriceSummaryCardProps {
 export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
   flight,
   fareClass,
+  returnFlight,
+  returnFareClass,
   passengerCount = 1,
   selectedServices = [],
+  serviceBundle = false,
   ctaLabel = 'Proceed to Passenger Info',
   onCtaClick,
   isCtaDisabled = false
 }) => {
   useLanguage();
   const flightPrice = fareClass ? fareClass.price : (flight?.basePrice ?? 0);
-  const baseTotal = flightPrice * passengerCount;
+  const baseTotal = (flightPrice + (returnFareClass?.price ?? 0)) * passengerCount;
   const servicesTotal = selectedServices.reduce((sum, s) => sum + ((s.price || 0) * ((s as any).quantity || 1)), 0);
-  const grandTotal = baseTotal + servicesTotal;
+  const discount = serviceDiscount(selectedServices as readonly BookingSelectedService[], serviceBundle);
+  const grandTotal = baseTotal + servicesTotal - discount;
 
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm sticky top-24">
@@ -40,15 +48,22 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
             <span>{localize(flight.flightNumber)}</span>
           </div>
           <div className="text-on-surface-variant text-body-sm mt-0.5">
-            {localize(flight.departureTime)}{localize("Departure • ")}{localize(fareClass?.name || 'Standard Tier')}
+            {localize('Departure time')}: {flight.departureTime} · {localize(fareClass?.name || 'Standard Tier')}
           </div>
         </div>
       )}
 
       {/* Itemized lines */}
+      {returnFlight && (
+        <div className="mb-4 pb-4 border-b border-outline-variant text-body-sm">
+          <strong className="text-primary">{localize('Return flight')}: {returnFlight.departureCode} → {returnFlight.arrivalCode} · {returnFlight.flightNumber}</strong>
+          <p>{returnFlight.departureAt?.slice(0, 10)} · {returnFlight.departureTime} · {localize(returnFareClass?.name)}</p>
+          <p className="mt-2 text-on-surface-variant">{localize('Ancillary services are charged once per booking.')}</p>
+        </div>
+      )}
       <div className="space-y-2.5 text-body-sm">
         <div className="flex items-center justify-between text-on-surface">
-          <span>{localize("Flight Fare (")}{localize(passengerCount)}{localize("x Adult)")}</span>
+          <span>{localize(`Flight Fare (${passengerCount}x Adult)`)}</span>
           <span className="font-semibold text-primary">{localize(formatCurrency(baseTotal))}</span>
         </div>
 
@@ -71,6 +86,7 @@ export const PriceSummaryCard: React.FC<PriceSummaryCardProps> = ({
       </div>
 
       {/* Total Due */}
+      {discount > 0 && <div className="mt-4 flex justify-between text-secondary font-semibold"><span>{localize('Service bundle discount (15%)')}</span><span>−{formatCurrency(discount)}</span></div>}
       <div className="mt-6 pt-4 border-t border-outline-variant flex items-center justify-between">
         <div>
           <span className="text-body-sm font-semibold text-on-surface-variant uppercase tracking-wider block">{localize("Total Payable ")}</span>

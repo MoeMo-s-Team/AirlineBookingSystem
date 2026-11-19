@@ -22,5 +22,6 @@ public class FlightResponse {
     private LocalDateTime arrivalTime;
     private BigDecimal basePrice;
     private Integer availableSeats;
+    private com.airline.domain.enums.FlightStatus status;
     private Map<String, BigDecimal> prices;
 }

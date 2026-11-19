@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AdditionalServicesPage } from './AdditionalServicesPage';
 import { useBookingFlow } from '../hooks/useBookingFlow';
 import { serviceApi } from '../api/serviceApi';
+import { setLanguage } from '../i18n';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -53,6 +54,28 @@ describe('AdditionalServicesPage', () => {
       selectedServices: [],
       toggleService: mockToggleService,
     } as any);
+  });
+
+  afterEach(() => setLanguage('en'));
+
+  it('translates the return fare and service names in Vietnamese', async () => {
+    setLanguage('vi');
+    const booking = vi.mocked(useBookingFlow)();
+    vi.mocked(useBookingFlow).mockReturnValue({
+      ...booking,
+      selectedReturnFlight: { ...booking.selectedFlight, departureCode: 'HAN', arrivalCode: 'SGN' },
+      selectedReturnFareClass: { ...booking.selectedFareClass, name: 'Business' },
+    } as ReturnType<typeof useBookingFlow>);
+    vi.mocked(serviceApi.getActiveServices).mockResolvedValue([
+      { id: 10, name: 'Extra Baggage 20kg', type: 'BAGGAGE', price: 250000, active: true },
+    ]);
+
+    render(<MemoryRouter><AdditionalServicesPage /></MemoryRouter>);
+
+    expect(await screen.findByText('Hành lý mua thêm 20 kg')).toBeVisible();
+    expect(screen.getByText(/Chuyến về.*HAN/)).toBeVisible();
+    expect(screen.getByText(/Thương gia/i)).toBeVisible();
+    expect(screen.queryByText(/\bBusiness\b/)).not.toBeInTheDocument();
   });
 
   it('loads active services from API, excludes inactive, and toggles selection', async () => {

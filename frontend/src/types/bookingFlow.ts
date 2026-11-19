@@ -11,6 +11,8 @@ export interface BookingFareOption extends Omit<FareClass, 'id'> {
 export interface BookingFlightSelection extends Omit<Flight, 'id' | 'fareClasses'> {
   id: number;
   fareClasses: BookingFareOption[];
+  departureAt?: string;
+  arrivalAt?: string;
 }
 
 export interface BookingPassengerDraft {

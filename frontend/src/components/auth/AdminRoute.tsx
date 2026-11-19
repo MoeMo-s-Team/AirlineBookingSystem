@@ -10,7 +10,7 @@ export interface AdminRouteProps {
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   useLanguage();
-  const { user, isAuthenticated, isLoading, profileError, refreshProfile } = useAuth();
+  const { user, isAuthenticated, isLoading, profileError, refreshProfile, sessionExpired } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -27,7 +27,7 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   }
 
   // Not logged in -> redirect to unified Sign In
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !sessionExpired) {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 

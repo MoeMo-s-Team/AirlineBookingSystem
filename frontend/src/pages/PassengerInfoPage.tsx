@@ -7,6 +7,7 @@ import { PassengerForm } from '../components/passenger/PassengerForm';
 import { PriceSummaryCard } from '../components/booking/PriceSummaryCard';
 import { useBookingFlow } from '../hooks/useBookingFlow';
 import type { BookingPassengerDraft } from '../types/bookingFlow';
+import { useAuth } from '../context/AuthContext';
 
 export interface PassengerInfoPageProps {
   readonly onProceed?: () => void;
@@ -15,14 +16,19 @@ export interface PassengerInfoPageProps {
 export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
   useLanguage();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const [autofilled, setAutofilled] = useState(false);
   const {
     searchParams,
     selectedFlight,
     selectedFareClass,
+    selectedReturnFlight,
+    selectedReturnFareClass,
     passengers,
     setPassengers,
     updatePassenger,
     selectedServices,
+    serviceBundle,
   } = useBookingFlow();
   const [showValidationError, setShowValidationError] = useState(false);
   const passengerCount = Math.min(9, Math.max(1, Math.trunc(searchParams.passengers || 1)));
@@ -116,6 +122,20 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
               </div>
 
               {/* Validation Error Banner */}
+              {isAuthenticated && user && (
+                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                  <button type="button" className="font-semibold text-secondary underline" onClick={() => {
+                    const details: Partial<BookingPassengerDraft> = { fullName: user.fullName };
+                    if (user.phone) details.phone = user.phone;
+                    if (user.dateOfBirth) details.dateOfBirth = user.dateOfBirth;
+                    if (user.passportNo) details.passportNo = user.passportNo;
+                    updatePassenger(0, details);
+                    setAutofilled(true);
+                  }}>{localize('Fill in my details')}</button>
+                  <p className="mt-1 text-body-sm text-on-surface-variant">{localize('Applies to the first passenger. Please review all details before continuing.')}</p>
+                  {autofilled && <p role="status" className="mt-2 text-body-sm">{localize('Your saved details were filled in. Please complete any missing fields.')} <Link to="/profile" className="underline">{localize('My profile')}</Link></p>}
+                </div>
+              )}
               {showValidationError && (
                 <div className="bg-error-container border border-error/30 rounded-xl p-4 flex items-start gap-3">
                   <span className="material-symbols-outlined text-error text-xl mt-0.5">error</span>
@@ -140,6 +160,9 @@ export const PassengerInfoPage: React.FC<PassengerInfoPageProps> = () => {
             {/* Price Summary Column */}
             <div className="lg:col-span-4">
               <PriceSummaryCard
+                serviceBundle={serviceBundle}
+                returnFlight={selectedReturnFlight}
+                returnFareClass={selectedReturnFareClass}
                 flight={selectedFlight}
                 fareClass={selectedFareClass}
                 passengerCount={passengerCount}

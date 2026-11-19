@@ -1,6 +1,9 @@
 import { getLocale, localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { StatusBadge } from '../common/StatusBadge';
+import { ReturnItinerary } from './ReturnItinerary';
+import { TicketActions } from './TicketActions';
+import { FlightDisruptionNotice } from './FlightDisruptionNotice';
 
 export interface BookingDossierModalProps {
   readonly booking: any | null;
@@ -25,8 +28,8 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
   const fare = booking?.fareClass;
   const passengers = booking?.passengers || [];
   const services = booking?.services || [];
-  const origin = flight?.originAirport || flight?.departureCode || '';
-  const destination = flight?.destinationAirport || flight?.arrivalCode || '';
+  const origin = flight?.originAirport || flight?.origin || flight?.departureCode || '';
+  const destination = flight?.destinationAirport || flight?.destination || flight?.arrivalCode || '';
   const flightNumber = flight?.flightNumber || '';
 
   const formatDate = (ts?: string) => {
@@ -97,6 +100,9 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
           <div className="p-8 text-center text-on-surface-variant">{localize("Không tìm thấy thông tin đặt chỗ. ")}</div>
         ) : (
           <div className="p-6 space-y-6">
+            <TicketActions bookingId={booking.id} status={booking.status} />
+            <ReturnItinerary flight={booking.returnFlight} fareName={booking.returnFareClass?.name} />
+            <FlightDisruptionNotice outbound={booking.flight} inbound={booking.returnFlight} />
             {/* Customer Account Details (Người đặt / hủy vé) */}
             <div className="bg-surface-container-low border border-outline-variant/60 rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
@@ -226,6 +232,7 @@ export const BookingDossierModal: React.FC<BookingDossierModalProps> = ({
             )}
 
             {/* Total Price */}
+            {booking.priceBreakdown?.discount > 0 && <p className="text-secondary font-semibold">{localize('Service bundle discount (15%)')}: −{booking.priceBreakdown.discount.toLocaleString(getLocale())} ₫</p>}
             <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant flex items-center justify-between">
               <span className="text-title-md font-bold text-primary">{localize("Tổng tiền thanh toán")}</span>
               <span className="text-headline-sm font-extrabold text-primary">

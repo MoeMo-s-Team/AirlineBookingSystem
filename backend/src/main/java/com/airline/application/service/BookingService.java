@@ -49,6 +49,8 @@ public class BookingService {
     private final BookingSubject bookingSubject;
     private final PricingStrategyFactory pricingStrategyFactory;
     private final PricingContext pricingContext;
+    private final BookingHoldService bookingHoldService;
+    private final BookingPricingService bookingPricingService;
 
     private static final String CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -60,7 +62,9 @@ public class BookingService {
                           ProfileRepository profileRepository,
                           BookingSubject bookingSubject,
                           PricingStrategyFactory pricingStrategyFactory,
-                          PricingContext pricingContext) {
+                          PricingContext pricingContext,
+                          BookingHoldService bookingHoldService,
+                          BookingPricingService bookingPricingService) {
         this.bookingRepository = bookingRepository;
         this.flightRepository = flightRepository;
         this.fareClassRepository = fareClassRepository;
@@ -69,6 +73,8 @@ public class BookingService {
         this.bookingSubject = bookingSubject;
         this.pricingStrategyFactory = pricingStrategyFactory;
         this.pricingContext = pricingContext;
+        this.bookingHoldService = bookingHoldService;
+        this.bookingPricingService = bookingPricingService;
     }
 
     @Transactional
@@ -76,8 +82,32 @@ public class BookingService {
         Profile user = profileRepository.findById(principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
 
-        Flight flight = flightRepository.findById(request.flightId())
-                .orElseThrow(() -> new ResourceNotFoundException("Chuyến bay không tồn tại"));
+        if ((request.returnFlightId() == null) != (request.returnFareClassId() == null)) {
+            throw new IllegalArgumentException("Return flight and return fare must be selected together");
+        }
+        if (request.flightId().equals(request.returnFlightId())) {
+            throw new IllegalArgumentException("Outbound and return flights must be different");
+        }
+        // Always lock both flights in ID order, including journeys on opposite routes.
+        java.util.Map<Long, Flight> lockedFlights = new java.util.HashMap<>();
+        java.util.stream.Stream.of(request.flightId(), request.returnFlightId()).filter(java.util.Objects::nonNull)
+                .sorted().forEach(id -> lockedFlights.put(id, flightRepository.findByIdForUpdate(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Chuyến bay không tồn tại"))));
+        Flight flight = lockedFlights.get(request.flightId());
+        Flight returnFlight = lockedFlights.get(request.returnFlightId());
+        FareClass returnFare = null;
+        if (returnFlight != null) {
+            if (!flight.getOrigin().equalsIgnoreCase(returnFlight.getDestination())
+                    || !flight.getDestination().equalsIgnoreCase(returnFlight.getOrigin())
+                    || !returnFlight.getDepartureTime().isAfter(flight.getArrivalTime())) {
+                throw new IllegalArgumentException("Return flight must reverse the route and depart after outbound arrival");
+            }
+            returnFare = fareClassRepository.findById(request.returnFareClassId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Return fare class not found"));
+            if (!Boolean.TRUE.equals(returnFare.getActive())) {
+                throw new IllegalArgumentException("Return fare class is inactive");
+            }
+        }
 
         FareClass fareClass = fareClassRepository.findById(request.fareClassId())
                 .orElseThrow(() -> new ResourceNotFoundException("Hạng vé không tồn tại"));
@@ -101,15 +131,21 @@ public class BookingService {
         // Calculate passenger flight fare: flight.basePrice * fareClass.priceMultiplier * passengerCount
         BigDecimal flightBasePrice = flight.getBasePrice();
         BigDecimal fareMultiplier = fareClass.getPriceMultiplier();
-        PricingStrategy pricingStrategy = pricingStrategyFactory.getStrategy(fareClass.getCode());
+        PricingStrategy pricingStrategy = pricingStrategyFactory.getStrategy(fareClass.getCode(), fareClass.getPriceMultiplier());
         BigDecimal totalPassengerFare = pricingContext.executeStrategy(
                 pricingStrategy, flightBasePrice, fareMultiplier, request.passengers().size());
+        if (returnFlight != null) {
+            totalPassengerFare = totalPassengerFare.add(pricingContext.executeStrategy(
+                    pricingStrategyFactory.getStrategy(returnFare.getCode(), returnFare.getPriceMultiplier()), returnFlight.getBasePrice(),
+                    returnFare.getPriceMultiplier(), request.passengers().size()));
+        }
 
-        BigDecimal totalServiceFare = BigDecimal.ZERO;
         List<BookingServiceItem> serviceItems = new ArrayList<>();
+        Set<Long> serviceIds = new HashSet<>();
 
         if (request.services() != null) {
             for (CreateBookingCommand.ServiceInput sReq : request.services()) {
+                if (!serviceIds.add(sReq.serviceId())) throw new IllegalArgumentException("Duplicate service selection");
                 if (sReq.quantity() == null || sReq.quantity() <= 0) {
                     throw new IllegalArgumentException("Số lượng dịch vụ phải lớn hơn 0");
                 }
@@ -120,9 +156,6 @@ public class BookingService {
                     throw new IllegalArgumentException("Dịch vụ bổ sung đã ngừng cung cấp: " + service.getName());
                 }
 
-                BigDecimal lineTotal = service.getPrice().multiply(BigDecimal.valueOf(sReq.quantity()));
-                totalServiceFare = totalServiceFare.add(lineTotal);
-
                 BookingServiceItem item = BookingServiceItem.builder()
                         .service(service)
                         .quantity(sReq.quantity())
@@ -132,7 +165,13 @@ public class BookingService {
             }
         }
 
-        BigDecimal totalPrice = totalPassengerFare.add(totalServiceFare).setScale(2, java.math.RoundingMode.HALF_UP);
+        BookingPricingService.Price price = bookingPricingService.calculate(totalPassengerFare, serviceItems, request.serviceBundle());
+        BigDecimal totalPrice = price.total();
+        java.time.LocalDateTime expiresAt = bookingHoldService.reserve(flight, request.passengers().size());
+        if (returnFlight != null) {
+            java.time.LocalDateTime returnExpiry = bookingHoldService.reserve(returnFlight, request.passengers().size());
+            if (returnExpiry.isBefore(expiresAt)) expiresAt = returnExpiry;
+        }
         String bookingCode = generateUniqueBookingCode();
 
         Booking booking = Booking.builder()
@@ -140,8 +179,13 @@ public class BookingService {
                 .user(user)
                 .flight(flight)
                 .fareClass(fareClass)
+                .returnFlight(returnFlight)
+                .returnFareClass(returnFare)
                 .status(BookingStatus.PENDING)
                 .totalPrice(totalPrice)
+                .serviceDiscount(price.discount())
+                .expiresAt(expiresAt)
+                .seatsHeld(true)
                 .build();
 
         for (CreateBookingCommand.PassengerInput pReq : request.passengers()) {
@@ -168,10 +212,11 @@ public class BookingService {
         return mapToView(savedBooking);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public BookingView getBookingDetail(ProfileIdentity principal, Long id) {
-        Booking booking = bookingRepository.findByIdAndUserId(id, principal.getId())
+        Booking booking = bookingRepository.findByIdAndUserIdForUpdate(id, principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt vé không tồn tại"));
+        bookingHoldService.expireIfNecessary(booking);
         return mapToView(booking);
     }
 
@@ -189,6 +234,12 @@ public class BookingService {
                 .map(this::mapToView);
     }
 
+    @Transactional(readOnly = true)
+    public BookingView getBookingAdmin(Long id) {
+        return mapToView(bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found")));
+    }
+
     @Transactional
     public BookingView cancelBooking(ProfileIdentity principal, Long id) {
         Booking booking = bookingRepository.findByIdAndUserIdForUpdate(id, principal.getId())
@@ -198,6 +249,7 @@ public class BookingService {
         BookingStateContext context = new BookingStateContext(previousStatus);
         context.cancel();
 
+        bookingHoldService.release(booking);
         booking.setStatus(context.getStatus());
         Booking saved = bookingRepository.save(booking);
 
@@ -232,7 +284,8 @@ public class BookingService {
         BigDecimal servicesTotal = booking.getServices().stream()
                 .map(s -> s.getUnitPrice().multiply(BigDecimal.valueOf(s.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal baseFare = booking.getTotalPrice().subtract(servicesTotal);
+        BigDecimal discount = booking.getServiceDiscount();
+        BigDecimal baseFare = booking.getTotalPrice().add(discount).subtract(servicesTotal);
         Payment latestPayment = booking.getPayments().stream()
                 .max(Comparator.comparing(Payment::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder())))
                 .orElse(null);
@@ -249,15 +302,21 @@ public class BookingService {
                 booking.getStatus(),
                 userSummary,
                 new BookingView.FlightSummary(booking.getFlight().getId(), booking.getFlight().getFlightNumber(),
-                        booking.getFlight().getOrigin(), booking.getFlight().getDestination(), booking.getFlight().getDepartureTime()),
+                        booking.getFlight().getOrigin(), booking.getFlight().getDestination(), booking.getFlight().getDepartureTime(), booking.getFlight().getStatus(), booking.getFlight().getArrivalTime()),
                 new BookingView.FareClassSummary(booking.getFareClass().getId(), booking.getFareClass().getCode(), booking.getFareClass().getName()),
                 passengerResponses,
                 serviceResponses,
-                new BookingView.PriceBreakdown(baseFare, servicesTotal, booking.getTotalPrice()),
+                new BookingView.PriceBreakdown(baseFare, servicesTotal, booking.getTotalPrice(), discount),
                 booking.getTotalPrice(),
                 latestPayment == null ? null : new BookingView.PaymentSummary(
                         latestPayment.getId(), latestPayment.getAmount(), latestPayment.getStatus(), latestPayment.getPaidAt()),
                 booking.getCreatedAt(),
-                booking.getUpdatedAt());
+                booking.getUpdatedAt(), booking.getExpiresAt(),
+                booking.getReturnFlight() == null ? null : new BookingView.FlightSummary(
+                        booking.getReturnFlight().getId(), booking.getReturnFlight().getFlightNumber(),
+                        booking.getReturnFlight().getOrigin(), booking.getReturnFlight().getDestination(),
+                        booking.getReturnFlight().getDepartureTime(), booking.getReturnFlight().getStatus(), booking.getReturnFlight().getArrivalTime()),
+                booking.getReturnFareClass() == null ? null : new BookingView.FareClassSummary(
+                        booking.getReturnFareClass().getId(), booking.getReturnFareClass().getCode(), booking.getReturnFareClass().getName()));
     }
 }

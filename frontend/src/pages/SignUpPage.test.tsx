@@ -28,6 +28,8 @@ describe('SignUpPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: null,
       isAuthenticated: false,
       isAdmin: false,
@@ -65,6 +67,8 @@ describe('SignUpPage', () => {
   it('navigates after the customer profile loads when confirmation is disabled', async () => {
     mockSignUp.mockImplementation(async () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: { id: 'new-user', email: 'b@example.com', fullName: 'Nguyen Van B', role: 'CUSTOMER' },
         isAuthenticated: true,
         isAdmin: false,
@@ -98,6 +102,8 @@ describe('SignUpPage', () => {
   it('passes returnTo to signUp and navigates to returnTo when confirmation is disabled', async () => {
     mockSignUp.mockImplementation(async () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: { id: 'new-user', email: 'c@example.com', fullName: 'Nguyen Van C', role: 'CUSTOMER' },
         isAuthenticated: true,
         isAdmin: false,

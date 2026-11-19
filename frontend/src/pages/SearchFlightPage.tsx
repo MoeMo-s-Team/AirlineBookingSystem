@@ -15,13 +15,14 @@ export interface SearchFlightPageProps {
 export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
   useLanguage();
   const navigate = useNavigate();
-  const { searchParams, setSearchParams } = useBookingFlow();
+  const { searchParams, setSearchParams, resetDraft } = useBookingFlow();
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const handleSearch = (params: FlightSearchParams = searchParams) => {
     const error = validateFlightSearch(params);
     setSearchError(error);
     if (error) return;
+    resetDraft?.();
     sessionStorage.removeItem('booking-create-outcome-unknown');
     const query = new URLSearchParams({
       origin: params.origin,
@@ -30,6 +31,8 @@ export const SearchFlightPage: React.FC<SearchFlightPageProps> = () => {
       passengers: String(params.passengers),
       cabinClass: params.cabinClass
     });
+    query.set('tripType', params.tripType);
+    if (params.tripType === 'round-trip' && params.returnDate) query.set('returnDate', params.returnDate);
     navigate(`/flights?${query.toString()}`);
   };
 

@@ -14,7 +14,7 @@ class ProfileControllerTest {
 
     @Test
     void getMyProfile_shouldReturnProfile_fromAuthenticatedPrincipal() {
-        ProfileController controller = new ProfileController();
+        ProfileController controller = new ProfileController(org.mockito.Mockito.mock(com.airline.application.service.ProfileService.class));
         UUID userId = UUID.randomUUID();
         ProfileIdentity principal = ProfileIdentity.builder()
                 .id(userId)

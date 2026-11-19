@@ -19,6 +19,20 @@ import java.util.UUID;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    Optional<Booking> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("SELECT b.id FROM Booking b LEFT JOIN b.returnFlight rf WHERE b.status = com.airline.domain.enums.BookingStatus.PENDING "
+            + "AND (b.expiresAt <= :now OR b.flight.status = com.airline.domain.enums.FlightStatus.CANCELLED "
+            + "OR rf.status = com.airline.domain.enums.FlightStatus.CANCELLED "
+            + "OR b.flight.departureTime <= :now OR rf.departureTime <= :now) ORDER BY b.expiresAt, b.id")
+    List<Long> findExpiredPendingIds(@Param("now") java.time.LocalDateTime now, Pageable pageable);
+
+    @Query("SELECT b FROM Booking b WHERE (b.flight.id = :flightId OR b.returnFlight.id = :flightId) "
+            + "AND b.status IN (com.airline.domain.enums.BookingStatus.PENDING, com.airline.domain.enums.BookingStatus.CONFIRMED)")
+    List<Booking> findActiveByFlightId(@Param("flightId") Long flightId);
+
     Optional<Booking> findByIdAndUserId(Long id, UUID userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -55,9 +69,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     boolean existsByBookingCode(String bookingCode);
 
-    boolean existsByFlightId(Long flightId);
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b "
+            + "WHERE b.flight.id = :flightId OR b.returnFlight.id = :flightId")
+    boolean existsByFlightId(@Param("flightId") Long flightId);
 
-    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b WHERE b.fareClass.id = :fareClassId")
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b WHERE b.fareClass.id = :fareClassId OR b.returnFareClass.id = :fareClassId")
     boolean existsByFareClassId(@Param("fareClassId") Long fareClassId);
 
     @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b JOIN b.services s WHERE s.service.id = :serviceId")

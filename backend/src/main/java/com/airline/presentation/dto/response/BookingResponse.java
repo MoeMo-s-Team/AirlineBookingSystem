@@ -24,6 +24,8 @@ public class BookingResponse {
     private BookingView.UserSummary user;
     private BookingView.FlightSummary flight;
     private BookingView.FareClassSummary fareClass;
+    private BookingView.FlightSummary returnFlight;
+    private BookingView.FareClassSummary returnFareClass;
     private List<BookingView.PassengerView> passengers;
     private List<BookingView.ServiceView> services;
     private BookingView.PriceBreakdown priceBreakdown;
@@ -31,6 +33,8 @@ public class BookingResponse {
     private BookingView.PaymentSummary payment;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private java.time.OffsetDateTime expiresAt;
+    private java.time.OffsetDateTime serverTime;
 
     public static BookingResponse from(BookingView view) {
         return BookingResponse.builder()
@@ -40,6 +44,8 @@ public class BookingResponse {
                 .user(view.user())
                 .flight(view.flight())
                 .fareClass(view.fareClass())
+                .returnFlight(view.returnFlight())
+                .returnFareClass(view.returnFareClass())
                 .passengers(view.passengers())
                 .services(view.services())
                 .priceBreakdown(view.priceBreakdown())
@@ -47,6 +53,9 @@ public class BookingResponse {
                 .payment(view.payment())
                 .createdAt(view.createdAt())
                 .updatedAt(view.updatedAt())
+                .expiresAt(view.expiresAt() == null ? null : view.expiresAt()
+                        .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toOffsetDateTime())
+                .serverTime(java.time.OffsetDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
                 .build();
     }
 }

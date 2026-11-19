@@ -27,6 +27,15 @@ public class Profile {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
+    @Column(length = 20)
+    private String phone;
+
+    @Column(name = "date_of_birth")
+    private java.time.LocalDate dateOfBirth;
+
+    @Column(name = "passport_no", length = 50)
+    private String passportNo;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;

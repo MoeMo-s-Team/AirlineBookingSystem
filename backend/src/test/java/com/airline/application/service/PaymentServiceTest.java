@@ -46,6 +46,8 @@ class PaymentServiceTest {
     private PaymentGateway paymentGateway;
     @Mock
     private BookingSubject bookingSubject;
+    @Mock
+    private BookingHoldService bookingHoldService;
 
     private PaymentService paymentService;
     private ProfileIdentity customerPrincipal;
@@ -57,7 +59,8 @@ class PaymentServiceTest {
                 bookingRepository,
                 paymentRepository,
                 paymentGateway,
-                bookingSubject
+                bookingSubject,
+                bookingHoldService
         );
         userId = UUID.randomUUID();
         customerPrincipal = ProfileIdentity.builder()
@@ -95,6 +98,7 @@ class PaymentServiceTest {
         assertNotNull(response.transactionRef());
         assertNotNull(response.paidAt());
         assertEquals(BookingStatus.CONFIRMED, booking.getStatus());
+        verify(bookingHoldService, never()).release(any());
 
         verify(bookingSubject).publishStatusChanged(booking, BookingStatus.PENDING);
     }
@@ -126,6 +130,7 @@ class PaymentServiceTest {
         assertNull(response.transactionRef());
         assertNull(response.paidAt());
         assertEquals(BookingStatus.PAYMENT_FAILED, booking.getStatus());
+        verify(bookingHoldService).release(booking);
 
         verify(bookingSubject).publishStatusChanged(booking, BookingStatus.PENDING);
     }
@@ -156,5 +161,15 @@ class PaymentServiceTest {
         ProcessPaymentCommand request = new ProcessPaymentCommand(1L, "CREDIT_CARD");
 
         assertThrows(ResourceNotFoundException.class, () -> paymentService.processPayment(customerPrincipal, request));
+    }
+
+    @Test
+    void expiredPaymentNeverCallsGateway() {
+        Booking booking = Booking.builder().id(1L).status(BookingStatus.PENDING).build();
+        when(bookingRepository.findByIdAndUserIdForUpdate(1L, userId)).thenReturn(Optional.of(booking));
+        when(bookingHoldService.expireIfNecessary(booking)).thenReturn(true);
+        assertThrows(com.airline.application.exception.BookingExpiredException.class,
+                () -> paymentService.processPayment(customerPrincipal, new ProcessPaymentCommand(1L, "MOCK")));
+        verifyNoInteractions(paymentGateway, paymentRepository);
     }
 }

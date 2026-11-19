@@ -2,6 +2,7 @@ import { getLocale, localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { NotificationModel } from '../../api/notificationApi';
+import { notificationBookingPath } from '../../utils/notificationLink';
 
 interface NotificationItemProps {
   readonly notification: NotificationModel;
@@ -11,9 +12,13 @@ interface NotificationItemProps {
 
 const TITLES: Record<string, string> = {
   BOOKING_CREATED: 'Booking created',
+  ADMIN_BOOKING_CREATED: 'New customer booking',
   BOOKING_CONFIRMED: 'Booking confirmed',
   BOOKING_CANCELLED: 'Booking cancelled',
-  PAYMENT_FAILED: 'Payment unsuccessful'
+  PAYMENT_FAILED: 'Payment unsuccessful',
+  FLIGHT_CANCELLED: 'Flight cancelled',
+  FLIGHT_SCHEDULE_CHANGED: 'Flight schedule changed',
+  FLIGHT_SEAT_AVAILABILITY_CHANGED: 'Flight seat availability changed'
 };
 
 export const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMarkRead, saving = false }) => {
@@ -35,7 +40,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
             {notification.bookingId !== null ? (
               <Link
-                to={`/my-bookings/${notification.bookingId}`}
+                to={notificationBookingPath(notification)}
                 onClick={() => { if (!notification.isRead) onMarkRead(notification.id); }}
                 className="text-body-sm font-semibold text-primary hover:underline focus-visible:underline"
               >
@@ -54,7 +59,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-label-md">
             <time dateTime={notification.createdAt} className="text-on-surface-variant">{localize(dateLabel)}</time>
             {notification.bookingId !== null && (
-              <Link to={`/my-bookings/${notification.bookingId}`} onClick={() => { if (!notification.isRead) onMarkRead(notification.id); }} className="font-semibold text-secondary hover:underline">{localize("View booking #")}{localize(notification.bookingId)}</Link>
+              <Link to={notificationBookingPath(notification)} onClick={() => { if (!notification.isRead) onMarkRead(notification.id); }} className="font-semibold text-secondary hover:underline">{localize("View booking #")}{localize(notification.bookingId)}</Link>
             )}
             {!notification.isRead && (
               <button
