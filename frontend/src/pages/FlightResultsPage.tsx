@@ -25,35 +25,53 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
   const { isAuthenticated } = useAuth();
   const {
     searchParams: defaultSearchParams,
+    setSearchParams: setBookingSearchParams,
     selectedFlight,
     setSelectedFlight,
     selectedFareClass,
     setSelectedFareClass,
+    selectedReturnFlight,
+    setSelectedReturnFlight,
+    selectedReturnFareClass,
+    setSelectedReturnFareClass,
   } = useBookingFlow();
+  const [leg, setLeg] = useState<'outbound' | 'return'>('outbound');
 
   const activeSearchParams = useMemo(() => ({
     ...defaultSearchParams,
     origin: urlSearchParams.get('origin') ?? defaultSearchParams.origin,
     destination: urlSearchParams.get('destination') ?? defaultSearchParams.destination,
     departureDate: urlSearchParams.get('date') ?? defaultSearchParams.departureDate,
+    tripType: (urlSearchParams.get('tripType') ?? defaultSearchParams.tripType) as typeof defaultSearchParams.tripType,
+    returnDate: urlSearchParams.get('returnDate') ?? defaultSearchParams.returnDate,
     passengers: Number(urlSearchParams.get('passengers')) || defaultSearchParams.passengers,
     cabinClass: (urlSearchParams.get('cabinClass') as typeof defaultSearchParams.cabinClass | null)
       ?? defaultSearchParams.cabinClass
   }), [defaultSearchParams, urlSearchParams]);
+  const roundTrip = activeSearchParams.tripType === 'round-trip';
+  const isReturnLeg = roundTrip && leg === 'return';
+  const legSearchParams = isReturnLeg ? {
+    ...activeSearchParams, tripType: 'one-way' as const,
+    origin: activeSearchParams.destination, destination: activeSearchParams.origin,
+    departureDate: activeSearchParams.returnDate ?? activeSearchParams.departureDate,
+  } : activeSearchParams;
   const {
     filteredFlights,
+    nearbyDates,
+    seatShortage,
     filters,
     updateFilter,
     maxAvailablePrice,
     isLoading,
     error
-  } = useFlights(activeSearchParams);
+  } = useFlights(legSearchParams, isReturnLeg ? selectedFlight?.arrivalAt : undefined,
+    roundTrip && !isReturnLeg ? activeSearchParams.returnDate : undefined);
 
   const [modalFlight, setModalFlight] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const originAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.origin);
-  const destinationAirport = AIRPORTS.find(airport => airport.code === activeSearchParams.destination);
-  const departureDate = new Date(`${activeSearchParams.departureDate}T00:00:00`);
+  const originAirport = AIRPORTS.find(airport => airport.code === legSearchParams.origin);
+  const destinationAirport = AIRPORTS.find(airport => airport.code === legSearchParams.destination);
+  const departureDate = new Date(`${legSearchParams.departureDate}T00:00:00`);
   const departureDateLabel = Number.isNaN(departureDate.getTime())
     ? 'Invalid departure date'
     : new Intl.DateTimeFormat(getLocale(), {
@@ -69,12 +87,21 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
       navigate(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`);
       return;
     }
-    setSelectedFlight(flight);
-    setSelectedFareClass(fareClass);
+    setBookingSearchParams(activeSearchParams);
+    if (isReturnLeg) {
+      setSelectedReturnFlight(flight);
+      setSelectedReturnFareClass(fareClass);
+    } else {
+      setSelectedFlight(flight);
+      setSelectedFareClass(fareClass);
+      setSelectedReturnFlight(null);
+      setSelectedReturnFareClass(null);
+      if (roundTrip) setLeg('return');
+    }
   };
 
   const handleProceed = () => {
-    if (selectedFlight && selectedFareClass) {
+    if (selectedFlight && selectedFareClass && (!roundTrip || (selectedReturnFlight && selectedReturnFareClass))) {
       navigate('/passenger');
     }
   };
@@ -94,8 +121,8 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-headline-md font-bold text-primary">
-                    {localize(originAirport?.city ?? activeSearchParams.origin)} ({localize(activeSearchParams.origin)}) →{localize(' ')}
-                    {localize(destinationAirport?.city ?? activeSearchParams.destination)} ({localize(activeSearchParams.destination)})
+                    {localize(originAirport?.city ?? legSearchParams.origin)} ({localize(legSearchParams.origin)}) →{localize(' ')}
+                    {localize(destinationAirport?.city ?? legSearchParams.destination)} ({localize(legSearchParams.destination)})
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-label-sm text-on-surface-variant mt-0.5">
@@ -121,6 +148,13 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
 
         {/* Content Area with Filters & Flight List */}
         <section className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+          {roundTrip && (
+            <div className="mb-6 rounded-xl border border-outline-variant p-4 flex flex-wrap items-center gap-4">
+              <strong className="text-primary">{localize(isReturnLeg ? 'Choose your return flight' : 'Choose your outbound flight')}</strong>
+              {selectedFlight && <span>{localize('Outbound flight')}: {selectedFlight.flightNumber} · {selectedFlight.departureAt?.slice(0, 10)}</span>}
+              {isReturnLeg && <button type="button" className="text-secondary underline" onClick={() => setLeg('outbound')}>{localize('Change outbound flight')}</button>}
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Filter Sidebar */}
             <aside className="lg:col-span-3 bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm space-y-6">
@@ -242,7 +276,48 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                     <p className="mt-1 text-body-sm">{localize(error)}</p>
                   </div>
                 )}
-                {!isLoading && !error && filteredFlights.length === 0 && (
+                {!isLoading && !error && seatShortage != null && (
+                  <div role="status" className="rounded-xl border border-secondary/30 bg-surface-container-low p-6">
+                    <p className="font-semibold text-primary">{localize('Not enough seats on the selected date')}</p>
+                    <p className="mt-1 text-body-sm text-on-surface-variant">
+                      {localize(`You selected ${activeSearchParams.passengers} passengers. The most seats available on a single flight is ${seatShortage}. Reduce the number of passengers or choose another date.`)}
+                    </p>
+                  </div>
+                )}
+                {!isLoading && !error && nearbyDates.length > 0 && (
+                  <div role="status" className="rounded-xl border border-secondary/30 bg-surface-container-low p-6">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                      {localize('Nearby flights available')}
+                    </div>
+                    <p className="mt-2 text-body-sm text-on-surface-variant">
+                      {seatShortage == null && <>{localize('No flights with enough seats on')} {departureDateLabel}. </>}{localize('Choose a nearby date within 3 days to view available flights.')}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {nearbyDates.map(suggestion => (
+                        <button key={suggestion.date} type="button"
+                          className="rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-3 text-left hover:border-primary transition-colors"
+                          onClick={() => {
+                            if (!isReturnLeg) {
+                              setSelectedFlight(null);
+                              setSelectedFareClass(null);
+                            }
+                            setSelectedReturnFlight(null);
+                            setSelectedReturnFareClass(null);
+                            const params = new URLSearchParams(urlSearchParams);
+                            params.set('origin', activeSearchParams.origin);
+                            params.set('destination', activeSearchParams.destination);
+                            params.set(isReturnLeg ? 'returnDate' : 'date', suggestion.date);
+                            navigate(`${location.pathname}?${params.toString()}`);
+                          }}>
+                          <span className="block font-semibold text-primary">{new Intl.DateTimeFormat(getLocale(), { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${suggestion.date}T00:00:00`))}</span>
+                          <span className="block text-body-sm text-on-surface-variant">{suggestion.count} {localize('flights')} · {localize('From')} {formatCurrency(suggestion.price)} {localize('/ passenger')}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!isLoading && !error && seatShortage == null && nearbyDates.length === 0 && filteredFlights.length === 0 && (
                   <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-8 text-center">
                     <span className="material-symbols-outlined text-[36px] text-secondary">travel_explore</span>
                     <p className="mt-2 font-semibold text-primary">{localize("No flights found for this route and date.")}</p>
@@ -254,7 +329,9 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                     key={flight.id}
                     flight={flight}
                     passengerCount={activeSearchParams.passengers}
-                    selectedFareClass={selectedFlight?.id === flight.id ? selectedFareClass : null}
+                    selectedFareClass={isReturnLeg
+                      ? (selectedReturnFlight?.id === flight.id ? selectedReturnFareClass : null)
+                      : (selectedFlight?.id === flight.id ? selectedFareClass : null)}
                     onSelectFare={handleSelectFare}
                     onViewDetails={f => {
                       setModalFlight(f);
@@ -279,8 +356,9 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                   <span className="text-label-sm font-bold uppercase tracking-wider text-secondary">{localize("Flight Selected: ")}{localize(selectedFlight.flightNumber)} ({localize(selectedFlight.departureCode)} → {localize(selectedFlight.arrivalCode)})
                   </span>
                   <div className="text-headline-sm font-bold text-primary">
-                    {localize(selectedFareClass.name)} • {localize(formatCurrency(selectedFareClass.price))} <span className="text-body-sm font-normal text-on-surface-variant">{localize("total per person")}</span>
+                    {localize(selectedFareClass.name)} • {localize(formatCurrency(selectedFareClass.price + (selectedReturnFareClass?.price ?? 0)))} <span className="text-body-sm font-normal text-on-surface-variant">{localize("total per person")}</span>
                   </div>
+                  {selectedReturnFlight && <p className="text-body-sm">{localize('Return flight')}: {selectedReturnFlight.flightNumber} · {selectedReturnFlight.departureAt?.slice(0, 10)} · {selectedReturnFareClass?.name}</p>}
                 </div>
               </div>
 
@@ -288,6 +366,7 @@ export const FlightResultsPage: React.FC<FlightResultsPageProps> = () => {
                 <button
                   type="button"
                   onClick={handleProceed}
+                  disabled={roundTrip && (!selectedReturnFlight || !selectedReturnFareClass)}
                   className="w-full sm:w-auto px-8 py-3 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <span>{localize("Continue to Passenger Details")}</span>

@@ -1,5 +1,5 @@
 import { localize, useLanguage } from '../i18n/index';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
@@ -9,6 +9,8 @@ import { bookingApi, type BookingDetail, type CreateBookingRequest } from '../ap
 import { paymentApi } from '../api/paymentApi';
 import type { ApiError } from '../api/apiClient';
 import { formatCurrency } from '../utils/formatCurrency';
+import { useBookingCountdown } from '../hooks/useBookingCountdown';
+import { FlightDisruptionNotice } from '../components/booking/FlightDisruptionNotice';
 
 export type CheckoutState =
   | 'draft'
@@ -30,8 +32,12 @@ export const CheckoutPaymentPage: React.FC = () => {
   const {
     selectedFlight,
     selectedFareClass,
+    searchParams: journeySearchParams,
+    selectedReturnFlight,
+    selectedReturnFareClass,
     passengers,
     selectedServices,
+    serviceBundle,
   } = useBookingFlow();
 
   const [checkoutState, setCheckoutState] = useState<CheckoutState>(
@@ -42,6 +48,8 @@ export const CheckoutPaymentPage: React.FC = () => {
   const [isLoadingPersisted, setIsLoadingPersisted] = useState(false);
   const bookingId = persistedBooking?.id ?? (queryBookingId ? Number(queryBookingId) : null);
   const hasValidBookingId = bookingId !== null && Number.isSafeInteger(bookingId) && bookingId > 0;
+  const { secondsLeft, isExpired, canPay } = useBookingCountdown(persistedBooking?.expiresAt, persistedBooking?.serverTime);
+  const expiryCheckedFor = useRef<number | null>(null);
 
   const fetchPersistedBooking = useCallback(async (id: number): Promise<BookingDetail | null> => {
     try {
@@ -77,8 +85,20 @@ export const CheckoutPaymentPage: React.FC = () => {
     }
   }, [queryBookingId, fetchPersistedBooking]);
 
+  useEffect(() => {
+    if (isExpired && bookingId !== null && checkoutState === 'persisted-pending'
+      && expiryCheckedFor.current !== bookingId) {
+      expiryCheckedFor.current = bookingId;
+      void fetchPersistedBooking(bookingId);
+    }
+  }, [isExpired, bookingId, checkoutState, fetchPersistedBooking]);
+
   // Handle Initial Booking Creation
   const handleCreateBooking = async () => {
+    if (journeySearchParams?.tripType === 'round-trip' && (!selectedReturnFlight || !selectedReturnFareClass)) {
+      setErrorMessage('Please select both outbound and return flights.');
+      return;
+    }
     if (!selectedFlight || !selectedFareClass || passengers.length === 0) {
       setErrorMessage('Thông tin đặt vé chưa đầy đủ. Vui lòng quay lại kiểm tra.');
       return;
@@ -92,6 +112,11 @@ export const CheckoutPaymentPage: React.FC = () => {
       const payload: CreateBookingRequest = {
         flightId: Number(selectedFlight.id),
         fareClassId: Number(selectedFareClass.id),
+        ...(serviceBundle ? { serviceBundle: true } : {}),
+        ...(selectedReturnFlight && selectedReturnFareClass ? {
+          returnFlightId: selectedReturnFlight.id,
+          returnFareClassId: selectedReturnFareClass.id,
+        } : {}),
         passengers: passengers.map(p => ({
           fullName: p.fullName,
           dateOfBirth: p.dateOfBirth,
@@ -148,6 +173,7 @@ export const CheckoutPaymentPage: React.FC = () => {
       checkoutState !== 'persisted-pending' ||
       persistedBooking?.status !== 'PENDING'
     ) return;
+    if (!canPay()) return;
 
     setCheckoutState('paying');
     setErrorMessage(null);
@@ -326,6 +352,20 @@ export const CheckoutPaymentPage: React.FC = () => {
                       </span>
                     </div>
                   )}
+                  <FlightDisruptionNotice outbound={persistedBooking?.flight} inbound={persistedBooking?.returnFlight} />
+
+                  {(persistedBooking?.status === 'PENDING' || (checkoutState === 'cancelled' && isExpired)) && secondsLeft !== null && (
+                    <div className={`rounded-xl border p-4 ${isExpired ? 'border-error text-error' : 'border-secondary/30 text-primary'}`}>
+                      {isExpired ? (
+                        <p role="alert">{localize('Your seat hold has expired. Please start a new booking.')}</p>
+                      ) : (
+                        <p>{localize('Time remaining to complete payment:')} <strong role="timer" aria-label={localize('Seat hold countdown')}>
+                          {String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')}
+                        </strong></p>
+                      )}
+                      <Link to="/" className="mt-2 inline-block font-semibold underline">{localize('Find a new flight')}</Link>
+                    </div>
+                  )}
 
                   {checkoutState === 'status-unknown' && (
                     <div className="space-y-3">
@@ -360,7 +400,7 @@ export const CheckoutPaymentPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleProcessPayment}
-                        disabled={checkoutState === 'paying' || isLoadingPersisted}
+                        disabled={checkoutState === 'paying' || isLoadingPersisted || isExpired || secondsLeft === null}
                         className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {checkoutState === 'paying' ? (
@@ -381,6 +421,9 @@ export const CheckoutPaymentPage: React.FC = () => {
             {/* Price Preview Column */}
             <div className="lg:col-span-4">
               <PriceSummaryCard
+                serviceBundle={serviceBundle}
+                returnFlight={selectedReturnFlight}
+                returnFareClass={selectedReturnFareClass}
                 flight={selectedFlight}
                 fareClass={selectedFareClass}
                 passengerCount={passengers.length}

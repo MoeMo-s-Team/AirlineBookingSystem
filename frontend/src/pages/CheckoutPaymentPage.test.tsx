@@ -115,6 +115,30 @@ describe('CheckoutPaymentPage', () => {
     });
   });
 
+  it('submits both legs in one booking request', async () => {
+    vi.mocked(useBookingFlow).mockReturnValue({ ...mockDraft,
+      searchParams: { tripType: 'round-trip' },
+      selectedReturnFlight: { ...mockDraft.selectedFlight, id: 202, flightNumber: 'SW202' },
+      selectedReturnFareClass: { ...mockDraft.selectedFareClass, id: 3, price: 1500000 },
+    } as any);
+    vi.mocked(bookingApi.createBooking).mockRejectedValue({ status: 400, message: 'Insufficient Seats' });
+    render(<MemoryRouter><CheckoutPaymentPage /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /Confirm & Create Booking/i }));
+    await waitFor(() => expect(bookingApi.createBooking).toHaveBeenCalledWith(expect.objectContaining({
+      flightId: 101, fareClassId: 2, returnFlightId: 202, returnFareClassId: 3,
+    })));
+    expect(bookingApi.createBooking).toHaveBeenCalledTimes(1);
+  });
+
+  it('requests the bundle discount explicitly instead of sending a client-computed total', async () => {
+    vi.mocked(useBookingFlow).mockReturnValue({ ...mockDraft, serviceBundle: true } as any);
+    vi.mocked(bookingApi.createBooking).mockRejectedValue({ status: 400, message: 'Insufficient Seats' });
+    render(<MemoryRouter><CheckoutPaymentPage /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /Confirm & Create Booking/i }));
+    await waitFor(() => expect(bookingApi.createBooking).toHaveBeenCalledWith(expect.objectContaining({ serviceBundle: true })));
+    expect(bookingApi.createBooking).toHaveBeenCalledWith(expect.not.objectContaining({ totalPrice: expect.anything() }));
+  });
+
   it('treats a malformed successful create response as an unknown outcome', async () => {
     vi.mocked(bookingApi.createBooking).mockResolvedValue({
       id: 505,
@@ -144,6 +168,7 @@ describe('CheckoutPaymentPage', () => {
       id: 505,
       bookingCode: 'SW-505',
       status: 'PENDING' as const,
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
       totalPrice: 1450000,
     };
 
@@ -228,6 +253,7 @@ describe('CheckoutPaymentPage', () => {
       id: 777,
       bookingCode: 'SW-777',
       status: 'PENDING',
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
       totalPrice: 1200000,
     } as any);
 
@@ -290,12 +316,30 @@ describe('CheckoutPaymentPage', () => {
     expect(paymentApi.processPayment).not.toHaveBeenCalled();
   });
 
+  it('blocks an expired hold, reconciles with the backend, and keeps the expiry notice after cancellation', async () => {
+    const expired = {
+      id: 889, bookingCode: 'SW-889', status: 'PENDING' as const,
+      totalPrice: 1200000,
+      expiresAt: new Date(Date.now() - 1000).toISOString(),
+    };
+    vi.mocked(bookingApi.getBooking).mockResolvedValueOnce(expired)
+      .mockResolvedValueOnce({ ...expired, status: 'CANCELLED' });
+    render(<MemoryRouter initialEntries={['/checkout?bookingId=889']}>
+      <Routes><Route path="/checkout" element={<CheckoutPaymentPage />} /></Routes>
+    </MemoryRouter>);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/seat hold has expired/i);
+    await waitFor(() => expect(bookingApi.getBooking).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Pay with Mock Gateway/i })).not.toBeInTheDocument());
+    expect(paymentApi.processPayment).not.toHaveBeenCalled();
+  });
+
   it('keeps payment paused after an uncertain payment result until status can be reloaded', async () => {
     vi.mocked(bookingApi.getBooking)
       .mockResolvedValueOnce({
         id: 777,
         bookingCode: 'SW-777',
         status: 'PENDING',
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
         totalPrice: 1200000,
       } as any)
       .mockRejectedValueOnce(new Error('Network timeout'))
@@ -303,6 +347,7 @@ describe('CheckoutPaymentPage', () => {
         id: 777,
         bookingCode: 'SW-777',
         status: 'PENDING',
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
         totalPrice: 1200000,
       } as any);
     vi.mocked(paymentApi.processPayment).mockRejectedValueOnce(new Error('Network timeout'));
@@ -334,6 +379,7 @@ describe('CheckoutPaymentPage', () => {
       id: 999,
       bookingCode: 'SW-999',
       status: 'PENDING',
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
       totalPrice: 1200000,
     } as any);
     vi.mocked(paymentApi.processPayment).mockResolvedValue({

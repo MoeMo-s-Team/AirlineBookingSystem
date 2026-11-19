@@ -3,11 +3,15 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { apiClient, type ApiError } from '../api/apiClient';
 import { safeReturnTo } from '../utils/safeReturnTo';
+import { recoveryUserId, markPasswordRecovery } from '../utils/passwordRecovery';
 
 export interface AuthUser {
   readonly id: string;
   readonly email: string;
   readonly fullName: string;
+  readonly phone?: string | null;
+  readonly dateOfBirth?: string | null;
+  readonly passportNo?: string | null;
   readonly role: 'CUSTOMER' | 'ADMIN';
   readonly name?: string;
   readonly frequentFlyerNumber?: string;
@@ -19,7 +23,10 @@ export interface AuthContextType {
   readonly isAuthenticated: boolean;
   readonly isAdmin: boolean;
   readonly isLoading: boolean;
+  readonly sessionExpired?: boolean;
   readonly profileError: ApiError | null;
+  readonly isPasswordRecovery: boolean;
+  readonly completePasswordRecovery: () => void;
   /** Supabase Auth token getter for API calls like notifications */
   readonly getAccessToken?: () => Promise<string | null>;
   readonly signIn: (email: string, password: string) => Promise<void>;
@@ -32,10 +39,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const intentionalSignOut = useRef(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profileError, setProfileError] = useState<ApiError | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authInitialized, setAuthInitialized] = useState<boolean>(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   // Generation counter to discard stale profile resolutions
   const requestGenRef = useRef<number>(0);
@@ -66,6 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (apiErr.status === 401 && sessionRef.current?.access_token !== currentSession.access_token) {
         return null;
       }
+      if (apiErr.status === 401 && profileUserIdRef.current) {
+        setSessionExpired(true);
+        return null;
+      }
       setUser(null);
       profileUserIdRef.current = null;
 
@@ -89,14 +103,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  useEffect(() => {
+    const expire = () => { if (profileUserIdRef.current) setSessionExpired(true); };
+    window.addEventListener('session-expired', expire);
+    return () => window.removeEventListener('session-expired', expire);
+  }, []);
+
+  useEffect(() => {
+    if (!session?.expires_at) return;
+    const check = async () => {
+      if (Date.now() < session.expires_at! * 1000) return;
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error || !data.session) setSessionExpired(true);
+      } catch { setSessionExpired(true); }
+    };
+    const timer = window.setInterval(() => { void check(); }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [session]);
+
   // Initial bootstrap; the session effect owns profile requests.
   useEffect(() => {
     let mounted = true;
     let authEventReceived = false;
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!mounted) return;
       authEventReceived = true;
+      if (!newSession && sessionRef.current && profileUserIdRef.current && !intentionalSignOut.current) setSessionExpired(true);
+      if (newSession) setSessionExpired(false);
+      if (event === 'PASSWORD_RECOVERY' && newSession) {
+        markPasswordRecovery(newSession.user.id);
+        setIsPasswordRecovery(true);
+      } else {
+        if (event === 'SIGNED_OUT' || !newSession
+          || (event === 'SIGNED_IN' && recoveryUserId() !== newSession.user.id)) markPasswordRecovery(null);
+        setIsPasswordRecovery(!!newSession && recoveryUserId() === newSession.user.id);
+      }
       sessionRef.current = newSession;
       setSession(newSession);
     });
@@ -108,6 +151,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!authEventReceived) {
           sessionRef.current = data.session;
           setSession(data.session);
+          setIsPasswordRecovery(!!data.session && recoveryUserId() === data.session.user.id);
+          if (!data.session) markPasswordRecovery(null);
         }
       } catch (err) {
         if (!mounted) return;
@@ -134,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!session) {
       requestGenRef.current++;
       sessionRef.current = null;
+      if (sessionExpired) { setIsLoading(false); return; }
       setUser(null);
       profileUserIdRef.current = null;
       const preserveAuthError = preserveAuthErrorRef.current;
@@ -156,9 +202,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
       }
     });
-  }, [authInitialized, session, fetchProfile]);
+  }, [authInitialized, session, fetchProfile, sessionExpired]);
 
   const signIn = useCallback(async (email: string, password: string): Promise<void> => {
+    markPasswordRecovery(null);
+    setIsPasswordRecovery(false);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -216,7 +264,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async (): Promise<void> => {
+    intentionalSignOut.current = true;
+    setSessionExpired(false);
     requestGenRef.current++;
+    markPasswordRecovery(null);
+    setIsPasswordRecovery(false);
     try {
       await supabase.auth.signOut();
     } finally {
@@ -224,6 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(null);
       setUser(null);
       setProfileError(null);
+      intentionalSignOut.current = false;
     }
   }, []);
 
@@ -232,6 +285,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await fetchProfile(session);
     }
   }, [session, fetchProfile]);
+
+  const completePasswordRecovery = useCallback(() => {
+    markPasswordRecovery(null);
+    setIsPasswordRecovery(false);
+  }, []);
 
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     if (sessionRef.current?.access_token) {
@@ -250,13 +308,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!session,
     isAdmin: user?.role === 'ADMIN',
     isLoading,
+    sessionExpired,
     profileError,
+    isPasswordRecovery,
+    completePasswordRecovery,
     getAccessToken,
     signIn,
     signUp,
     signOut,
     refreshProfile,
-  }), [session, user, isLoading, profileError, getAccessToken, signIn, signUp, signOut, refreshProfile]);
+  }), [session, user, isLoading, sessionExpired, profileError, isPasswordRecovery, completePasswordRecovery, getAccessToken, signIn, signUp, signOut, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>

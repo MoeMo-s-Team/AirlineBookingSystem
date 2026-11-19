@@ -4,6 +4,7 @@ import com.airline.application.dto.ProfileIdentity;
 import com.airline.application.dto.PaymentResult;
 import com.airline.application.dto.ProcessPaymentCommand;
 import com.airline.application.exception.BookingConflictException;
+import com.airline.application.exception.BookingExpiredException;
 import com.airline.domain.entity.Booking;
 import com.airline.domain.entity.Payment;
 import com.airline.domain.enums.BookingStatus;
@@ -28,8 +29,9 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentGateway paymentGateway;
     private final BookingSubject bookingSubject;
+    private final BookingHoldService bookingHoldService;
 
-    @Transactional
+    @Transactional(noRollbackFor = BookingExpiredException.class)
     public PaymentResult processPayment(ProfileIdentity principal, ProcessPaymentCommand request) {
         Booking booking = bookingRepository.findByIdAndUserIdForUpdate(request.bookingId(), principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt vé không tồn tại"));
@@ -39,6 +41,12 @@ public class PaymentService {
 
         if (previousStatus != BookingStatus.PENDING) {
             throw new BookingConflictException("Only pending bookings can be paid");
+        }
+
+        // Expiration and seat release must commit even though the payment is rejected.
+        bookingHoldService.lockFlightsForPayment(booking);
+        if (bookingHoldService.expireIfNecessary(booking)) {
+            throw new BookingExpiredException();
         }
 
         PaymentStatus gatewayResult = paymentGateway.processPayment(booking.getId(), request.paymentMethod());
@@ -52,6 +60,7 @@ public class PaymentService {
             paidAt = LocalDateTime.now();
         } else {
             stateContext.failPayment();
+            bookingHoldService.release(booking);
         }
 
         Payment payment = Payment.builder()

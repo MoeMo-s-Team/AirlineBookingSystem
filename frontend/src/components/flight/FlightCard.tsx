@@ -107,6 +107,11 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                 {localize(formatCurrency(flight.basePrice))}
               </span>
               <span className="text-body-sm text-on-surface-variant block mt-0.5">{localize("includes taxes & fees ")}</span>
+              {flight.seatsAvailable <= 5 && (
+                <span className="mt-2 block text-label-sm font-bold text-error">
+                  {flight.seatsAvailable === 0 ? localize('Sold out') : localize(`Only ${flight.seatsAvailable} seats left`)}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2 mt-3">
@@ -118,6 +123,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
               <button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
+                disabled={flight.seatsAvailable < passengerCount || flight.status === 'DEPARTED' || flight.status === 'CANCELLED'}
                 className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary text-label-md font-semibold transition-all flex items-center gap-1 shadow-sm"
               >
                 <span>{localize(expanded ? 'Hide Fares' : 'View Fares')}</span>

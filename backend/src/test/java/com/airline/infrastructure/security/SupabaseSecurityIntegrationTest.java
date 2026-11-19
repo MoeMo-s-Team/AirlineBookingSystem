@@ -44,8 +44,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
-@Import({SecurityConfig.class, ProfileAuthorizationFilter.class, SupabaseProperties.class})
+@Import({SecurityConfig.class, ProfileAuthorizationFilter.class, SupabaseProperties.class, com.airline.pattern.facade.BookingFacade.class})
 class SupabaseSecurityIntegrationTest {
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.airline.pattern.factory.ETicketFactory eTicketFactory;
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.airline.pattern.factory.BoardingPassFactory boardingPassFactory;
 
     @Autowired
     private MockMvc mockMvc;
@@ -240,6 +244,17 @@ class SupabaseSecurityIntegrationTest {
     }
 
     @Test
+    void customerCannotReadAdminBookingDetails() throws Exception {
+        UUID userId = UUID.randomUUID();
+        String token = createToken(rsaJwk, ISSUER, List.of(AUDIENCE), Instant.now().plus(1, ChronoUnit.HOURS), userId);
+        when(profileService.requireIdentity(userId)).thenReturn(ProfileIdentity.builder()
+                .id(userId).role("CUSTOMER").build());
+        mockMvc.perform(get("/api/bookings/admin/1").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+        verify(bookingService, never()).getBookingAdmin(any());
+    }
+
+    @Test
     void notificationRoutes_useVerifiedProfileIdForListCountAndRead() throws Exception {
         UUID userId = UUID.randomUUID();
         String token = createToken(rsaJwk, ISSUER, List.of(AUDIENCE),
@@ -308,5 +323,46 @@ class SupabaseSecurityIntegrationTest {
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(notificationService);
+    }
+
+    @Test
+    void profileUpdateAlwaysUsesJwtOwnerAndIgnoresRoleEmailAndIdInPayload() throws Exception {
+        UUID userId = UUID.randomUUID();
+        ProfileIdentity principal = ProfileIdentity.builder().id(userId).email("owner@example.com")
+                .fullName("Owner Name").role("CUSTOMER").phone("0901234567").build();
+        String token = createToken(rsaJwk, ISSUER, List.of(AUDIENCE), Instant.now().plus(1, ChronoUnit.HOURS), userId);
+        when(profileService.requireIdentity(userId)).thenReturn(principal);
+        when(profileService.updateMyProfile(eq(userId), any())).thenReturn(principal);
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/profile/me")
+                        .header("Authorization", "Bearer " + token).contentType("application/json")
+                        .content("""
+                                {"fullName":"Owner Name","phone":"0901234567","dateOfBirth":"1990-01-01","passportNo":"AB12345",
+                                 "role":"ADMIN","email":"attacker@example.com","id":"00000000-0000-0000-0000-000000000001"}
+                                """))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.id").value(userId.toString()))
+                .andExpect(jsonPath("$.data.role").value("CUSTOMER"))
+                .andExpect(jsonPath("$.data.email").value("owner@example.com"));
+        verify(profileService).updateMyProfile(eq(userId), argThat(command -> command.fullName().equals("Owner Name")
+                && command.passportNo().equals("AB12345")));
+    }
+
+    @Test
+    void profileUpdateRejectsAnonymousRequests() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/profile/me")
+                        .contentType("application/json").content("{\"fullName\":\"Test Name\"}"))
+                .andExpect(status().isUnauthorized());
+        verify(profileService, never()).updateMyProfile(any(), any());
+    }
+
+    @Test
+    void profileUpdateRejectsInvalidDateBeforeServiceCall() throws Exception {
+        UUID userId = UUID.randomUUID();
+        String token = createToken(rsaJwk, ISSUER, List.of(AUDIENCE), Instant.now().plus(1, ChronoUnit.HOURS), userId);
+        when(profileService.requireIdentity(userId)).thenReturn(ProfileIdentity.builder().id(userId).role("CUSTOMER").build());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/profile/me")
+                        .header("Authorization", "Bearer " + token).contentType("application/json")
+                        .content("{\"fullName\":\"Valid Name\",\"dateOfBirth\":\"not-a-date\"}"))
+                .andExpect(status().isBadRequest());
+        verify(profileService, never()).updateMyProfile(any(), any());
     }
 }

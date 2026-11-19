@@ -1,6 +1,6 @@
 import { localize, useLanguage } from '../i18n/index';
 import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { safeReturnTo } from '../utils/safeReturnTo';
 import { LanguageToggle } from '../components/layout/LanguageToggle';
@@ -9,10 +9,13 @@ export const AuthCallbackPage: React.FC = () => {
   useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const failed = searchParams.has('error') || new URLSearchParams(location.hash.slice(1)).has('error');
   const { user, isAuthenticated, isLoading, profileError, refreshProfile } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
+    if (failed) return;
 
     if (profileError) return;
 
@@ -28,7 +31,12 @@ export const AuthCallbackPage: React.FC = () => {
     } else {
       navigate('/sign-in', { replace: true });
     }
-  }, [isLoading, isAuthenticated, user, profileError, navigate, searchParams]);
+  }, [isLoading, isAuthenticated, user, profileError, navigate, searchParams, failed]);
+
+  if (failed) return <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
+    <p>{localize('Google sign-in was cancelled or failed. Please try again.')}</p>
+    <a href="/sign-in" className="text-primary underline">{localize('Back to sign in')}</a>
+  </div>;
 
   if (isLoading || (isAuthenticated && !user && !profileError)) {
     return (

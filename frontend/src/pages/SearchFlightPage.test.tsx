@@ -69,4 +69,26 @@ describe('SearchFlightPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent("Departure date cannot be in the past.");
     expect(mockNavigate).not.toHaveBeenCalled();
   });
+
+  it('includes both dates and round-trip mode in the results URL', () => {
+    render(<MemoryRouter><BookingFlowProvider><SearchFlightPage /></BookingFlowProvider></MemoryRouter>);
+    fireEvent.click(screen.getByRole('radio', { name: 'Round trip' }));
+    fireEvent.change(screen.getByLabelText('Departure Date'), { target: { value: '2099-01-10' } });
+    fireEvent.change(screen.getByLabelText('Return date'), { target: { value: '2099-01-12' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search SkyWing Flights/i }));
+    const url = mockNavigate.mock.calls[0][0] as string;
+    expect(url).toContain('tripType=round-trip');
+    expect(url).toContain('date=2099-01-10');
+    expect(url).toContain('returnDate=2099-01-12');
+  });
+
+  it('rejects a return date before departure', () => {
+    render(<MemoryRouter><BookingFlowProvider><SearchFlightPage /></BookingFlowProvider></MemoryRouter>);
+    fireEvent.click(screen.getByRole('radio', { name: 'Round trip' }));
+    fireEvent.change(screen.getByLabelText('Departure Date'), { target: { value: '2099-01-10' } });
+    fireEvent.change(screen.getByLabelText('Return date'), { target: { value: '2099-01-09' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search SkyWing Flights/i }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Return date cannot precede departure date.');
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
 });

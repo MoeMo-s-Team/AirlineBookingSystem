@@ -29,6 +29,8 @@ describe('SignInPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: null,
       isAuthenticated: false,
       isAdmin: false,
@@ -50,6 +52,8 @@ describe('SignInPage', () => {
     } as const;
     mockSignIn.mockImplementation(async () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user,
         isAuthenticated: true,
         isAdmin: true,
@@ -91,6 +95,8 @@ describe('SignInPage', () => {
     } as const;
     mockSignIn.mockImplementation(async () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user,
         isAuthenticated: true,
         isAdmin: false,
@@ -128,6 +134,8 @@ describe('SignInPage', () => {
     } as const;
     mockSignIn.mockImplementation(async () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user,
         isAuthenticated: true,
         isAdmin: false,
@@ -164,6 +172,8 @@ describe('SignInPage', () => {
     } as const;
     mockSignIn.mockImplementation(async () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user,
         isAuthenticated: true,
         isAdmin: true,
@@ -200,6 +210,8 @@ describe('SignInPage', () => {
     } as const;
     mockSignIn.mockImplementation(async () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user,
         isAuthenticated: true,
         isAdmin: false,

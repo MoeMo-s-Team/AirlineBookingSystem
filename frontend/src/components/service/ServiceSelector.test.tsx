@@ -45,6 +45,19 @@ describe('ServiceSelector Component', () => {
     vi.clearAllMocks();
   });
 
+  it('offers a bundle only when all three active categories are available', async () => {
+    vi.mocked(serviceApi.getActiveServices).mockResolvedValue([
+      ...mockServices.filter(service => service.active),
+      { id: 20, name: 'Seat selection', type: 'SEAT', price: 150000, active: true },
+    ]);
+    const select = vi.fn();
+    render(<ServiceSelector selectedServices={[]} onToggleService={vi.fn()} onSelectBundle={select} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Select service bundle' }));
+    expect(select).toHaveBeenCalledWith(expect.arrayContaining([
+      expect.objectContaining({ type: 'BAGGAGE' }), expect.objectContaining({ type: 'MEAL' }), expect.objectContaining({ type: 'SEAT' }),
+    ]));
+  });
+
   it('renders only active services and excludes inactive ones', async () => {
     vi.mocked(serviceApi.getActiveServices).mockResolvedValue(mockServices);
 

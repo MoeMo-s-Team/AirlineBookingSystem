@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface ProfileRepository extends JpaRepository<Profile, UUID> {
+    java.util.List<Profile> findByRole_Name(String roleName);
 
     @Query("SELECT p FROM Profile p LEFT JOIN FETCH p.role WHERE p.id = :id")
     Optional<Profile> findProfileWithRoleById(@Param("id") UUID id);

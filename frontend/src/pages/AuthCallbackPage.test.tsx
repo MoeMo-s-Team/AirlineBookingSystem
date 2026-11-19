@@ -24,6 +24,8 @@ describe('AuthCallbackPage', () => {
 
   it('renders loading state while bootstrap isLoading is true', () => {
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: null,
       isAuthenticated: false,
       isAdmin: false,
@@ -47,6 +49,8 @@ describe('AuthCallbackPage', () => {
 
   it('navigates to /admin/flights when user is authenticated with ADMIN role', async () => {
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: { id: 'admin-1', email: 'admin@airline.com', fullName: 'Admin', role: 'ADMIN' },
       isAuthenticated: true,
       isAdmin: true,
@@ -71,6 +75,8 @@ describe('AuthCallbackPage', () => {
 
   it('navigates to /my-bookings when user is authenticated with CUSTOMER role', async () => {
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: { id: 'cust-1', email: 'cust@airline.com', fullName: 'Customer', role: 'CUSTOMER' },
       isAuthenticated: true,
       isAdmin: false,
@@ -95,6 +101,8 @@ describe('AuthCallbackPage', () => {
 
   it('navigates to returnTo when user is authenticated with CUSTOMER role and returnTo is valid', async () => {
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: { id: 'cust-1', email: 'cust@airline.com', fullName: 'Customer', role: 'CUSTOMER' },
       isAuthenticated: true,
       isAdmin: false,
@@ -119,6 +127,8 @@ describe('AuthCallbackPage', () => {
 
   it('navigates to /admin/flights even if returnTo is present for ADMIN role', async () => {
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: { id: 'admin-1', email: 'admin@airline.com', fullName: 'Admin', role: 'ADMIN' },
       isAuthenticated: true,
       isAdmin: true,
@@ -143,6 +153,8 @@ describe('AuthCallbackPage', () => {
 
   it('displays profile error when profile loading failed', () => {
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: null,
       isAuthenticated: false,
       isAdmin: false,
@@ -167,6 +179,8 @@ describe('AuthCallbackPage', () => {
   it('keeps the session callback visible and retries a temporary profile error', () => {
     const refreshProfile = vi.fn();
     vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
       user: null,
       isAuthenticated: true,
       isAdmin: false,

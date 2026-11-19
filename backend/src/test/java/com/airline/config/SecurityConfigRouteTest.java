@@ -40,8 +40,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
-@Import({SecurityConfig.class, ProfileAuthorizationFilter.class, SupabaseProperties.class})
+@Import({SecurityConfig.class, ProfileAuthorizationFilter.class, SupabaseProperties.class, com.airline.pattern.facade.BookingFacade.class})
 class SecurityConfigRouteTest {
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.airline.pattern.factory.ETicketFactory eTicketFactory;
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.airline.pattern.factory.BoardingPassFactory boardingPassFactory;
 
     @Autowired
     private MockMvc mockMvc;

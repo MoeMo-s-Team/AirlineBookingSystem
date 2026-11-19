@@ -4,6 +4,9 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { TopNavBar } from '../components/layout/TopNavBar';
 import { Footer } from '../components/layout/Footer';
 import { bookingApi, type BookingDetail } from '../api/bookingApi';
+import { ReturnItinerary } from '../components/booking/ReturnItinerary';
+import { FlightDisruptionNotice } from '../components/booking/FlightDisruptionNotice';
+import { TicketActions } from '../components/booking/TicketActions';
 
 export interface BookingConfirmationPageProps {
   readonly onPrint?: () => void;
@@ -68,6 +71,11 @@ export const BookingConfirmationPage: React.FC<BookingConfirmationPageProps> = (
       <TopNavBar />
 
       <main className="flex-1 pt-16">
+        {booking && <TicketActions bookingId={booking.id} status={booking.status} />}
+        <div className="max-w-4xl mx-auto px-6"><ReturnItinerary flight={booking?.returnFlight} fareName={booking?.returnFareClass?.name} />
+          <FlightDisruptionNotice outbound={booking?.flight} inbound={booking?.returnFlight} />
+          {(booking?.priceBreakdown?.discount ?? 0) > 0 && <p className="text-secondary">{localize('Service bundle discount (15%)')}: −{booking?.priceBreakdown?.discount?.toLocaleString(getLocale())} ₫</p>}
+        </div>
         <section className="max-w-4xl mx-auto px-6 py-12">
           {loading ? (
             <div className="py-20 text-center" role="status">

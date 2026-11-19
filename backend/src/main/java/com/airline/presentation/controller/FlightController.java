@@ -39,8 +39,14 @@ public class FlightController {
     public ResponseEntity<ApiResponse<List<FlightResponse>>> searchFlights(
             @RequestParam String origin,
             @RequestParam String destination,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.success(flightService.searchFlights(origin, destination, date)));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "false") boolean nearby,
+            @RequestParam(defaultValue = "1") int passengers,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime notBefore,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate notAfterDate) {
+        return ResponseEntity.ok(ApiResponse.success(nearby
+                ? flightService.searchFlightsWithNearbyDates(origin, destination, date, passengers, notBefore, notAfterDate)
+                : flightService.searchFlights(origin, destination, date)));
     }
 
     @GetMapping("/all")
@@ -49,6 +55,23 @@ public class FlightController {
     public ResponseEntity<ApiResponse<List<FlightResponse>>> listFlights() {
         return ResponseEntity.ok(ApiResponse.success(flightService.listFlights()));
     }
+
+    @GetMapping("/round-trip")
+    @Operation(summary = "Search outbound and return flights")
+    public ResponseEntity<ApiResponse<RoundTripFlights>> searchRoundTrip(
+            @RequestParam String origin, @RequestParam String destination,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate returnDate,
+            @RequestParam(defaultValue = "1") int passengers) {
+        if (returnDate.isBefore(departureDate)) {
+            throw new IllegalArgumentException("Return date cannot precede departure date");
+        }
+        return ResponseEntity.ok(ApiResponse.success(new RoundTripFlights(
+                flightService.searchFlightsWithNearbyDates(origin, destination, departureDate, passengers, null, returnDate),
+                flightService.searchFlightsWithNearbyDates(destination, origin, returnDate, passengers, departureDate.atStartOfDay(), null))));
+    }
+
+    public record RoundTripFlights(List<FlightResponse> outboundFlights, List<FlightResponse> returnFlights) {}
 
     @GetMapping("/{id}")
     @Operation(summary = "Xem chi tiết chuyến bay (Public)")

@@ -2,6 +2,8 @@ import { getLocale, localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { StatusBadge } from '../common/StatusBadge';
 import type { BookingSummary } from '../../api/bookingApi';
+import { ReturnItinerary } from './ReturnItinerary';
+import { FlightDisruptionNotice } from './FlightDisruptionNotice';
 
 export interface BookingCardProps {
   readonly booking: BookingSummary | any;
@@ -19,8 +21,8 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const isPending = booking.status === 'PENDING';
   const flight = booking.flight;
   const fare = booking.fareClass;
-  const origin = flight?.originAirport || flight?.departureCode || '';
-  const destination = flight?.destinationAirport || flight?.arrivalCode || '';
+  const origin = flight?.originAirport || flight?.origin || flight?.departureCode || '';
+  const destination = flight?.destinationAirport || flight?.destination || flight?.arrivalCode || '';
   const flightNumber = flight?.flightNumber || '';
 
   const formatTime = (ts?: string) => {
@@ -62,6 +64,8 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm hover:shadow transition-shadow">
       {/* Top Bar with Code and Status */}
+      <ReturnItinerary flight={booking.returnFlight} />
+      <FlightDisruptionNotice outbound={booking.flight} inbound={booking.returnFlight} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-outline-variant gap-3">
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/60">

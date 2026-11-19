@@ -32,6 +32,7 @@ public class FlightService {
     private final FlightRepository flightRepository;
     private final FareClassRepository fareClassRepository;
     private final BookingRepository bookingRepository;
+    private final com.airline.pattern.observer.FlightSubject flightSubject;
 
     @Transactional(readOnly = true)
     public List<FlightResponse> listFlights() {
@@ -59,6 +60,7 @@ public class FlightService {
                 .findByOriginIgnoreCaseAndDestinationIgnoreCaseAndDepartureTimeGreaterThanEqualAndDepartureTimeLessThanOrderByDepartureTimeAsc(
                         normalizedOrigin, normalizedDestination, startOfDay, startOfNextDay)
                 .stream()
+                .filter(flight -> flight.getStatus() != com.airline.domain.enums.FlightStatus.CANCELLED)
                 .map(flight -> toResponse(flight, activeFares))
                 .toList();
     }
@@ -67,6 +69,47 @@ public class FlightService {
     public FlightResponse getFlightById(Long id) {
         Flight flight = findFlight(id);
         return toResponse(flight, fareClassRepository.findByActiveTrue());
+    }
+
+    @Transactional(readOnly = true)
+    public List<FlightResponse> searchFlightsWithNearbyDates(String origin, String destination, LocalDate date) {
+        return searchFlightsWithNearbyDates(origin, destination, date, 1, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FlightResponse> searchFlightsWithNearbyDates(String origin, String destination, LocalDate date,
+            int passengers, LocalDateTime notBefore, LocalDate notAfterDate) {
+        if (passengers < 1) throw new IllegalArgumentException("Passenger count must be positive");
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime earliest = notBefore != null && notBefore.isAfter(now) ? notBefore : now;
+        java.util.function.Predicate<FlightResponse> bookable = flight ->
+                flight.getAvailableSeats() >= passengers && flight.getDepartureTime().isAfter(earliest)
+                && (notAfterDate == null || !flight.getDepartureTime().toLocalDate().isAfter(notAfterDate));
+        List<FlightResponse> exact = searchFlights(origin, destination, date).stream().filter(bookable).toList();
+        if (!exact.isEmpty()) {
+            return exact;
+        }
+        LocalDateTime start = date.minusDays(3).atStartOfDay();
+        LocalDateTime end = date.plusDays(4).atStartOfDay();
+        if (notAfterDate != null && notAfterDate.plusDays(1).atStartOfDay().isBefore(end))
+            end = notAfterDate.plusDays(1).atStartOfDay();
+        if (earliest.isAfter(start)) start = earliest;
+        if (!end.isAfter(start)) {
+            return List.of();
+        }
+        List<FareClass> activeFares = fareClassRepository.findByActiveTrue();
+        return flightRepository
+                .findByOriginIgnoreCaseAndDestinationIgnoreCaseAndDepartureTimeGreaterThanEqualAndDepartureTimeLessThanOrderByDepartureTimeAsc(
+                        origin.trim().toUpperCase(Locale.ROOT), destination.trim().toUpperCase(Locale.ROOT),
+                        start, end)
+                .stream()
+                .filter(flight -> flight.getStatus() != com.airline.domain.enums.FlightStatus.CANCELLED
+                        && flight.getAvailableSeats() >= passengers && flight.getDepartureTime().isAfter(earliest))
+                .sorted(java.util.Comparator.comparingLong((Flight flight) -> Math.abs(
+                        java.time.temporal.ChronoUnit.DAYS.between(date, flight.getDepartureTime().toLocalDate())))
+                        .thenComparing(Flight::getDepartureTime))
+                .map(flight -> toResponse(flight, activeFares))
+                .toList();
     }
 
     public FlightResponse createFlight(FlightRequest request) {
@@ -94,7 +137,19 @@ public class FlightService {
     }
 
     public FlightResponse updateFlight(Long id, FlightUpdateRequest request) {
-        Flight flight = findFlight(id);
+        Flight flight = findFlightForUpdate(id);
+        var oldDeparture = flight.getDepartureTime();
+        var oldArrival = flight.getArrivalTime();
+        var oldStatus = flight.getStatus();
+        var oldAvailableSeats = flight.getAvailableSeats();
+        if (oldStatus == com.airline.domain.enums.FlightStatus.CANCELLED) {
+            throw new BookingConflictException("Cancelled flights cannot be modified.");
+        }
+        boolean routeChanged = (request.getOrigin() != null && !request.getOrigin().equalsIgnoreCase(flight.getOrigin()))
+                || (request.getDestination() != null && !request.getDestination().equalsIgnoreCase(flight.getDestination()));
+        if (routeChanged && bookingRepository.existsByFlightId(id)) {
+            throw new BookingConflictException("Cannot change the route of a booked flight.");
+        }
 
         if (request.getFlightNumber() != null) {
             String flightNumber = normalizeFlightNumber(request.getFlightNumber());
@@ -124,11 +179,17 @@ public class FlightService {
 
         validateRoute(flight.getOrigin(), flight.getDestination());
         validateSchedule(flight.getDepartureTime(), flight.getArrivalTime());
-        return toResponse(flightRepository.save(flight), fareClassRepository.findByActiveTrue());
+        if (request.getStatus() != null) flight.setStatus(request.getStatus());
+        else if (flight.getDepartureTime().isAfter(oldDeparture)) flight.setStatus(com.airline.domain.enums.FlightStatus.DELAYED);
+        Flight saved = flightRepository.save(flight);
+        flightSubject.publish(new com.airline.pattern.observer.FlightChangedEvent(id, saved.getFlightNumber(),
+                oldDeparture, oldArrival, oldStatus, saved.getDepartureTime(), saved.getArrivalTime(), saved.getStatus(),
+                !java.util.Objects.equals(oldAvailableSeats, saved.getAvailableSeats())));
+        return toResponse(saved, fareClassRepository.findByActiveTrue());
     }
 
     public void deleteFlight(Long id) {
-        Flight flight = findFlight(id);
+        Flight flight = findFlightForUpdate(id);
         if (bookingRepository.existsByFlightId(id)) {
             throw new BookingConflictException("Không thể xóa chuyến bay đã có đặt vé");
         }
@@ -137,6 +198,11 @@ public class FlightService {
 
     private Flight findFlight(Long id) {
         return flightRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyến bay với ID: " + id));
+    }
+
+    private Flight findFlightForUpdate(Long id) {
+        return flightRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyến bay với ID: " + id));
     }
 
@@ -159,6 +225,7 @@ public class FlightService {
                 .arrivalTime(flight.getArrivalTime())
                 .basePrice(flight.getBasePrice())
                 .availableSeats(flight.getAvailableSeats())
+                .status(flight.getStatus())
                 .prices(prices)
                 .build();
     }

@@ -23,6 +23,9 @@ CREATE TABLE profiles (
     id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email       VARCHAR(255) NOT NULL UNIQUE,
     full_name   VARCHAR(255) NOT NULL,
+    phone       VARCHAR(20),
+    date_of_birth DATE,
+    passport_no VARCHAR(50),
     role_id     BIGINT NOT NULL REFERENCES roles(id),
     created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
@@ -37,7 +40,7 @@ BEGIN
     VALUES (
         NEW.id,
         NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'full_name', ''), NEW.raw_user_meta_data->>'name', ''),
         (SELECT id FROM public.roles WHERE name = 'CUSTOMER')
     );
     RETURN NEW;
@@ -60,10 +63,21 @@ CREATE TABLE flights (
     arrival_time    TIMESTAMP NOT NULL,
     base_price      DECIMAL(15,2) NOT NULL,
     available_seats INTEGER NOT NULL CHECK (available_seats >= 0),
+    status          VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED',
     created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_flights_search ON flights(origin, destination, departure_time);
+
+CREATE TABLE flight_change_deliveries (
+    seats_changed BOOLEAN NOT NULL DEFAULT FALSE,
+    id BIGSERIAL PRIMARY KEY, flight_id BIGINT NOT NULL, flight_number VARCHAR(20) NOT NULL,
+    old_departure TIMESTAMP NOT NULL, old_arrival TIMESTAMP NOT NULL,
+    departure TIMESTAMP NOT NULL, arrival TIMESTAMP NOT NULL,
+    old_status VARCHAR(20) NOT NULL, status VARCHAR(20) NOT NULL,
+    processed BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX idx_flight_change_pending ON flight_change_deliveries(id) WHERE processed = FALSE;
 
 -- ============================================================
 -- 4. FARE CLASSES
@@ -88,13 +102,24 @@ CREATE TABLE bookings (
     user_id       UUID NOT NULL REFERENCES profiles(id),
     flight_id     BIGINT NOT NULL REFERENCES flights(id),
     fare_class_id BIGINT NOT NULL REFERENCES fare_classes(id),
+    return_flight_id BIGINT REFERENCES flights(id),
+    return_fare_class_id BIGINT REFERENCES fare_classes(id),
     status        VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     total_price   DECIMAL(15,2) NOT NULL,
+    service_discount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    expires_at    TIMESTAMP,
+    seats_held    BOOLEAN NOT NULL DEFAULT FALSE,
     created_at    TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMP NOT NULL DEFAULT NOW()
+    updated_at    TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT bookings_return_pair CHECK (
+        (return_flight_id IS NULL AND return_fare_class_id IS NULL) OR
+        (return_flight_id IS NOT NULL AND return_fare_class_id IS NOT NULL AND return_flight_id <> flight_id)
+    )
 );
 CREATE INDEX idx_bookings_user ON bookings(user_id);
+CREATE INDEX idx_bookings_return_flight ON bookings(return_flight_id);
 CREATE INDEX idx_bookings_status ON bookings(status);
+CREATE INDEX idx_bookings_pending_expiry ON bookings(expires_at, id) WHERE status = 'PENDING';
 
 -- ============================================================
 -- 6. PASSENGERS
@@ -170,7 +195,8 @@ INSERT INTO roles (name) VALUES ('CUSTOMER'), ('ADMIN');
 INSERT INTO fare_classes (code, name, price_multiplier, baggage, seat_pitch, meal) VALUES
     ('ECONOMY', 'Economy', 1.00, '7kg cabin baggage, 20kg checked', 'Standard 30-31 inch legroom', 'Complimentary snack & water'),
     ('PREMIUM', 'Premium Economy', 1.50, '10kg cabin baggage, 30kg checked', 'Extra 34-36 inch pitch with leg-rest', 'Hot meal selection & beverages'),
-    ('BUSINESS', 'Business', 2.50, '2x 10kg cabin, 40kg priority baggage', 'Full flat-bed seat with direct aisle access', 'Chef-curated gourmet dining & fine wines');
+    ('BUSINESS', 'Business', 2.50, '2x 10kg cabin, 40kg priority baggage', 'Full flat-bed seat with direct aisle access', 'Chef-curated gourmet dining & fine wines'),
+    ('FIRST_CLASS', 'First Class', 3.50, '2x 10kg cabin, 50kg priority baggage', 'Private suite with full flat-bed seat', 'A la carte dining and premium beverages');
 
 -- Additional services (prices in VND)
 INSERT INTO additional_services (name, type, price) VALUES

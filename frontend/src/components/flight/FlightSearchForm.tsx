@@ -28,6 +28,15 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
 
   return (
     <div className="bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant p-6 lg:p-8">
+      <div className="mb-5 flex gap-4" role="group" aria-label={localize('Trip type')}>
+        {(['one-way', 'round-trip'] as const).map(type => (
+          <label key={type} className="flex items-center gap-2 font-semibold text-primary">
+            <input type="radio" name="tripType" checked={searchParams.tripType === type}
+              onChange={() => onChange({ ...searchParams, tripType: type })} />
+            {localize(type === 'one-way' ? 'One way' : 'Round trip')}
+          </label>
+        ))}
+      </div>
       {/* Inputs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
         {/* Origin Field */}
@@ -106,7 +115,15 @@ export const FlightSearchForm: React.FC<FlightSearchFormProps> = ({
             onChange={e => onChange({ ...searchParams, departureDate: e.target.value })}
             className="w-full bg-transparent text-primary font-bold text-headline-sm focus:outline-none cursor-pointer"
           />
-          <div className="text-label-sm text-on-surface-variant mt-0.5">{localize("One way flight ")}</div>
+          {searchParams.tripType === 'round-trip' && (
+            <label className="mt-3 block text-label-sm text-outline">
+              {localize('Return date')}
+              <input type="date" aria-label={localize('Return date')}
+                min={searchParams.departureDate || localToday()} value={searchParams.returnDate ?? ''}
+                onChange={e => onChange({ ...searchParams, returnDate: e.target.value })}
+                className="mt-1 w-full bg-transparent text-primary font-bold text-headline-sm" />
+            </label>
+          )}
         </div>
 
         {/* Cabin Class Field */}

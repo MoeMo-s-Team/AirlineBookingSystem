@@ -23,6 +23,10 @@ public class BookingCreateRequest {
     @NotNull(message = "Mã hạng vé không được để trống")
     private Long fareClassId;
 
+    private Long returnFlightId;
+    private Long returnFareClassId;
+    private boolean serviceBundle;
+
     @NotEmpty(message = "Danh sách hành khách không được để trống")
     @Valid
     @Builder.Default

@@ -4,17 +4,24 @@ import { serviceApi, ServiceResponse } from '../../api/serviceApi';
 import type { AncillaryService } from '../../types';
 import type { BookingSelectedService } from '../../types/bookingFlow';
 import { ServiceCard } from './ServiceCard';
+import { bundleTypes } from '../../utils/serviceBundle';
 
 export interface ServiceSelectorProps {
   readonly selectedServices: readonly (BookingSelectedService | AncillaryService)[];
   readonly onToggleService: (service: any) => void;
   readonly onUpdateQuantity?: (serviceId: number, quantity: number) => void;
+  readonly onSelectBundle?: (services: BookingSelectedService[]) => void;
+  readonly serviceBundle?: boolean;
+  readonly onRemoveBundle?: () => void;
 }
 
 export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
   selectedServices,
   onToggleService,
   onUpdateQuantity,
+  onSelectBundle,
+  serviceBundle,
+  onRemoveBundle,
 }) => {
   useLanguage();
   const [services, setServices] = useState<AncillaryService[]>([]);
@@ -70,6 +77,10 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
   useEffect(() => {
     fetchServices();
   }, [fetchServices]);
+
+  const bundleServices = bundleTypes.map(type => services
+    .filter(service => (service as unknown as BookingSelectedService).type === type)
+    .sort((a, b) => a.price - b.price)[0]);
 
   // 1. Trạng thái Đang tải dữ liệu (Loading State) - Hiển thị Skeleton Loader
   if (isLoading) {
@@ -135,6 +146,16 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
   // 4. Trạng thái Thành công - Hiển thị danh sách dịch vụ thật từ Supabase
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {onSelectBundle && bundleServices.every(Boolean) && (
+        <div className="sm:col-span-2 rounded-2xl border border-secondary/40 bg-surface-container-low p-5">
+          <h3 className="font-bold text-primary">{localize('Travel bundle: baggage + meal + seat')}</h3>
+          <p className="mt-1 text-body-sm">{localize('Save 15% on all selected services. Ticket fares are unchanged. One of each bundle service is added per booking.')}</p>
+          <button type="button" className="mt-3 rounded-xl bg-primary px-4 py-2 font-semibold text-on-primary"
+            onClick={() => serviceBundle ? onRemoveBundle?.() : onSelectBundle(bundleServices as unknown as BookingSelectedService[])}>
+            {localize(serviceBundle ? 'Remove bundle discount' : 'Select service bundle')}
+          </button>
+        </div>
+      )}
       {services.map(service => {
         const selected = selectedServices.find(s => String(s.id) === String(service.id));
         const isSelected = Boolean(selected);

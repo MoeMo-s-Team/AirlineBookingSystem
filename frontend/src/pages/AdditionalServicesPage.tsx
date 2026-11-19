@@ -17,10 +17,13 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
   const {
     selectedFlight,
     selectedFareClass,
+    selectedReturnFlight,
+    selectedReturnFareClass,
     passengers,
     selectedServices,
     toggleService,
-    updateServiceQuantity
+    updateServiceQuantity,
+    serviceBundle, setServiceBundle, setSelectedServices,
   } = useBookingFlow();
 
   const handleContinue = () => {
@@ -79,6 +82,15 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
               </div>
 
               <ServiceSelector
+                serviceBundle={serviceBundle}
+                onRemoveBundle={() => setServiceBundle(false)}
+                onSelectBundle={services => {
+                  setSelectedServices?.(current => {
+                    const ids = new Set(services.map(service => service.id));
+                    return [...current.filter(service => !ids.has(service.id)), ...services.map(service => ({ ...service, quantity: 1 }))];
+                  });
+                  setServiceBundle(true);
+                }}
                 selectedServices={selectedServices}
                 onToggleService={toggleService}
                 onUpdateQuantity={updateServiceQuantity}
@@ -88,6 +100,9 @@ export const AdditionalServicesPage: React.FC<AdditionalServicesPageProps> = () 
             {/* Price Summary Column */}
             <div className="lg:col-span-4">
               <PriceSummaryCard
+                serviceBundle={serviceBundle}
+                returnFlight={selectedReturnFlight}
+                returnFareClass={selectedReturnFareClass}
                 flight={selectedFlight}
                 fareClass={selectedFareClass}
                 passengerCount={passengers.length}

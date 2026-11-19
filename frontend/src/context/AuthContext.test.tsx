@@ -4,6 +4,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
 import { apiClient } from '../api/apiClient';
+import { recoveryUserId, markPasswordRecovery } from '../utils/passwordRecovery';
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -24,8 +25,51 @@ vi.mock('../api/apiClient', () => ({
 }));
 
 describe('AuthContext', () => {
+  it('does not open a reauthentication modal without a profile when the initial token is rejected', async () => {
+    let callback: any;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation(handler => {
+      callback = handler;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: {
+      access_token: 'rejected-token', user: { id: 'owner' },
+    } as any }, error: null });
+    vi.mocked(apiClient.get).mockRejectedValue({ status: 401, message: 'Rejected token' });
+    vi.mocked(supabase.auth.signOut).mockImplementation(async () => {
+      callback('SIGNED_OUT', null);
+      return { error: null };
+    });
+    const { result } = renderHook(() => useAuth(), { wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider> });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.user).toBeNull();
+    expect(result.current.sessionExpired).toBe(false);
+    expect(result.current.profileError?.status).toBe(401);
+  });
+  it('keeps the profile while an expired session waits for reauthentication', async () => {
+    let callback: any;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation(handler => {
+      callback = handler;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: {
+      access_token: 'token', user: { id: 'owner' },
+    } as any }, error: null });
+    vi.mocked(apiClient.get).mockResolvedValue({ id: 'owner', email: 'owner@example.com', fullName: 'Owner', role: 'CUSTOMER' });
+    const { result } = renderHook(() => useAuth(), { wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider> });
+    await waitFor(() => expect(result.current.user?.id).toBe('owner'));
+    act(() => callback('SIGNED_OUT', null));
+    await waitFor(() => expect(result.current.sessionExpired).toBe(true));
+    expect(result.current.user?.email).toBe('owner@example.com');
+    expect(result.current.isAuthenticated).toBe(false);
+    act(() => callback('SIGNED_IN', { access_token: 'new-token', user: { id: 'owner' } }));
+    await waitFor(() => expect(result.current.sessionExpired).toBe(false));
+    expect(result.current.isAuthenticated).toBe(true);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null });
+    markPasswordRecovery(null);
     vi.mocked(supabase.auth.onAuthStateChange).mockImplementation(() => {
       return {
         data: {
@@ -35,6 +79,45 @@ describe('AuthContext', () => {
         },
       } as any;
     });
+  });
+
+  it('keeps recovery through session refresh and clears it after successful completion', async () => {
+    let callback: any;
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation(handler => {
+      callback = handler;
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as any;
+    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null });
+    vi.mocked(apiClient.get).mockResolvedValue({ id: 'recovery-user', fullName: 'Owner', email: 'owner@example.com', role: 'CUSTOMER' });
+    const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>;
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const session = { access_token: 'recovery-token', user: { id: 'recovery-user' } };
+    act(() => callback('PASSWORD_RECOVERY', session));
+    await waitFor(() => expect(result.current.isPasswordRecovery).toBe(true));
+    expect(recoveryUserId()).toBe('recovery-user');
+    act(() => callback('SIGNED_IN', session));
+    expect(result.current.isPasswordRecovery).toBe(true);
+    act(() => callback('TOKEN_REFRESHED', { ...session, access_token: 'refreshed-token' }));
+    expect(result.current.isPasswordRecovery).toBe(true);
+    act(() => result.current.completePasswordRecovery());
+    expect(result.current.isPasswordRecovery).toBe(false);
+    expect(recoveryUserId()).toBeNull();
+  });
+
+  it('restores a recovery flow after reload for its matching Supabase user', async () => {
+    markPasswordRecovery('recovery-user');
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { access_token: 'recovery-token', user: { id: 'recovery-user' } } as any }, error: null,
+    });
+    vi.mocked(apiClient.get).mockResolvedValue({ id: 'recovery-user', fullName: 'Owner', email: 'owner@example.com', role: 'CUSTOMER' });
+    const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>;
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isPasswordRecovery).toBe(true);
+    await act(async () => result.current.signOut());
+    expect(result.current.isPasswordRecovery).toBe(false);
+    expect(recoveryUserId()).toBeNull();
   });
 
   it('restores initial session and fetches profile from /api/profile/me', async () => {

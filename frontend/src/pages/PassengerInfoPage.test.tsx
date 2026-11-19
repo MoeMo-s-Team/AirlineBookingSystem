@@ -23,7 +23,7 @@ vi.mock('../context/NotificationContext', () => ({
 
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'test-user', email: 'test@example.com', fullName: 'Test User' },
+    user: { id: 'test-user', email: 'test@example.com', fullName: 'Test User', phone: '0901234567', dateOfBirth: '1990-01-01', passportNo: 'AB12345' },
     isAuthenticated: true,
     signOut: vi.fn(),
   }),
@@ -76,6 +76,20 @@ describe('PassengerInfoPage', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/services');
+    });
+  });
+
+  it('fills only the first passenger when the customer requests autofill', () => {
+    const blank = { fullName: '', phone: '', dateOfBirth: '', passportNo: '' };
+    vi.mocked(useBookingFlow).mockReturnValue({ searchParams: { passengers: 2 }, passengers: [blank, blank],
+      setPassengers: vi.fn(), updatePassenger: mockUpdatePassenger, selectedServices: [],
+      selectedFlight: null, selectedFareClass: null,
+    } as any);
+    render(<MemoryRouter><PassengerInfoPage /></MemoryRouter>);
+    expect(mockUpdatePassenger).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Fill in my details' }));
+    expect(mockUpdatePassenger).toHaveBeenCalledExactlyOnceWith(0, {
+      fullName: 'Test User', phone: '0901234567', dateOfBirth: '1990-01-01', passportNo: 'AB12345',
     });
   });
 });

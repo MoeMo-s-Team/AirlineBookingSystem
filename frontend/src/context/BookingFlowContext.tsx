@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { FlightSearchParams } from '../types';
 import { localToday } from '../utils/flightSearch';
+import { bundleEligible, serviceDiscount } from '../utils/serviceBundle';
 import type {
   BookingFlightSelection,
   BookingFareOption,
@@ -14,11 +15,17 @@ export interface BookingFlowContextType {
   selectedFlight: BookingFlightSelection | null;
   setSelectedFlight: React.Dispatch<React.SetStateAction<BookingFlightSelection | null>>;
   selectedFareClass: BookingFareOption | null;
+  selectedReturnFlight: BookingFlightSelection | null;
+  setSelectedReturnFlight: React.Dispatch<React.SetStateAction<BookingFlightSelection | null>>;
+  selectedReturnFareClass: BookingFareOption | null;
+  setSelectedReturnFareClass: React.Dispatch<React.SetStateAction<BookingFareOption | null>>;
   setSelectedFareClass: React.Dispatch<React.SetStateAction<BookingFareOption | null>>;
   passengers: BookingPassengerDraft[];
   setPassengers: React.Dispatch<React.SetStateAction<BookingPassengerDraft[]>>;
   updatePassenger: (index: number, updated: Partial<BookingPassengerDraft>) => void;
   selectedServices: BookingSelectedService[];
+  serviceBundle: boolean;
+  setServiceBundle: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedServices?: React.Dispatch<React.SetStateAction<BookingSelectedService[]>>;
   toggleService: (service: BookingSelectedService) => void;
   updateServiceQuantity: (serviceId: number, quantity: number) => void;
@@ -52,7 +59,11 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [selectedFlight, setSelectedFlight] = useState<BookingFlightSelection | null>(null);
   const [selectedFareClass, setSelectedFareClass] = useState<BookingFareOption | null>(null);
   const [passengers, setPassengers] = useState<BookingPassengerDraft[]>([]);
+  const [selectedReturnFlight, setSelectedReturnFlight] = useState<BookingFlightSelection | null>(null);
+  const [selectedReturnFareClass, setSelectedReturnFareClass] = useState<BookingFareOption | null>(null);
   const [selectedServices, setSelectedServices] = useState<BookingSelectedService[]>([]);
+  const [serviceBundle, setServiceBundle] = useState(false);
+  const appliedBundle = serviceBundle && bundleEligible(selectedServices);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | 'wallet'>('card');
   const [confirmedBooking, setConfirmedBooking] = useState<any | null>(null);
 
@@ -99,13 +110,14 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, []);
 
   const priceSummary = useMemo(() => {
-    const flightPrice = selectedFareClass ? selectedFareClass.price : (selectedFlight?.basePrice ?? 0);
+    const flightPrice = (selectedFareClass ? selectedFareClass.price : (selectedFlight?.basePrice ?? 0))
+      + (selectedReturnFareClass?.price ?? 0);
     const count = passengers.length > 0 ? passengers.length : (searchParams.passengers || 1);
     const baseTotal = flightPrice * count;
     const taxesAndFees = 0;
     const servicesTotal = selectedServices.reduce((sum, s) => sum + (s.price || 0) * (s.quantity || 1), 0);
-    const discount = 0;
-    const grandTotal = baseTotal + servicesTotal;
+    const discount = serviceDiscount(selectedServices, appliedBundle);
+    const grandTotal = baseTotal + servicesTotal - discount;
 
     return {
       flightPrice,
@@ -115,7 +127,7 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
       discount,
       grandTotal,
     };
-  }, [selectedFlight, selectedFareClass, passengers, searchParams.passengers, selectedServices]);
+  }, [selectedFlight, selectedFareClass, selectedReturnFareClass, passengers, searchParams.passengers, selectedServices, appliedBundle]);
 
   const confirmBooking = useCallback(() => {
     if (!selectedFlight || !selectedFareClass) return null;
@@ -125,8 +137,11 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const resetDraft = useCallback(() => {
     setSelectedFlight(null);
     setSelectedFareClass(null);
+    setSelectedReturnFlight(null);
+    setSelectedReturnFareClass(null);
     setPassengers([]);
     setSelectedServices([]);
+    setServiceBundle(false);
     setPaymentMethod('card');
     setConfirmedBooking(null);
   }, []);
@@ -138,11 +153,17 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
       selectedFlight,
       setSelectedFlight,
       selectedFareClass,
+      selectedReturnFlight,
+      setSelectedReturnFlight,
+      selectedReturnFareClass,
+      setSelectedReturnFareClass,
       setSelectedFareClass,
       passengers,
       setPassengers,
       updatePassenger,
       selectedServices,
+      serviceBundle: appliedBundle,
+      setServiceBundle,
       setSelectedServices,
       toggleService,
       updateServiceQuantity,
@@ -157,9 +178,12 @@ export const BookingFlowProvider: React.FC<{ children: React.ReactNode }> = ({ c
       searchParams,
       selectedFlight,
       selectedFareClass,
+      selectedReturnFlight,
+      selectedReturnFareClass,
       passengers,
       updatePassenger,
       selectedServices,
+      appliedBundle,
       toggleService,
       updateServiceQuantity,
       paymentMethod,

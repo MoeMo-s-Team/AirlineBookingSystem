@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AdminRoute } from './AdminRoute';
 import { CustomerRoute } from './CustomerRoute';
 import { useAuth } from '../../context/AuthContext';
+import { PasswordRecoveryGuard } from './PasswordRecoveryGuard';
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -14,10 +15,24 @@ describe('Route Guards', () => {
     vi.clearAllMocks();
   });
 
+  it('routes an admin recovery session to password reset before normal role redirects', () => {
+    vi.mocked(useAuth).mockReturnValue({ user: { id: 'admin', fullName: 'Admin', email: 'admin@example.com', role: 'ADMIN' },
+      isAuthenticated: true, isAdmin: true, isLoading: false, profileError: null,
+      isPasswordRecovery: true, completePasswordRecovery: vi.fn(), signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), refreshProfile: vi.fn() });
+    render(<MemoryRouter initialEntries={['/auth/callback']}><PasswordRecoveryGuard><Routes>
+      <Route path="/auth/callback" element={<p>Normal callback</p>} />
+      <Route path="/reset-password" element={<p>Password reset form</p>} />
+    </Routes></PasswordRecoveryGuard></MemoryRouter>);
+    expect(screen.getByText('Password reset form')).toBeInTheDocument();
+    expect(screen.queryByText('Normal callback')).not.toBeInTheDocument();
+  });
+
   describe('AdminRoute', () => {
     it('keeps a session with a profile server error and offers retry', () => {
       const refreshProfile = vi.fn();
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: null,
         isAuthenticated: true,
         isAdmin: false,
@@ -46,6 +61,8 @@ describe('Route Guards', () => {
 
     it('shows invalid profile instead of redirecting to sign-in on 403', () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: null,
         isAuthenticated: true,
         isAdmin: false,
@@ -72,6 +89,8 @@ describe('Route Guards', () => {
 
     it('shows loading view without redirecting while isLoading is true', () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: null,
         isAuthenticated: false,
         isAdmin: false,
@@ -98,6 +117,8 @@ describe('Route Guards', () => {
 
     it('redirects to /sign-in when unauthenticated and not loading', () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: null,
         isAuthenticated: false,
         isAdmin: false,
@@ -123,6 +144,8 @@ describe('Route Guards', () => {
 
     it('renders Access Denied when authenticated as CUSTOMER', () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: { id: 'c-1', email: 'c@airline.com', fullName: 'Customer', role: 'CUSTOMER' },
         isAuthenticated: true,
         isAdmin: false,
@@ -148,6 +171,8 @@ describe('Route Guards', () => {
 
     it('renders children when authenticated as ADMIN', () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: { id: 'a-1', email: 'a@airline.com', fullName: 'Admin', role: 'ADMIN' },
         isAuthenticated: true,
         isAdmin: true,
@@ -174,6 +199,8 @@ describe('Route Guards', () => {
   describe('CustomerRoute', () => {
     it('redirects to /admin/flights when authenticated as ADMIN', () => {
       vi.mocked(useAuth).mockReturnValue({
+      isPasswordRecovery: false,
+      completePasswordRecovery: vi.fn(),
         user: { id: 'a-1', email: 'a@airline.com', fullName: 'Admin', role: 'ADMIN' },
         isAuthenticated: true,
         isAdmin: true,

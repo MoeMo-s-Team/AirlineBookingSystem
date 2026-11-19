@@ -60,6 +60,8 @@ class BookingPaymentConcurrencyTest {
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("supabase.url", () -> "https://dummy.supabase.co");
         registry.add("supabase.jwt-audience", () -> "authenticated");
+        registry.add("booking.hold.cleanup-interval-ms", () -> "3600000");
+        registry.add("flight.notifications.interval-ms", () -> "3600000");
     }
 
     @Autowired
@@ -82,6 +84,13 @@ class BookingPaymentConcurrencyTest {
 
     @Autowired
     private FareClassRepository fareClassRepository;
+    @Autowired private FlightService flightService;
+    @Autowired private com.airline.domain.repository.FlightChangeDeliveryRepository flightDeliveries;
+    @Autowired private com.airline.domain.repository.NotificationRepository notifications;
+    @Autowired private FlightChangeDeliveryService flightDeliveryService;
+
+    @Autowired
+    private BookingHoldService bookingHoldService;
 
     @MockBean
     private BookingSubject bookingSubject;
@@ -89,7 +98,8 @@ class BookingPaymentConcurrencyTest {
     @Test
     void concurrentPayAndCancel_exactlyOneWins() throws Exception {
         UUID userId = UUID.randomUUID();
-        Role role = roleRepository.save(Role.builder().name("CUSTOMER").build());
+        Role role = roleRepository.findByName("CUSTOMER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("CUSTOMER").build()));
         Profile profile = profileRepository.save(Profile.builder()
                 .id(userId)
                 .email("user@concurrency.test")
@@ -170,5 +180,187 @@ class BookingPaymentConcurrencyTest {
 
         // Observer was notified exactly once for the pay or cancel status transition
         verify(bookingSubject, times(1)).publishStatusChanged(any(Booking.class), eq(BookingStatus.PENDING));
+    }
+
+    private record Fixture(ProfileIdentity principal, Flight flight, FareClass fare) {}
+
+    private Fixture fixture(int seats) {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Role role = roleRepository.findByName("CUSTOMER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("CUSTOMER").build()));
+        Profile profile = profileRepository.save(Profile.builder().id(UUID.randomUUID())
+                .email(suffix + "@holds.test").fullName("Hold Test").role(role).build());
+        LocalDateTime departure = bookingHoldService.now().plusDays(5);
+        Flight flight = flightRepository.save(Flight.builder().flightNumber("H" + suffix)
+                .origin("SGN").destination("HAN").departureTime(departure).arrivalTime(departure.plusHours(2))
+                .basePrice(new BigDecimal("1000000")).availableSeats(seats).build());
+        FareClass fare = fareClassRepository.save(FareClass.builder().code("ECO_" + suffix)
+                .name("Hold fare").priceMultiplier(BigDecimal.ONE).active(true).build());
+        return new Fixture(ProfileIdentity.builder().id(profile.getId()).email(profile.getEmail())
+                .role("CUSTOMER").build(), flight, fare);
+    }
+
+    private com.airline.application.dto.CreateBookingCommand request(Fixture fixture) {
+        return new com.airline.application.dto.CreateBookingCommand(fixture.flight().getId(), fixture.fare().getId(),
+                java.util.List.of(new com.airline.application.dto.CreateBookingCommand.PassengerInput(
+                        "Test Passenger", java.time.LocalDate.of(1990, 1, 1), "P12345", "0901234567")), java.util.List.of());
+    }
+
+    @Test
+    void concurrentLastSeatReservationAllowsOnlyOneBooking() throws Exception {
+        Fixture fixture = fixture(1);
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        java.util.concurrent.Callable<Boolean> reserve = () -> {
+            barrier.await(10, TimeUnit.SECONDS);
+            try {
+                bookingService.createBooking(fixture.principal(), request(fixture));
+                return true;
+            } catch (IllegalArgumentException ex) {
+                assertEquals("Insufficient Seats", ex.getMessage());
+                return false;
+            }
+        };
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<Boolean> first = executor.submit(reserve);
+            Future<Boolean> second = executor.submit(reserve);
+            assertEquals(1, (first.get(15, TimeUnit.SECONDS) ? 1 : 0) + (second.get(15, TimeUnit.SECONDS) ? 1 : 0));
+        }
+        assertEquals(0, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+        assertEquals(1, bookingRepository.findByUserIdOrderByCreatedAtDesc(fixture.principal().getId()).size());
+    }
+
+    private Long expiredBooking(Fixture fixture) {
+        Long id = bookingService.createBooking(fixture.principal(), request(fixture)).id();
+        Booking booking = bookingRepository.findById(id).orElseThrow();
+        booking.setExpiresAt(bookingHoldService.now().minusSeconds(1));
+        bookingRepository.save(booking);
+        return id;
+    }
+
+    @Test
+    void expiredPaymentCommitsCancellationAndRefundDespiteReturningConflict() {
+        Fixture fixture = fixture(2);
+        Long id = expiredBooking(fixture);
+        org.junit.jupiter.api.Assertions.assertThrows(com.airline.application.exception.BookingExpiredException.class,
+                () -> paymentService.processPayment(fixture.principal(), new ProcessPaymentCommand(id, "MOCK")));
+        assertEquals(BookingStatus.CANCELLED, bookingRepository.findById(id).orElseThrow().getStatus());
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+        bookingHoldService.expireBooking(id);
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+    }
+
+    @Test
+    void concurrentCleanupAndPaymentRefundOnlyOnce() throws Exception {
+        Fixture fixture = fixture(2);
+        Long id = expiredBooking(fixture);
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<?> cleanup = executor.submit(() -> {
+                try { barrier.await(10, TimeUnit.SECONDS); }
+                catch (Exception ex) { throw new RuntimeException(ex); }
+                bookingHoldService.expireBooking(id);
+            });
+            Future<?> payment = executor.submit(() -> {
+                try { barrier.await(10, TimeUnit.SECONDS); }
+                catch (Exception ex) { throw new RuntimeException(ex); }
+                org.junit.jupiter.api.Assertions.assertThrows(BookingConflictException.class,
+                        () -> paymentService.processPayment(fixture.principal(), new ProcessPaymentCommand(id, "MOCK")));
+            });
+            cleanup.get(15, TimeUnit.SECONDS);
+            payment.get(15, TimeUnit.SECONDS);
+        }
+        assertEquals(BookingStatus.CANCELLED, bookingRepository.findById(id).orElseThrow().getStatus());
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+    }
+
+    @Test
+    void failedCreationRollsBackSeatReservation() {
+        Fixture fixture = fixture(2);
+        org.mockito.Mockito.doThrow(new IllegalStateException("notification storage failed"))
+                .when(bookingSubject).publishStatusChanged(any(), org.mockito.ArgumentMatchers.isNull());
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> bookingService.createBooking(fixture.principal(), request(fixture)));
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+        assertEquals(0, bookingRepository.findByUserIdOrderByCreatedAtDesc(fixture.principal().getId()).size());
+    }
+
+    private Flight returnFlight(Fixture fixture, int seats) {
+        LocalDateTime departure = fixture.flight().getArrivalTime().plusDays(2);
+        return flightRepository.save(Flight.builder().flightNumber("R" + UUID.randomUUID().toString().substring(0, 8))
+                .origin("HAN").destination("SGN").departureTime(departure).arrivalTime(departure.plusHours(2))
+                .basePrice(new BigDecimal("1500000")).availableSeats(seats).build());
+    }
+
+    private com.airline.application.dto.CreateBookingCommand roundTripRequest(Fixture fixture, Flight inbound) {
+        var outbound = request(fixture);
+        return new com.airline.application.dto.CreateBookingCommand(outbound.flightId(), outbound.fareClassId(),
+                outbound.passengers(), outbound.services(), inbound.getId(), fixture.fare().getId());
+    }
+
+    @Test
+    void insufficientReturnSeatsRollBackOutboundReservation() {
+        Fixture fixture = fixture(2);
+        Flight inbound = returnFlight(fixture, 0);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createBooking(fixture.principal(), roundTripRequest(fixture, inbound)));
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+        assertEquals(0, flightRepository.findById(inbound.getId()).orElseThrow().getAvailableSeats());
+        assertEquals(0, bookingRepository.findByUserIdOrderByCreatedAtDesc(fixture.principal().getId()).size());
+    }
+
+    @Test
+    void roundTripCancellationRefundsBothLegsWithoutDoubleRefund() {
+        Fixture fixture = fixture(2);
+        Flight inbound = returnFlight(fixture, 3);
+        Long id = bookingService.createBooking(fixture.principal(), roundTripRequest(fixture, inbound)).id();
+        assertEquals(1, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+        assertEquals(2, flightRepository.findById(inbound.getId()).orElseThrow().getAvailableSeats());
+        bookingService.cancelBooking(fixture.principal(), id);
+        org.junit.jupiter.api.Assertions.assertThrows(BookingConflictException.class,
+                () -> bookingService.cancelBooking(fixture.principal(), id));
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+        assertEquals(3, flightRepository.findById(inbound.getId()).orElseThrow().getAvailableSeats());
+    }
+
+    @Test
+    void roundTripExpiryRefundsBothLegs() {
+        Fixture fixture = fixture(2);
+        Flight inbound = returnFlight(fixture, 3);
+        Long id = bookingService.createBooking(fixture.principal(), roundTripRequest(fixture, inbound)).id();
+        Booking booking = bookingRepository.findById(id).orElseThrow();
+        booking.setExpiresAt(bookingHoldService.now().minusSeconds(1));
+        bookingRepository.save(booking);
+        bookingHoldService.expireBooking(id);
+        bookingHoldService.expireBooking(id);
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+        assertEquals(3, flightRepository.findById(inbound.getId()).orElseThrow().getAvailableSeats());
+    }
+
+    @Test
+    void cancelledFlightCannotBePaidAndPendingSeatsAreRefunded() {
+        Fixture fixture = fixture(2);
+        Long id = bookingService.createBooking(fixture.principal(), request(fixture)).id();
+        flightService.updateFlight(fixture.flight().getId(), com.airline.presentation.dto.request.FlightUpdateRequest.builder()
+                .status(com.airline.domain.enums.FlightStatus.CANCELLED).build());
+        org.junit.jupiter.api.Assertions.assertThrows(BookingConflictException.class,
+                () -> paymentService.processPayment(fixture.principal(), new ProcessPaymentCommand(id, "MOCK")));
+        assertEquals(BookingStatus.CANCELLED, bookingRepository.findById(id).orElseThrow().getStatus());
+        assertEquals(2, flightRepository.findById(fixture.flight().getId()).orElseThrow().getAvailableSeats());
+    }
+
+    @Test
+    void cancellationNotificationIsDeliveredOnceAndDoesNotPretendToRefundPaidBooking() {
+        Fixture fixture = fixture(2);
+        Long id = bookingService.createBooking(fixture.principal(), request(fixture)).id();
+        paymentService.processPayment(fixture.principal(), new ProcessPaymentCommand(id, "MOCK"));
+        flightService.updateFlight(fixture.flight().getId(), com.airline.presentation.dto.request.FlightUpdateRequest.builder()
+                .status(com.airline.domain.enums.FlightStatus.CANCELLED).build());
+        Long deliveryId = flightDeliveries.findPendingIds(org.springframework.data.domain.PageRequest.of(0, 100)).stream()
+                .filter(delivery -> flightDeliveries.findById(delivery).orElseThrow().getFlightId().equals(fixture.flight().getId()))
+                .findFirst().orElseThrow();
+        flightDeliveryService.deliver(deliveryId);
+        flightDeliveryService.deliver(deliveryId);
+        assertEquals(1, notifications.countByUser_Id(fixture.principal().getId()));
+        assertEquals(BookingStatus.CONFIRMED, bookingRepository.findById(id).orElseThrow().getStatus());
     }
 }

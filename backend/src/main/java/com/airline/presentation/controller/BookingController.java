@@ -30,13 +30,14 @@ import java.util.UUID;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final com.airline.pattern.facade.BookingFacade bookingFacade;
 
     @PostMapping
     @Operation(summary = "Tạo đơn đặt vé mới (Customer)")
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
             @AuthenticationPrincipal ProfileIdentity principal,
             @Valid @RequestBody BookingCreateRequest request) {
-        BookingResponse created = BookingResponse.from(bookingService.createBooking(principal, toCommand(request)));
+        BookingResponse created = BookingResponse.from(bookingFacade.createBooking(principal, toCommand(request)));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt vé thành công", created));
     }
@@ -64,7 +65,7 @@ public class BookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
             @AuthenticationPrincipal ProfileIdentity principal,
             @PathVariable Long id) {
-        BookingResponse cancelled = BookingResponse.from(bookingService.cancelBooking(principal, id));
+        BookingResponse cancelled = BookingResponse.from(bookingFacade.cancelBooking(principal, id));
         return ResponseEntity.ok(ApiResponse.success("Hủy đơn đặt vé thành công", cancelled));
     }
 
@@ -86,6 +87,12 @@ public class BookingController {
                         .toList(),
                 request.getServices() == null ? List.of() : request.getServices().stream()
                         .map(s -> new CreateBookingCommand.ServiceInput(s.getServiceId(), s.getQuantity()))
-                        .toList());
+                        .toList(), request.getReturnFlightId(), request.getReturnFareClassId(), request.isServiceBundle());
+    }
+
+    @GetMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<BookingResponse>> getBookingAdmin(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(BookingResponse.from(bookingService.getBookingAdmin(id))));
     }
 }

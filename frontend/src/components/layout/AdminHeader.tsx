@@ -1,6 +1,8 @@
 import { localize, useLanguage } from '../../i18n/index';
 import React from 'react';
 import { LanguageToggle } from './LanguageToggle';
+import { NotificationBell } from '../notification/NotificationBell';
+import { Link } from 'react-router-dom';
 
 export interface AdminHeaderProps {
   readonly title: string;
@@ -31,6 +33,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
       <div className="flex items-center gap-2 sm:gap-4">
         <LanguageToggle />
+        <Link to="/profile" className="text-label-md font-semibold text-primary">{localize('My profile')}</Link>
+        <NotificationBell />
         {onSearch && (
           <div className="relative w-40 md:w-64 lg:w-80">
             <span className="material-symbols-outlined absolute left-3 top-2.5 text-[20px] text-outline">

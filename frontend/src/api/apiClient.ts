@@ -80,6 +80,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
+    if (response.status === 401 && token) window.dispatchEvent(new Event('session-expired'));
     const errorMsg = data?.message || `Lỗi yêu cầu HTTP: ${response.status} ${response.statusText}`;
     throw new ApiError(response.status, errorMsg, data?.code, data?.timestamp);
   }

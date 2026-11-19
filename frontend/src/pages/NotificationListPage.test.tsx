@@ -23,12 +23,32 @@ describe('NotificationListPage', () => {
       markRead: vi.fn(),
       refresh: vi.fn(),
       unreadCount: 1,
+      preview: [],
     } as unknown as ReturnType<typeof useNotifications>);
     listPage.mockResolvedValue({
       data: [{ id: 7, type: 'BOOKING_CREATED', message: 'Booking awaits payment.', isRead: false, bookingId: 42, createdAt: '2026-10-15T09:00:00' }],
       pagination: { total: 1, limit: 20, offset: 0 },
     });
     markAllRead.mockResolvedValue(1);
+  });
+
+  it('reloads the open list when a new flight notification reaches the preview', async () => {
+    const view = render(<MemoryRouter><NotificationListPage /></MemoryRouter>);
+    await screen.findByText('Booking awaits payment.');
+    const notification = {
+      id: 8, type: 'FLIGHT_SEAT_AVAILABILITY_CHANGED',
+      message: 'Seat availability for flight VN5 was updated.', isRead: false,
+      bookingId: 42, createdAt: '2026-10-15T09:01:00',
+    };
+    listPage.mockResolvedValue({
+      data: [notification],
+      pagination: { total: 1, limit: 20, offset: 0 },
+    });
+    const current = vi.mocked(useNotifications)();
+    vi.mocked(useNotifications).mockReturnValue({ ...current, preview: [notification] });
+    view.rerender(<MemoryRouter><NotificationListPage /></MemoryRouter>);
+
+    expect(await screen.findByText(notification.message)).toBeInTheDocument();
   });
 
   it('opens the owner-scoped booking route and marks all notifications as read', async () => {

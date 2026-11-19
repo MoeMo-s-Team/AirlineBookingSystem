@@ -40,7 +40,8 @@ class PaymentControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new PaymentController(paymentService);
+        controller = new PaymentController(new com.airline.pattern.facade.BookingFacade(
+                org.mockito.Mockito.mock(com.airline.application.service.BookingService.class), paymentService));
         userId = UUID.randomUUID();
         customerPrincipal = ProfileIdentity.builder()
                 .id(userId)

@@ -5,11 +5,13 @@ import { AIRPORTS, STANDARD_FARE_CLASSES } from '../data/mockData';
 import { FlightFilterOptions, FlightSearchParams } from '../types';
 import type { BookingFlightSelection, BookingFareOption } from '../types/bookingFlow';
 
-export function useFlights(searchParams: FlightSearchParams) {
+export function useFlights(searchParams: FlightSearchParams, notBefore?: string, notAfterDate?: string) {
   const [flights, setFlights] = useState<readonly BookingFlightSelection[]>([]);
   const [activeFares, setActiveFares] = useState<FareClassResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nearbyDates, setNearbyDates] = useState<{ date: string; count: number; price: number }[]>([]);
+  const [seatShortage, setSeatShortage] = useState<number | null>(null);
 
   const [filters, setFilters] = useState<FlightFilterOptions>({
     maxPrice: Number.MAX_SAFE_INTEGER,
@@ -27,21 +29,65 @@ export function useFlights(searchParams: FlightSearchParams) {
     const controller = new AbortController();
     setIsLoading(true);
     setError(null);
+    setFlights([]);
+    setNearbyDates([]);
+    setSeatShortage(null);
 
+    const query = {
+      origin: searchParams.origin,
+      destination: searchParams.destination,
+      date: searchParams.departureDate,
+      passengers: searchParams.passengers,
+      notBefore,
+      notAfterDate,
+    };
     Promise.all([
-      searchFlights({
-        origin: searchParams.origin,
-        destination: searchParams.destination,
-        date: searchParams.departureDate
-      }, controller.signal),
+      searchFlights(query, controller.signal),
       fareApi.getActiveFares(),
     ])
-      .then(([flightsResult, activeFaresResult]) => {
+      .then(async ([flightsResult, activeFaresResult]) => {
         if (controller.signal.aborted) return;
         setActiveFares(activeFaresResult);
-        setFlights(flightsResult.map(f => toFlightViewModel(f, activeFaresResult)));
+        const requestedDay = Date.parse(`${searchParams.departureDate}T00:00:00Z`);
+        const matchesTravelWindow = (f: FlightApiModel) => {
+          const departure = Date.parse(/[zZ]|[+-]\d{2}:\d{2}$/.test(f.departureTime)
+            ? f.departureTime : `${f.departureTime}+07:00`);
+          const dayDistance = Math.abs(Date.parse(`${f.departureTime.slice(0, 10)}T00:00:00Z`) - requestedDay) / 86400000;
+          return f.status !== 'CANCELLED'
+            && departure > Date.now() && dayDistance <= 3
+            && (!notBefore || f.departureTime > notBefore)
+            && (!notAfterDate || f.departureTime.slice(0, 10) <= notAfterDate);
+        };
+        const eligible = flightsResult.filter(f => matchesTravelWindow(f) && f.availableSeats >= query.passengers);
+        const exact = eligible.filter(f => f.departureTime.slice(0, 10) === searchParams.departureDate);
+        if (exact.length === 0) {
+          // Nearby search omits undersized flights. Check the requested day without its seat filter.
+          const sameDay = await searchFlights({ ...query, nearby: false }, controller.signal).catch(() => []);
+          if (controller.signal.aborted) return;
+          const mostSeats = sameDay.filter(f => matchesTravelWindow(f) && f.departureTime.slice(0, 10) === query.date)
+            .reduce((maximum, f) => Math.max(maximum, f.availableSeats), -1);
+          if (mostSeats >= 0 && mostSeats < query.passengers) setSeatShortage(mostSeats);
+        }
+        setFlights(exact.map(f => toFlightViewModel(f, activeFaresResult)));
+        const dates = new Map<string, { date: string; count: number; price: number }>();
+        if (exact.length === 0) {
+          eligible.forEach(f => {
+            const prices = activeFaresResult.filter(fare => fare.active && fare.priceMultiplier > 0)
+              .map(fare => Math.round(f.basePrice * fare.priceMultiplier));
+            if (prices.length === 0) return;
+            const price = Math.min(...prices);
+            const date = f.departureTime.slice(0, 10);
+            const previous = dates.get(date);
+            dates.set(date, { date, count: (previous?.count ?? 0) + 1, price: Math.min(previous?.price ?? Infinity, price) });
+          });
+        }
+        setNearbyDates([...dates.values()].sort((a, b) => {
+          const distance = (date: string) => Math.abs(Date.parse(`${date}T00:00:00Z`) - requestedDay);
+          return distance(a.date) - distance(b.date) || a.date.localeCompare(b.date);
+        }));
       })
       .catch(cause => {
+        if (controller.signal.aborted) return;
         if (cause instanceof DOMException && cause.name === 'AbortError') return;
         setFlights([]);
         setError(cause instanceof Error ? cause.message : 'Không thể tải danh sách chuyến bay.');
@@ -51,7 +97,7 @@ export function useFlights(searchParams: FlightSearchParams) {
       });
 
     return () => controller.abort();
-  }, [searchParams.origin, searchParams.destination, searchParams.departureDate]);
+  }, [searchParams.origin, searchParams.destination, searchParams.departureDate, searchParams.passengers, notBefore, notAfterDate]);
 
   const filteredFlights = useMemo(() => {
     return flights.filter(flight => {
@@ -106,6 +152,8 @@ export function useFlights(searchParams: FlightSearchParams) {
     filters,
     updateFilter,
     filteredFlights,
+    nearbyDates,
+    seatShortage,
     allFlights: flights,
     activeFares,
     maxAvailablePrice,
@@ -124,6 +172,8 @@ function toFlightViewModel(flight: FlightApiModel, activeFares: FareClassRespons
   return {
     id: flight.id,
     flightNumber: flight.flightNumber,
+    departureAt: flight.departureTime,
+    arrivalAt: flight.arrivalTime,
     airline: 'SkyWing Airlines',
     departureCity: departureAirport?.city ?? flight.origin,
     departureAirport: departureAirport?.name ?? flight.origin,
@@ -142,7 +192,7 @@ function toFlightViewModel(flight: FlightApiModel, activeFares: FareClassRespons
     basePrice: flight.basePrice,
     seatsAvailable: flight.availableSeats,
     onTimeRate: 'N/A',
-    status: departure.getTime() > Date.now() ? 'SCHEDULED' : 'DEPARTED',
+    status: flight.status === 'CANCELLED' ? 'CANCELLED' : departure.getTime() <= Date.now() ? 'DEPARTED' : flight.status ?? 'SCHEDULED',
     fareClasses: buildFareClasses(flight.basePrice, activeFares)
   };
 }
@@ -169,7 +219,7 @@ function buildFareClasses(basePrice: number, activeFares: FareClassResponse[]): 
         id: fare.id,
         code: fare.code,
         name: fare.name,
-        tier: template?.tier || 'Economy',
+        tier: upperCode.includes('FIRST') ? 'First' : template?.tier || 'Economy',
         priceMultiplier: fare.priceMultiplier,
         price: Math.round(basePrice * fare.priceMultiplier),
         baggage: fare.baggage || 'Chưa có thông tin hành lý',

@@ -9,6 +9,7 @@ export interface FlightAdminInput {
   arrivalTime: string;
   basePrice: number;
   availableSeats: number;
+  status?: 'SCHEDULED' | 'DELAYED' | 'CANCELLED';
 }
 
 export const flightAdminApi = {

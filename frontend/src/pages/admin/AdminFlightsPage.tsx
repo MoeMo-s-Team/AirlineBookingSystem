@@ -32,6 +32,18 @@ export function AdminFlightsPage() {
   const [editing, setEditing] = useState<FlightApiModel | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<FlightApiModel | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+
+  const cancelFlight = async (flight: FlightApiModel) => {
+    if (cancellingId !== null || !window.confirm(localize('Cancel this flight? Affected customers will be notified.'))) return;
+    setCancellingId(flight.id); setActionError(null);
+    try {
+      const updated = await flightAdminApi.update(flight.id, { status: 'CANCELLED' });
+      setFlights(current => current.map(item => item.id === updated.id ? updated : item));
+      setNotice('Flight cancelled. Customer notifications are queued.');
+    } catch (error) { setActionError(messageOf(error)); }
+    finally { setCancellingId(null); }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -193,7 +205,7 @@ export function AdminFlightsPage() {
                     <thead><tr><th>{localize("Flight")}</th><th>{localize("Route")}</th><th>{localize("Departure")}</th><th>{localize("Arrival")}</th><th>{localize("Base fare")}</th><th>{localize("Seats")}</th><th>{localize("Actions")}</th></tr></thead>
                     <tbody>{visible.map(flight => (
                       <tr key={flight.id}>
-                        <td data-label="Flight"><span className={styles.flightCode}>{localize(flight.flightNumber)}</span></td>
+                        <td data-label="Flight"><span className={styles.flightCode}>{localize(flight.flightNumber)}</span><span className="block text-body-sm">{localize(flight.status ?? 'SCHEDULED')}</span></td>
                         <td data-label="Route"><span className={styles.route}>{localize(flight.origin)} → {localize(flight.destination)}</span></td>
                         <td data-label="Departure"><span className={styles.time}>{localize(formatTime(flight.departureTime))}</span></td>
                         <td data-label="Arrival"><span className={styles.time}>{localize(formatTime(flight.arrivalTime))}</span></td>
@@ -201,9 +213,12 @@ export function AdminFlightsPage() {
                         <td data-label="Seats"><span className={styles.number}>{localize(flight.availableSeats)}</span></td>
                         <td data-label="Actions"><div className={styles.rowActions}>
                           <button type="button" className={styles.textButton}
+                            disabled={flight.status === 'CANCELLED'}
                             onClick={() => { setEditing(flight); setActionError(null); setNotice(null); }}>{localize("Edit")}</button>
                           <button type="button" className={`${styles.textButton} ${styles.dangerButton}`}
                             onClick={() => { setDeleting(flight); setActionError(null); setNotice(null); }} aria-label={localize(`Delete ${flight.flightNumber}`)}>{localize("Delete")}</button>
+                          {flight.status !== 'CANCELLED' && <button type="button" className={`${styles.textButton} ${styles.dangerButton}`}
+                            disabled={cancellingId !== null} onClick={() => void cancelFlight(flight)}>{localize('Cancel flight')}</button>}
                         </div></td>
                       </tr>
                     ))}</tbody>

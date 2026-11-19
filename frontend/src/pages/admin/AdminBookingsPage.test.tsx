@@ -8,8 +8,11 @@ vi.mock('../../api/bookingApi', () => ({
   bookingApi: {
     getAdminBookings: vi.fn(),
     getBooking: vi.fn(),
+    getAdminBooking: vi.fn(),
   },
 }));
+
+vi.mock('../../components/notification/NotificationBell', () => ({ NotificationBell: () => null }));
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({
@@ -107,5 +110,18 @@ describe('AdminBookingsPage', () => {
     // Has no refund or cancel actions in table or modal
     expect(screen.queryByRole('button', { name: /refund|issue refund/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /cancel this booking/i })).toBeNull();
+  });
+
+  it('loads a linked admin booking even when it is absent from the current list page', async () => {
+    vi.mocked(bookingApi.getAdminBookings).mockResolvedValue({ ...mockAdminPage, data: [] });
+    vi.mocked(bookingApi.getAdminBooking).mockResolvedValue({
+      id: 999, bookingCode: 'LINKED999', status: 'PENDING', totalPrice: 3000000,
+      flight: { flightNumber: 'OUT999', origin: 'SGN', destination: 'HAN' },
+      returnFlight: { flightNumber: 'RET999', origin: 'HAN', destination: 'SGN' },
+    });
+    render(<MemoryRouter initialEntries={['/admin/bookings?bookingId=999']}><AdminBookingsPage /></MemoryRouter>);
+    expect(await screen.findByText('LINKED999')).toBeInTheDocument();
+    expect(screen.getByText(/RET999/)).toBeInTheDocument();
+    expect(bookingApi.getAdminBooking).toHaveBeenCalledWith(999);
   });
 });

@@ -46,7 +46,8 @@ class BookingControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new BookingController(bookingService);
+        controller = new BookingController(bookingService, new com.airline.pattern.facade.BookingFacade(bookingService,
+                org.mockito.Mockito.mock(com.airline.application.service.PaymentService.class)));
         userId = UUID.randomUUID();
         customerPrincipal = ProfileIdentity.builder()
                 .id(userId)
@@ -116,7 +117,7 @@ class BookingControllerTest {
     void bookingResponse_usesNestedSrsShape() {
         BookingResponse booking = BookingResponse.from(bookingView(BookingStatus.CONFIRMED));
 
-        JsonNode json = new ObjectMapper().valueToTree(booking);
+        JsonNode json = new ObjectMapper().findAndRegisterModules().valueToTree(booking);
 
         assertEquals(3L, json.path("flight").path("id").asLong());
         assertEquals("VN123", json.path("flight").path("flightNumber").asText());

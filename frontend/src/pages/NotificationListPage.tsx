@@ -14,7 +14,8 @@ type Filter = 'all' | 'unread';
 export const NotificationListPage: React.FC = () => {
   useLanguage();
   const { isAuthenticated, user } = useAuth();
-  const { listPage, markRead, markAllRead, refresh, unreadCount } = useNotifications();
+  const { listPage, markRead, markAllRead, refresh, unreadCount, preview } = useNotifications();
+  const latestNotificationId = preview[0]?.id;
   const [filter, setFilter] = useState<Filter>('all');
   const [offset, setOffset] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
@@ -60,7 +61,7 @@ export const NotificationListPage: React.FC = () => {
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [isAuthenticated, user?.id, listPage, filter, offset, reloadKey]);
+  }, [isAuthenticated, user?.id, listPage, filter, offset, reloadKey, latestNotificationId]);
 
   const visibleItems = listOwnerId === (user?.id ?? null) ? items : [];
   const visibleTotal = listOwnerId === (user?.id ?? null) ? total : 0;

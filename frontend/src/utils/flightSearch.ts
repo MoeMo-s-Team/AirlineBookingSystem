@@ -22,5 +22,14 @@ export function validateFlightSearch(params: FlightSearchParams): string | null 
   if (params.departureDate < localToday()) {
     return 'Ngày bay không được ở trong quá khứ.';
   }
+  if (params.tripType === 'round-trip') {
+    const returnDate = params.returnDate ?? '';
+    const parsed = new Date(`${returnDate}T00:00:00`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(returnDate) || Number.isNaN(parsed.getTime())
+      || `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}` !== returnDate) {
+      return 'Please choose a valid return date.';
+    }
+    if (returnDate < params.departureDate) return 'Return date cannot precede departure date.';
+  }
   return null;
 }

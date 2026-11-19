@@ -10,3 +10,9 @@ standard fare codes. Existing non-null administrator values are preserved.
 Custom fare codes can be configured through the admin fare editor.
 
 For a new database, `../init.sql` already includes these columns and seed values.
+
+For existing databases, apply `20261116_flight_updates_bundles.sql` if the
+`flight_change_deliveries` table is missing, then apply
+`20261119_flight_seat_notifications.sql` before starting the updated backend.
+Apply `20261116_notification_realtime.sql` to enable live delivery on the customer
+interface.

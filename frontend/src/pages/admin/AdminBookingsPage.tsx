@@ -1,5 +1,6 @@
 import { getLocale, localize, useLanguage } from '../../i18n/index';
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AdminSidebar } from '../../components/layout/AdminSidebar';
 import { AdminHeader } from '../../components/layout/AdminHeader';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -31,6 +32,19 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = () => {
   const [search, setSearch] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<AdminBookingListRecord | null>(null);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [urlParams] = useSearchParams();
+  const linkedBookingId = urlParams.get('bookingId');
+  useEffect(() => {
+    const id = Number(linkedBookingId);
+    if (!Number.isSafeInteger(id) || id <= 0) return;
+    let cancelled = false;
+    bookingApi.getAdminBooking(id).then(data => {
+      if (cancelled) return;
+      setSelectedRecord(data);
+      setIsDossierOpen(true);
+    }).catch(() => { if (!cancelled) setError('Unable to load booking details.'); });
+    return () => { cancelled = true; };
+  }, [linkedBookingId]);
 
   useEffect(() => {
     let cancelled = false;
